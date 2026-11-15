@@ -1,0 +1,24 @@
+{
+  "template_only": true,
+  "skill_revision": "2.2",
+  "task_id": null,
+  "owner_id": null,
+  "writer_ids": [],
+  "stage": "00",
+  "paper_status": "NOT_STARTED",
+  "scope_revision": 1,
+  "source_versions": [],
+  "review_plan": {
+    "reviewer_id": null,
+    "capability_evidence": null,
+    "source_first_inventory_ref": null,
+    "status": "PENDING"
+  },
+  "open_unit_ids": [],
+  "next_actions": [],
+  "blockers": [],
+  "stop_reason": null,
+  "restart_action": null,
+  "history": [],
+  "repair_progress": {}
+}

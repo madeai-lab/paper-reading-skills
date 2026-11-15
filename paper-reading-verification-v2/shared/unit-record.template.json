@@ -1,0 +1,23 @@
+{
+  "template_only": true,
+  "unit_id": null,
+  "kind": null,
+  "label": null,
+  "parent_id": null,
+  "children": [],
+  "source_id": null,
+  "locators": [],
+  "assigned_owner": null,
+  "read_state": "INVENTORIED",
+  "information_role": null,
+  "understanding_note": null,
+  "evidence_refs": [],
+  "visual_review": {
+    "required": null,
+    "actually_viewed": false,
+    "artifact_refs": [],
+    "checks": [],
+    "limitations": []
+  },
+  "dependencies": []
+}

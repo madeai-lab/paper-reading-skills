@@ -1,0 +1,23 @@
+{
+  "template_only": true,
+  "review_id": null,
+  "reviewer_id": null,
+  "independence_disclosure": null,
+  "source_first_inventory_ref": null,
+  "checked_unit_ids": [],
+  "checked_claim_ids": [],
+  "findings": [],
+  "unresolved_reading_gaps": [],
+  "open_source_issues": [],
+  "gate_decisions": {
+    "G0": "PENDING",
+    "G1": "PENDING",
+    "G2": "PENDING",
+    "G3": "PENDING"
+  },
+  "decision": null,
+  "repair_requests": [],
+  "reviewed_scope_revision": null,
+  "reviewed_source_hashes": {},
+  "reviewed_content_sha256": null
+}

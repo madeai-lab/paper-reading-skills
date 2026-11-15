@@ -1,0 +1,25 @@
+{
+  "template_only": true,
+  "issue_id": null,
+  "kind": null,
+  "status": "OPEN",
+  "observations": [],
+  "source_refs": [],
+  "minimal_evidence": [],
+  "calculation": {
+    "applicable": null,
+    "inputs": [],
+    "formula": null,
+    "result": null,
+    "units": null,
+    "conditions": []
+  },
+  "alternative_explanations": [],
+  "checks_performed": [],
+  "missing_evidence": [],
+  "affected_claims": [],
+  "impact": null,
+  "recommended_use": null,
+  "user_question": null,
+  "user_decision": null
+}

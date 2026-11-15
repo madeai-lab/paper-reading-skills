@@ -1,0 +1,48 @@
+{
+  "template_only": true,
+  "task_id": null,
+  "paper_id": null,
+  "scope_mode": "COMPLETE_PAPER",
+  "scope_revision": 1,
+  "paper_status": "NOT_STARTED",
+  "sources": [],
+  "units": [],
+  "methods_taxonomy": [],
+  "experiments": [],
+  "claims": [],
+  "issues": [],
+  "reviews": [],
+  "gate_results": {
+    "G0": {
+      "decision": "PENDING",
+      "evidence_refs": [],
+      "open_items": []
+    },
+    "G1": {
+      "decision": "PENDING",
+      "evidence_refs": [],
+      "open_items": []
+    },
+    "G2": {
+      "decision": "PENDING",
+      "evidence_refs": [],
+      "open_items": []
+    },
+    "G3": {
+      "decision": "PENDING",
+      "evidence_refs": [],
+      "open_items": []
+    }
+  },
+  "deliverables": {
+    "full_notebook": null,
+    "report": null,
+    "material_index": null,
+    "user_review": null,
+    "independent_review": null
+  },
+  "skill_revision": "2.2",
+  "owner_id": null,
+  "writer_ids": [],
+  "scope_exclusions": []
+}

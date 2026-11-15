@@ -1,0 +1,36 @@
+{
+  "template_only": true,
+  "task_id": "REPLACE_WITH_TASK_ID",
+  "paper_id": "REPLACE_WITH_PAPER_ID",
+  "stage": "00",
+  "role": "coordinator",
+  "language": "zh-CN",
+  "scope_mode": "COMPLETE_PAPER",
+  "scope_revision": 1,
+  "target_identity": {
+    "title": null,
+    "doi_or_identifier": null,
+    "selected_version": null
+  },
+  "source_root": null,
+  "source_files": [],
+  "source_urls": [],
+  "required_supplements": [],
+  "assigned_unit_ids": [
+    "ALL"
+  ],
+  "output_dir": null,
+  "handoff_paths": [],
+  "constraints": {
+    "respect_existing_user_authorization": true,
+    "no_ocr": true,
+    "sources_read_only": true,
+    "no_source_uploads": true,
+    "no_paper_code_execution": true,
+    "no_access_control_bypass": true,
+    "independent_reviewer_required": true
+  },
+  "completion_rule": "All in-scope information units covered and semantically checked; G3 required. Counts and files alone are insufficient.",
+  "unresolved_source_issue_rule": "Preserve evidence for user review; restrict affected claims without treating a user preference as factual proof.",
+  "skill_revision": "2.2"
+}
