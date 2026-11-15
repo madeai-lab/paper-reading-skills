@@ -1,5 +1,7 @@
 # English execution entry
 
+[中文版](../zh-CN/README.md)
+
 Purpose: produce traceable understanding of a paper's text, experiments, visuals, detailed structure and relevant supplements. When a paper appears unreasonable, present an evidence chain the user can inspect.
 
 ## Execution order
@@ -27,7 +29,6 @@ One Owner closes each paper's full scope. A visual agent must not assume the exp
 
 A reader-facing summary may be concise. The underlying notebook must retain every information unit. Coverage, understanding and verification come before compression; a short target report must not narrow source reading.
 
-The [user-review example](../examples/user-review-example.en.md) shows how to present a real source concern without deciding it for the user.
 
 Use the [acceptance scenarios](ACCEPTANCE_CASES.md) to detect omitted panels/supplements, mixed metrics and unsupported author-error verdicts. Static validation of this package is not evidence that real agent execution has been behaviorally validated.
 
