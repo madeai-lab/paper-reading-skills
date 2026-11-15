@@ -1,6 +1,6 @@
 # Research targets and visual reports (revision 2.3)
 
-Read this reference when configuring a research purpose or preparing/reviewing a report. It applies to both language editions; write deliverables in the user's requested language. The source-reading and independent-review requirements remain in force.
+Read this reference when configuring a research purpose or preparing/reviewing a report. It applies to both language editions; write deliverables in the user's requested language. The source-reading and independent-review requirements remain in force. New acquisitions follow [Native PDF elements](native-elements.md): body text/table cells/native labels use structured evidence first, while displayed image assets and graphical/raster/conflict content still require actual viewing. The table exception never grants a gallery image viewing flag.
 
 ## Explicit research target
 

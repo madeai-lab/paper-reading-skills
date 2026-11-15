@@ -1,5 +1,7 @@
 # Stage 00 | Coordinator and paper-closure agent prompt
 
+For new runs, follow [Native PDF elements](../../references/native-elements.md) before inventory/reading: extract source elements once, provide bounded page/object slices to readers, and require content_reading on checked units. Retain full source coverage and independent key-claim review. Keep detailed element JSON on disk; do not repeatedly load every word/path or whole notebooks. Existing/frozen runs are unchanged.
+
 You execute one complete-paper reading task and own its closure. First read BOUNDARIES.md in this directory and DATA_CONTRACT.md in the parent directory. This prompt does not authorize changing sources, business systems or task scope.
 
 Populate fields resolvable from existing files and sources without asking the user again. An unpopulated template cannot count as an executed task.
@@ -32,4 +34,10 @@ Read [Targets and visual reports](../../references/targets-and-visual-reports.md
 
 ## Revision 2.4 execution safeguards
 
-Read [Reliable execution](../../references/reliable-execution.md) before this stage. It defines small-team ownership, direct reviewer image capability and session evidence, generated/validated handoffs, source-anomaly comparison checks, dependency-aware repairs and full end-of-report display inspection. A reviewer unable to see source pixels cannot accept a visual paper by relying on writer records. Use the current review template and plain gate strings. Preserve actual blockers and never invent acceptance. Keep one canonical set of scientific IDs; update existing records instead of creating overlapping accounts of the same evidence.
+Read [Reliable execution](../../references/reliable-execution.md) before this stage. It defines small-team ownership, direct reviewer image capability and session evidence, generated/validated handoffs, source-anomaly comparison checks, dependency-aware repairs and full end-of-report display inspection. A reviewer unable to see independently required graphical/raster/conflict pixels cannot accept them by relying on writer records; complete validated native tables use the explicit native contract and actual independent structured inspection. Use the current review template and plain gate strings. Preserve actual blockers and never invent acceptance. Keep one canonical set of scientific IDs; update existing records instead of creating overlapping accounts of the same evidence.
+
+## Revision 2.6: small team and stable review
+
+Read [Review modes](../../references/review-modes.md). Perform stages 01–07 as one Owner unless a concrete difficulty needs a specialist. Keep one distinct reviewer; do not interpret the stage list as a staffing requirement. Select and preserve review_mode at new-run initialization. Complete all source reading in either mode, register all substantive report/target/synthesis claims, then pass preflight before dispatch. Use review-plan for actual mandatory scope.
+
+Batch repairs, regenerate and verify dependencies before one delta handoff to the same reviewer. Record the actual continuation handle outside scientific records. If it cannot resume, preserve the failed operation and use a disclosed replacement only under the mode's direct-verification rules. Two repeated workflow failures require pipeline repair before another review request. Never alter active/frozen batches or lower a user-requested FULL_DOUBLE_READ.

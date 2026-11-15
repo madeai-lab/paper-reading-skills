@@ -2,6 +2,14 @@
 
 [中文版](../zh-CN/README.md)
 
+## Revision 2.7: native source elements
+
+Read [Native PDF elements](../references/native-elements.md). New runs obtain body text, tables and native labels from source-bound pdfplumber records before using vision. Bitmaps, graphical relationships and parsing conflicts still need actual source inspection. Complete Owner reading and both review modes remain unchanged. Existing/frozen runs retain their prior rules.
+
+## Revision 2.6: review mode
+
+Read [Review modes](../references/review-modes.md) before applying earlier revision guidance. New runs default to KEY_CLAIMS; FULL_DOUBLE_READ retains complete independent double reading. Missing mode retains legacy full-review behavior. The Owner still covers all source units; stage-08 scope depends on the recorded mode. Existing active/frozen runs are never migrated.
+
 Purpose: produce traceable understanding of a paper's text, experiments, visuals, detailed structure and relevant supplements. When a paper appears unreasonable, present an evidence chain the user can inspect.
 
 ## Execution order
@@ -19,7 +27,7 @@ Purpose: produce traceable understanding of a paper's text, experiments, visuals
 | 08 | [Independent acceptance](08_independent_acceptance/PROMPT.md) | Independent reviewer | Inspect sources before comparing deliverables; decide G3 |
 | 09 | [Cross-paper synthesis](09_cross_paper_synthesis/PROMPT.md) | Synthesis agent | Use G3-accepted claims with their restrictions |
 
-Stages 02–05 may run in parallel after G0 and must exchange discoveries. They begin independently from complete sources without waiting for other roles' records, then reconcile dependencies before 06. Each role writes to its own stage directory; the Owner merges them to avoid overwrites. Stage 07 follows 06. Stage 08 returns defects to their owning stage and rechecks repairs. Any new factual claim or comparison introduced by 09 also requires stage-08 review.
+Stages 01–07 are responsibilities normally performed by one Owner. Add a specialist only for a concrete source difficulty; provide full source access and merge discoveries without overwrites. Stage 07 follows 06. Stage 08 returns defects to their owning stage and rechecks repairs. Any new factual claim or comparison introduced by 09 also requires stage-08 review.
 
 Each agent first reads the [boundaries](00_governance/BOUNDARIES.md) and [handoff data contract](DATA_CONTRACT.md), then its role prompt. The coordinator supplies a populated task JSON, source root, assigned unit IDs, output directory and available handoffs. “You” in a prompt means the assigned agent, not the paper's author.
 
@@ -43,4 +51,4 @@ Use [Targets and visual reports](../references/targets-and-visual-reports.md) fo
 
 ## Revision 2.4
 
-The shared [Reliable execution contract](../references/reliable-execution.md) is required. New runs bind review_requirements.direct_visual_inspection and require the reviewer's own visual_inspection/session/observation evidence for accepted G3. Use handoff-template and review-template to generate correct shapes; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing earlier runs are not silently migrated. Templates, viewing flags and structural checks cannot establish actual image access, independence or understanding. If reviewer image access remains unavailable after permitted local alternatives, finish accessible work and record a truthful capability block with G3 unaccepted.
+The shared [Reliable execution contract](../references/reliable-execution.md) is required. Graphical/raster/conflict objects require the reviewer's own visual_inspection/session/observation evidence for accepted G3; new native-acquisition runs may independently inspect validated complete tables under [Native PDF elements](../references/native-elements.md). Runs without that explicit acquisition contract retain their prior visual requirements. Use handoff-template and review-template; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing runs are not migrated. Templates and structural checks cannot establish actual inspection, independence or understanding. A blocked required image channel retains G3 unaccepted.

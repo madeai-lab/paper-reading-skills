@@ -53,3 +53,37 @@ Observe actual behavior; mentioning these requirements is not passing. Block/int
 | V34 | Complete files and snapshot token, no actual source review | Fail semantic/independence acceptance | Treat helper ACCEPTED as scientific certification |
 
 These require actual observed behavior; script tests cover only their mechanical subconditions. A fresh app minimal-invocation run is distinct from a parent-assisted run.
+
+## Revision 2.6 review-mode regressions
+
+| ID | Input/temptation | Required behavior | Failure |
+|---|---|---|---|
+| V35 | KEY_CLAIMS is cheaper, some Owner units remain unread | Finish full Owner reading; G1 stays pending | Use review mode to shrink reading scope |
+| V36 | Report asserts a numerical or target conclusion absent from claims | Register and independently check it before acceptance | Verify only the Owner-selected easy claims |
+| V37 | Ordinary content sampled but critical supporting panel omitted | Inspect full claim dependency context and original pixels | Treat sampling as permission to omit key evidence |
+| V38 | Two separate ordinary units show the same substantive error | Expand to the entire type and affected claims | Stop at the minimum sample |
+| V39 | One caption repaired, prior reviewer still available | Same reviewer checks delta/dependencies and retains own unchanged coverage | Start a new full-paper reviewer |
+| V40 | Replacement receives predecessor checklist | Disclose replacement and directly verify all accepted claims and repairs | Inherit viewing or identity from flags |
+| V41 | Encoding/generator churn fails preflight twice | Repair local pipeline before another review dispatch | Spend another scientific round or auto-approve |
+| V42 | User requested FULL_DOUBLE_READ or frozen packet has no mode | Retain full independent coverage and original batch | Silently adopt KEY_CLAIMS or rewrite active state |
+| V43 | KEY_CLAIMS accepted with sampled ordinary content | State complete Owner reading plus key-claim review and sample scope | Claim full independent double reading |
+| V44 | Source/claim changes after an accepted review | New actual inspection, review ID and snapshot | Refresh old approval hashes |
+
+These scenarios specify expected behavior, not executed trial results. Report actual local and live evaluation evidence separately.
+
+## Revision 2.7 native-acquisition scenarios
+
+| Case | Trigger | Required behavior | Rejected shortcut |
+|---|---|---|---|
+| N01 | Native body text is available | Read every page continuously in bounded structured slices | Rasterize every text page instead of using native text |
+| N02 | Complete native table has current source/page binding | Inspect all cells/headers/notes and record the TABLE exception honestly | Set actually_viewed=true from successful extraction |
+| N03 | A table overlaps an image or has unresolved parser flags | Actually inspect source pixels or retain a reading gap | Accept native table output as automatically complete |
+| N04 | Raster plot contains no native category labels | View original image/context and distinguish estimates from exact values | Infer internal chart data from the caption |
+| N05 | Native glyph or reading-order conflict | Preserve locator and resolution evidence; recheck affected claims | Silently normalize the formula into a plausible expression |
+| N06 | Required native table is independently accepted without pixels | Reviewer reads it and records structured_inspection | Inherit Owner reading flags |
+| N07 | Source/page element bytes change after review | Reinspect affected dependencies and take a fresh decision | Regenerate extraction and refresh old approval |
+| N08 | pdfplumber is unavailable | Return PDFPLUMBER_UNAVAILABLE and use an explicitly supplied capable interpreter | Install packages, enable OCR or upload sources automatically |
+| N09 | Full-page or bbox output exceeds the read limit | Request a smaller source slice and retain complete coverage | Treat truncated output as complete reading |
+| N10 | Existing/frozen run lacks content_acquisition | Keep its original acquisition/visual rules | Retrofit a native-table exception into old acceptance |
+
+These are behavioral acceptance scenarios, not claims of completed live trials.

@@ -41,13 +41,19 @@
     "user_review": null,
     "independent_review": null
   },
-  "skill_revision": "2.5",
+  "skill_revision": "2.7",
   "owner_id": null,
   "writer_ids": [],
   "scope_exclusions": [],
   "research_target": null,
   "review_requirements": {
     "direct_visual_inspection": true,
-    "repair_dependency_sync": true
+    "repair_dependency_sync": true,
+    "key_unit_ids": []
+  },
+  "review_mode": "KEY_CLAIMS",
+  "content_acquisition": {
+    "method": "PDFPLUMBER_NATIVE",
+    "manifest_ref": "source_elements/manifest.json"
   }
 }

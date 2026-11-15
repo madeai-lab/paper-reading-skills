@@ -29,3 +29,11 @@ Research targets are now explicit versioned JSON, independent of paper identity.
 ## Revision 2.5
 
 [Repair synchronization](references/repair-synchronization.md) adds read-only discovery of all current text/data artifacts, including unlinked notes and old manual notebooks. New runs require per-file inspection dispositions before repair readiness. Changed files/records, omitted files and declared obsolete wording prevent dispatch or acceptance until rechecked. Explicit historical exceptions retain provenance. Current notes also participate in review snapshots. Semantic correctness still requires actual independent inspection; existing frozen runs are not migrated.
+
+## Revision 2.6
+
+[Review modes](references/review-modes.md) separate complete Owner reading from the scope of independent review. New runs default to verification of all claims and evidence chains with risk-based sampling; full independent rereading remains available.
+
+## Revision 2.7
+
+[Native PDF elements](references/native-elements.md) adds bounded access to text, tables, and other elements using pdfplumber. Graphical content and extraction conflicts still require direct inspection. pdfplumber is an optional extraction dependency and is not installed automatically.

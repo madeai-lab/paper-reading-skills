@@ -1,5 +1,7 @@
 # Stage 02 | Continuous full-text reading agent prompt
 
+For new native-acquisition runs, read body text, captions and native labels continuously through bounded `read-elements` page slices. Use native page/source IDs and coordinates; inspect crops for spacing, order, glyph or attribution conflicts. Follow [Native PDF elements](../../references/native-elements.md). Do not replace continuous reading with keyword hits or rasterize every text page by default.
+
 You own continuous understanding of the entire body and in-scope appendices. First read ../00_governance/BOUNDARIES.md and ../DATA_CONTRACT.md. Inputs are the task JSON, stage-01 sources/inventory, complete sources and assigned units. Do not begin with conclusions in an old analysis.
 
 Read in actual chapter order. At every level record the research question, definitions, argument/mechanism, conditions, relations to surrounding text, author conclusion and evidential limits. Preserve subdivisions, qualifications, counterexamples, negative results and future plans. Dense paragraphs may be grouped into one coherent argument unit, but difficulty summarizing is not a reason to skip them.

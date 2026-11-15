@@ -1,6 +1,6 @@
-# Reliable execution (revision 2.5)
+# Reliable execution (revision 2.7)
 
-Read this before executing or reviewing a reading run. It supplements both language editions. Existing source, authorization and full-coverage boundaries still apply. These rules address observed failures; they do not turn structural checks into proof of understanding.
+Read this before executing or reviewing a reading run, together with [Native PDF elements](native-elements.md) and [Review modes](review-modes.md). It supplements both language editions. Reviewer coverage below is mode-specific for new 2.6 runs; complete Owner reading is unchanged. Existing source, authorization and full-coverage boundaries still apply. These rules address observed failures; they do not turn structural checks into proof of understanding.
 
 ## Keep the team and records small
 
@@ -12,7 +12,7 @@ Prefer canonical handoffs over custom scripts rewriting many files. Do not maint
 
 ## Verify image capability before relying on a reviewer
 
-Before expensive independent review, give the intended reviewer one source page/image, source identity and stage-08 requirements, without draft conclusions. In its own clean context it actually opens the image and records visible labels, relationships and limitations with the tool outcome. File existence, a successful Read return, a caption, OCR or another reader's description is not evidence that pixels were displayed to that reviewer.
+When mode-required graphical/raster/conflict objects need pixels, before expensive independent review give the intended reviewer one such source page/image, source identity and stage-08 requirements, without draft conclusions. A new native-only text/validated-table source uses independent structured inspection instead of a fabricated image probe. In its own clean context it actually opens the image and records visible labels, relationships and limitations with the tool outcome. File existence, a successful Read return, a caption, OCR or another reader's description is not evidence that pixels were displayed to that reviewer.
 
 If the tool returns filtered, unavailable or undisplayed image content, set direct_pixels_available=false. Try at most one materially different already-available local viewing method, or a genuinely separate capable independent reviewer, within existing authorization. Do not repeat the same unavailable channel, install tools, upload sources or rename the writer as reviewer. This is a capability check, not a source anomaly.
 
@@ -41,9 +41,9 @@ For new 2.4 runs, acceptance requires a reviewer-authored visual_inspection obje
 }
 ```
 
-Enumerate every current visual unit, including composite parent/panels; do not copy the writer's visual flags. Save your actual tool outcome/observation evidence locally. COMPLETE is permitted only after direct viewing; BLOCKED cannot accompany accepted G3. If the source genuinely has no informative visual units, use status=NOT_APPLICABLE and units=[] with source-derived reasoning. The controller and checker reject incomplete/blocked visual contracts for new runs. They still cannot authenticate viewing or reviewer identity: contradictory disclosures are workflow errors requiring correction, not wording to hide behind a true flag.
+Enumerate every independently required pixel unit, including necessary composite parent/panel context. New native-acquisition runs may exclude only complete validated native tables under the native contract and must record independent structured_inspection for them. FULL_DOUBLE_READ still checks every source unit; legacy runs retain their prior all-visual requirement. KEY_CLAIMS uses its computed required scope. Do not copy the writer's visual flags. Save your actual tool outcome/observation evidence locally. COMPLETE is permitted only after direct viewing; BLOCKED cannot accompany accepted G3. If no independent pixel units remain after the valid native-table exception, use status=NOT_APPLICABLE and units=[] with source-derived reasoning and actual structured evidence where required. The controller and checker reject incomplete/blocked visual contracts for new runs. They still cannot authenticate viewing or reviewer identity: contradictory disclosures are workflow errors requiring correction, not wording to hide behind a true flag.
 
-If independent direct viewing remains unavailable, finish all accessible reading, records and reporting, retain G3 PENDING/FAIL and record an actual CAPABILITY_BLOCK using EXECUTION.md. Include the actual failed attempts, evidence paths, affected action REQUEST_REVIEW and restart action. Do not produce acceptance merely with a footnote about unavailable pixels. An honest capability-blocked result is an observed outcome, not successful full reading.
+If independently required direct viewing remains unavailable, finish all accessible reading, records and reporting, retain G3 PENDING/FAIL and record an actual CAPABILITY_BLOCK using EXECUTION.md. Include the actual failed attempts, evidence paths, affected action REQUEST_REVIEW and restart action. Do not produce acceptance merely with a footnote about unavailable pixels. An honest capability-blocked result is an observed outcome, not successful full reading.
 
 ## Generate and validate handoffs before mutation
 
@@ -81,3 +81,7 @@ Finish text, assets, target answers, metadata and G0–G2 before the reviewer sn
 ## Unassisted trial boundary
 
 When the user requests a minimally supervised trial, provide only the updated skill, source, explicit target, new output directory and execution permissions. Keep prior reports, specific known paper anomalies and expected verdicts out of the test prompt. Observe status without editing the run, injecting repairs, supplying a replacement reviewer from the supervising host, or modifying the frozen skill. The executing agent may perform the skill's own repair/review loop within authorization. Preserve its actual completion or capability-blocked outcome; report failure as failure rather than silently rescuing the trial.
+
+## Efficient reinspection
+
+Read [Efficient independent reinspection](efficient-reinspection.md) before dispatching repair review. Reuse the actual independent reviewer and its own source-first evidence. A new decision needs a new review ID and fresh snapshot, not a fresh agent. Reinspect changes and their affected dependencies while retaining the same reviewer's verified unchanged coverage; expand the review when source, scope or reliability changes. Never invent resumed identity, viewing or approval.

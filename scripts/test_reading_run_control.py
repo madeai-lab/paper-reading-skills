@@ -203,7 +203,8 @@ class ReadingRunControlTests(unittest.TestCase):
             state=json.loads((out/"execution_state.json").read_text(encoding="utf8"))
             self.assertEqual(packet["gate_results"]["G0"]["decision"],"PENDING")
             self.assertEqual(state["stage"],"01")
-            self.assertEqual(state["next_actions"][0]["kind"],"SOURCE_INVENTORY")
+            self.assertEqual(state["next_actions"][0]["kind"],"EXTRACT_ELEMENTS")
+            self.assertEqual(packet['content_acquisition']['method'], 'PDFPLUMBER_NATIVE')
             self.assertEqual(source.read_bytes(),before)
             self.assertEqual((out/"source.pdf").read_bytes(),before)
 

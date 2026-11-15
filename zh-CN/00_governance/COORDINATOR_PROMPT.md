@@ -1,5 +1,7 @@
 # 阶段00｜协调与整篇闭合Agent Prompt
 
+新运行建清单/阅读前先遵循[PDF原生元素](../../references/native-elements.md)：提取一次，给读者有界页面/对象片段，已检查单元记录content_reading。完整来源覆盖和关键结论独立核查不变；详细元素JSON留在磁盘，不反复加载全部词/路径或整份底稿。旧运行与冻结批次不变。
+
 你负责执行一次论文完整阅读任务，并为整篇闭合负责。先读同目录BOUNDARIES.md及上级DATA_CONTRACT.md。本Prompt不授权改变源文件、业务系统或任务范围。
 
 能从现有文件和源材料确定的任务字段由你填好，不向用户重复询问；模板未填完整不能当成已执行任务。
@@ -32,4 +34,10 @@ Read [Targets and visual reports](../../references/targets-and-visual-reports.md
 
 ## Revision 2.4 execution safeguards
 
-Read [Reliable execution](../../references/reliable-execution.md) before this stage. It defines small-team ownership, direct reviewer image capability and session evidence, generated/validated handoffs, source-anomaly comparison checks, dependency-aware repairs and full end-of-report display inspection. A reviewer unable to see source pixels cannot accept a visual paper by relying on writer records. Use the current review template and plain gate strings. Preserve actual blockers and never invent acceptance. Keep one canonical set of scientific IDs; update existing records instead of creating overlapping accounts of the same evidence.
+Read [Reliable execution](../../references/reliable-execution.md) before this stage. It defines small-team ownership, direct reviewer image capability and session evidence, generated/validated handoffs, source-anomaly comparison checks, dependency-aware repairs and full end-of-report display inspection. A reviewer unable to see independently required graphical/raster/conflict pixels cannot accept them by relying on writer records; complete validated native tables use the explicit native contract and actual independent structured inspection. Use the current review template and plain gate strings. Preserve actual blockers and never invent acceptance. Keep one canonical set of scientific IDs; update existing records instead of creating overlapping accounts of the same evidence.
+
+## 修订2.6：小组合与稳定复审
+
+读取[审查模式](../../references/review-modes.md)。默认由一位 Owner 完成阶段01—07，具体难点才增加专项读者；保留一位独立审查者，阶段表不是人数要求。初始化新运行时选择并保留 review_mode。两种模式都完整阅读，登记报告/目标答案/综合的全部实质性主张，先通过 preflight，再按 review-plan 送审。
+
+批量修复、重新生成并核对依赖后，一次将差异交回同一审查者。真实续接句柄放在科学记录之外。确实无法续接时保存失败，替补须披露并按模式直接核验。同类流程错误重复两轮，先修生成与同步再送审。不改活动/冻结批次，不降低用户指定的 FULL_DOUBLE_READ。

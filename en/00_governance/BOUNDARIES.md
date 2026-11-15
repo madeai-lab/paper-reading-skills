@@ -1,6 +1,6 @@
 # Full-reading boundaries and acceptance contract
 
-This contract applies to every role. Role prompts cannot weaken it. If the user explicitly narrows the task, record the new scope name and stop using a full-paper completion label.
+This contract applies to every role. New native-acquisition runs also follow [Native PDF elements](../../references/native-elements.md); earlier runs retain their existing acquisition requirements. The revision-2.6 review-mode distinction below defines independent scope; complete Owner reading never changes. Role prompts cannot weaken it. If the user explicitly narrows the task, record the new scope name and stop using a full-paper completion label.
 
 ## B01: Freeze the object before interpreting it
 
@@ -35,9 +35,9 @@ Build a source-first inventory, then read continuously. Search locates or revisi
 
 Chunk long sources without changing total scope. Preserve boundaries, neighboring context, unresolved references and handoffs. The Owner merges and checks for holes and duplicates. If an actual imposed time, page or token limit prevents continuation, checkpoint under EXECUTION.md and report actual coverage rather than forcing completion. A subjective desire to save time is not such a limit.
 
-## B06: Actually inspect images
+## B06: Inspect the source content through the appropriate evidence route
 
-Open legible original pages or images for every information-bearing visual, every subpanel and every table. Captions, alt text, extracted text and screenshot filenames do not establish visual reading. Do not infer precise numbers from illegible curves or substitute a caption for a relationship shown inside a figure.
+Read native text, labels and complete table cells from structured elements first when the new acquisition contract is enabled. Open legible original images for all graphical/raster objects, their panels and parsing conflicts. Only complete validated native tables may use the documented structured-reading exception; legacy runs still open every table. Captions, alt text, extracted text and screenshot filenames do not establish visual reading. Do not infer precise numbers from illegible curves or substitute a caption for a relationship shown inside a figure.
 
 Read the whole object, details, caption and neighboring text. Check axes, units, scales, legends, colors, arrow direction, groups, normalization, uncertainty bars, significance, headers, notes and emphasis. Crops must preserve enough context to interpret them.
 
@@ -87,9 +87,9 @@ Do not constrain the notebook to 2,500–4,500 characters or a fixed section cou
 ## B14: Four gates
 
 - G0: freeze source versions and scope; inventory all pages, sections, visuals/panels and appendices; list missing materials.
-- G1: actually read every in-scope unit and visually inspect all information-bearing visuals; close every reading gap.
+- G1: actually read every in-scope unit; inspect required graphical/raster/conflict pixels and validate any complete native-table exception; close every reading gap.
 - G2: bidirectionally link methods, taxonomy, experiments, visuals and claims; check definitions/samples/conditions and complete anomaly chains.
-- G3: an independent reviewer inspects sources first, then checks coverage, explanation, fidelity and issue treatment; repair all agent errors.
+- G3: a distinct reviewer checks sources first, then performs mode-specific independent evidence review, verifies complete Owner coverage and issue treatment, and closes reading/scientific workflow errors. KEY_CLAIMS is not full double reading.
 
 G0 may allow limited work while material gaps remain, but those gaps block G1. Counts and checklists at G1/G2 do not replace semantic review at G3. An average score cannot compensate for a critical omission.
 
@@ -106,3 +106,7 @@ A source/version, inventory, important value, interpretation or report-claim cha
 
 
 Revision2.1: actually execute and close B14 gates. B15 PARTIAL_SCOPE describes incompleteness; it does not authorize early stopping without a genuine block. Follow the [execution contract](../EXECUTION.md); never invent resource/permission limits.
+
+## Revision 2.6: complete reading versus independent scope
+
+Apply [Review modes](../../references/review-modes.md). B02–B08 require full Owner coverage in every mode. KEY_CLAIMS independently verifies all current claims, their evidence dependencies and a stratified ordinary sample, checking source/Owner coverage and expanding on errors. FULL_DOUBLE_READ independently checks every unit through the source-appropriate route, including the narrow native-table exception only when explicitly enabled; absent acquisition/mode fields retain legacy requirements. Record actual mode/coverage and never call sampled ordinary verification complete independent double reading. NON_INFORMATIVE and scope exclusions still require independent justification. Do not modify active/frozen runs to adopt the new default.

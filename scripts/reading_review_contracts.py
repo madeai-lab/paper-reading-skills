@@ -12,6 +12,9 @@ def visual_fingerprint(root, review):
     refs = set(record.get('tool_evidence_refs', []))
     if review.get('source_first_inventory_ref'):
         refs.add(review['source_first_inventory_ref'])
+    structured = review.get('structured_inspection')
+    if isinstance(structured, dict):
+        refs.update(structured.get('evidence_refs', []))
     for row in record.get('units', []):
         refs.update(row.get('artifact_refs', []))
     files = {}
@@ -20,6 +23,8 @@ def visual_fingerprint(root, review):
         files[ref] = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else 'MISSING'
     data = {'reviewer_session_id': review.get('reviewer_session_id'),
             'visual_inspection': record, 'files': files}
+    if structured is not None:
+        data['structured_inspection'] = structured
     return hashlib.sha256(json.dumps(data, sort_keys=True, ensure_ascii=False).encode('utf8')).hexdigest()
 
 
@@ -35,8 +40,11 @@ def visual_review_errors(root, packet, review):
     if not enabled(packet):
         return []
     root = Path(root)
-    required = {u['unit_id'] for u in packet.get('units', [])
-                if u.get('kind') in VISUAL or u.get('visual_review', {}).get('required')}
+    from reading_review_modes import required_visual_ids
+    try:
+        required = required_visual_ids(packet, review, root)
+    except (ValueError, TypeError, KeyError) as exc:
+        return [{'code': 'REVIEW_PLAN_INVALID', 'item': 'G3', 'next_action': str(exc)}]
     record = review.get('visual_inspection', {})
     def fail(message):
         return [{'code': 'REVIEW_VISUAL_INCOMPLETE', 'item': 'G3', 'next_action': message}]

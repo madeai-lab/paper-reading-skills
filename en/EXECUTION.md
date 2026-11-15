@@ -1,10 +1,18 @@
 # Execution and terminal assessment (revision 2.2)
 
+## Revision 2.6: review mode
+
+Read [Review modes](../references/review-modes.md) before applying earlier revision guidance. New runs default to KEY_CLAIMS; FULL_DOUBLE_READ retains complete independent double reading. Missing mode retains legacy full-review behavior. The Owner still covers all source units; stage-08 scope depends on the recorded mode. Existing active/frozen runs are never migrated.
+
 Calling this skill with a paper executes 00–08. Default to complete scope, without expanding into experimental replication. The local helper saves canonical records; it does not run models, create services, prove reading or prevent a host final response.
+
+## Revision 2.7: extract and read native elements
+
+Follow [Native PDF elements](../references/native-elements.md). New runs bind content_acquisition. Run `extract-elements "<run>"` with an interpreter providing pdfplumber, then `read-elements "<run>" --pages 1 2` in continuous bounded batches. Use `--bbox x0 top x1 bottom` for a narrow source region. Native text/cells/labels come first; preserve actual viewing of bitmaps, graphical relationships and conflicts. Do not render every body-text page by default. Extraction does not advance read_state. A valid native TABLE records content_reading instead of falsely setting actually_viewed. Existing runs are not migrated.
 
 ## 1. Initialize and inventory before dependent readers
 
-Use python "<skill>/scripts/reading_run_control.py" init "<new-run>" --source "<paper.pdf>" --owner "<actual-owner-id>" --language en.
+Use python "<skill>/scripts/reading_run_control.py" init "<new-run>" --source "<paper.pdf>" --owner "<actual-owner-id>" --language en --review-mode KEY_CLAIMS.
 The new directory must not exist. This preserves a source copy/hash and creates task, assignment, state and packet JSON with gates PENDING. Fill discoverable identity fields yourself. Plan actual independent review capacity at startup.
 
 Read stage 01, inspect the actual source/all pages and save:
@@ -14,13 +22,13 @@ Read stage 01, inspect the actual source/all pages and save:
 
 Run sync "<run>" after editing inventories, using the same helper path as above. Submit an Owner G0 decision through merge. G0 must be evidenced PASS before stages 02–05 start. New discoveries/corrections stay in inventory and invalidate affected reading/review. Never delete difficult units.
 
-Give useful reading specialists complete sources, assigned IDs, role prompts and the data contract. Roles may be combined. Use a distinct reviewer in a fresh/no-history context where supported (for example fork_turns="none"), with sources/stage-08 prompt first; release finished readers to free capacity. Withhold drafts/conclusions until its independent checklist is saved. Do not rename the writer as reviewer.
+Give useful reading specialists complete sources, assigned IDs, role prompts and the data contract. Roles may be combined. Use a distinct reviewer in a fresh/no-history context where supported (for example fork_turns="none"), with sources/stage-08 prompt first; release finished readers to free capacity. Withhold drafts/conclusions until its mode-appropriate independent source map/checklist is saved. Do not rename the writer as reviewer.
 
 ## 2. Record each reading batch, then do the next action
 
 Run next "<run>" after each chunk, handoff or repair. If terminal_decision=CONTINUE, perform next_action before another assessment. The returned IDs are bounded batches, not permission to omit the rest. Send progress messages while working.
 
-Role handoff JSON contains writer_id and any of units, methods_taxonomy, experiments, claims, issues, gate_results. No other top-level keys are accepted. Units are partial updates by an already-inventoried unit_id; preserve inventory identity/kind/locators. Supply read_state, a source-specific understanding_note and existing evidence_refs. For informative visuals actually inspect the original image and record visual_review with artifact_refs/checks/limitations. Keep rich visual/formal explanations on the unit as well as in notes. READ/UNDERSTOOD never becomes CHECKED automatically. Assign CHECKED only after the required source/content cross-check, not because the helper accepted a payload.
+Role handoff JSON contains writer_id and any of units, methods_taxonomy, experiments, claims, issues, gate_results. No other top-level keys are accepted. Units are partial updates by an already-inventoried unit_id; preserve inventory identity/kind/locators. Supply read_state, a source-specific understanding_note and existing evidence_refs. For graphical/raster/conflict objects actually inspect the original image and record visual_review with artifact_refs/checks/limitations. In native-acquisition runs only validated complete tables may instead record content_reading under the native contract. Keep rich visual/formal explanations on the unit as well as in notes. READ/UNDERSTOOD never becomes CHECKED automatically. Assign CHECKED only after the required source/content cross-check, not because the helper accepted a payload.
 
 Use merge "<run>" --file "<role-handoff.json>". It archives actual handoffs, merges per-unit explanations/specialist records and renders full_notebook.md/material_index.md. These generated files avoid manually duplicating the same reading records; generation is not understanding. A handoff saying “detail still being developed” is not finished evidence. Experiments require all DATA_CONTRACT fields with source-specific values or justified NOT_REPORTED/NOT_APPLICABLE states. Do not mechanically fill every field with NA.
 
@@ -32,7 +40,7 @@ Read text continuously, retaining chunk joins; inspect every informative visual/
 
 Complete stages 06/07 and write report.md/user_review.md from full records. The report may say “pending independent review; current decision in paper_packet.json.” Finish its scientific text before review so acceptance need not change inspected content.
 
-The distinct reviewer first makes its own source checklist, then compares the whole packet/notebook/report and original locations. Immediately before its decision, it runs snapshot "<run>" and copies reviewed_scope_revision, reviewed_source_hashes and reviewed_content_sha256 into a new actual review. This binds the inspected version, not identity or understanding. Do not change the inspected packet during a review; if changed, the reviewer rechecks affected content and takes a fresh snapshot. Review IDs use letters/numbers/underscore/dot/hyphen only. Preserve each new decision under a new review_id.
+The distinct reviewer first saves its mode-appropriate source map/checklist, then inspects the scope computed by review-plan against original evidence. KEY_CLAIMS checks every current claim and the stratified ordinary sample; FULL_DOUBLE_READ checks every unit. Immediately before its decision, it saves the inspected draft and runs snapshot "<run>" --file "<review-draft.json>", then copies all four returned snapshot fields into a new actual review. This binds the inspected version, not identity or understanding. Do not change the inspected packet during a review; if changed, the reviewer rechecks affected content and takes a fresh snapshot. Review IDs use letters/numbers/underscore/dot/hyphen only. Preserve each new decision under a new review_id.
 
 When review returns, Owner immediately runs ingest-review "<run>" --file "<actual-review.json>". Preserve its actual decision and failed gates. REVISION_REQUIRED means continue with the returned REPAIR actions:
 1. Reinspect source and correct records, explanations and dependent claims. Retain evidence for each repair_id.
@@ -61,8 +69,18 @@ For inspected source panels, run python "<skill>/scripts/reading_report_assets.p
 
 ## Revision 2.4
 
-The shared [Reliable execution contract](../references/reliable-execution.md) is required. New runs bind review_requirements.direct_visual_inspection and require the reviewer's own visual_inspection/session/observation evidence for accepted G3. Use handoff-template and review-template to generate correct shapes; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing earlier runs are not silently migrated. Templates, viewing flags and structural checks cannot establish actual image access, independence or understanding. If reviewer image access remains unavailable after permitted local alternatives, finish accessible work and record a truthful capability block with G3 unaccepted.
+The shared [Reliable execution contract](../references/reliable-execution.md) is required. Graphical/raster/conflict objects require the reviewer's own visual_inspection/session/observation evidence for accepted G3; new native-acquisition runs may independently inspect validated complete tables under [Native PDF elements](../references/native-elements.md). Runs without that explicit acquisition contract retain their prior visual requirements. Use handoff-template and review-template; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing runs are not migrated. Templates and structural checks cannot establish actual inspection, independence or understanding. A blocked required image channel retains G3 unaccepted.
 
 ## Revision 2.5 dependency synchronization
 
 For failed-review repairs, finish canonical records, claims, notes, manual and generated notebooks, gate evidence, report, target analysis and visual data/captions as one batch. Regenerate outputs before scanning. New runs require repair-scan and a completed per-file report under repair_sync/; then use repair-ready --sync-file. Later current-file changes reopen readiness. Read [the shared repair synchronization contract](../references/repair-synchronization.md).
+
+## Efficient reinspection
+
+Read [Efficient independent reinspection](../references/efficient-reinspection.md) before dispatching repair review. Reuse the actual independent reviewer and its own source-first evidence. A new decision needs a new review ID and fresh snapshot, not a fresh agent. Reinspect changes and their affected dependencies while retaining the same reviewer's verified unchanged coverage; expand the review when source, scope or reliability changes. Never invent resumed identity, viewing or approval.
+
+## Revision 2.6 commands and dispatch
+
+Initialize new runs with --review-mode KEY_CLAIMS (default) or --review-mode FULL_DOUBLE_READ. Before requesting review, finish all current outputs and run `preflight "<run>"` plus `review-plan "<run>"`. Resolve Owner-controlled errors before using reviewer capacity. `review-plan` computes mandatory claims, dependency units, ordinary sample IDs and the coverage label; an empty manual key list cannot exempt packet claims.
+
+For repairs, complete one transaction before dispatch, use `review-delta "<run>"` and send compact differences to the same actual reviewer. Record continuation.previous_review_id, retained_unit_ids, rechecked_unit_ids and replacement_reason when applicable. Two recurring workflow failures suspend review dispatch until the local pipeline is stable; they never grant approval. Report complete Owner reading separately from KEY_CLAIMS verification or full independent double reading.

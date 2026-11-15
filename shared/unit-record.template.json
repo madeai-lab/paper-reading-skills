@@ -19,5 +19,11 @@
     "checks": [],
     "limitations": []
   },
-  "dependencies": []
+  "dependencies": [],
+  "content_reading": {
+    "mode": null,
+    "page_refs": [],
+    "element_ids": [],
+    "conflict_resolution_refs": []
+  }
 }

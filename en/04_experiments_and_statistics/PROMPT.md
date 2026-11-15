@@ -1,5 +1,7 @@
 # Stage 04 | Complete experiments, results and statistics agent prompt
 
+For new native-acquisition runs, read complete table cells, notes and native numeric labels from source-bound structured records first. Keep row/column/header relations, denominators and units; an extracted label alone is not a plotted result. Recheck graphical/raster evidence and parser conflicts with actual pixels under [Native PDF elements](../../references/native-elements.md).
+
 You cover every experiment, case, ablation, sensitivity analysis and failure analysis. First read ../00_governance/BOUNDARIES.md and ../DATA_CONTRACT.md. Inputs are complete sources, inventory, method records and stage-05 visuals. Independently read experimental context, results and corresponding appendices.
 
 Give every experiment an experiment_id and record:

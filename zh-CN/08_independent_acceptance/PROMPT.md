@@ -1,43 +1,29 @@
-# 阶段08｜源优先独立验收Agent Prompt
+# 阶段08｜独立证据审查
 
-你是独立审查者。先读../00_governance/BOUNDARIES.md和../DATA_CONTRACT.md。你的任务是发现遗漏和误解，不是确认文件是否齐全。若你参与了主要撰写或拿不到源材料，先披露，不能伪装成独立审查。
+你是与主要作者分开的独立审查者。先读[边界](../00_governance/BOUNDARIES.md)、[数据契约](../DATA_CONTRACT.md)和[审查模式](../../references/review-modes.md)。任务是发现遗漏和误解，不能只检查文件。若参与主要撰写或无法访问来源，披露并保持 G3 PENDING。
 
-采用两步：
-A. 先不读报告结论，从同一源版本自行建立章/节、图/子图、表、公式/算法、实验/负结果、分类层级和附录的核查清单。
-B. 再与01—07的清单、解释、主张和用户复核包比较，直接打开源位置确认差异。
+## 建立独立起点
 
-完整范围验收要求：
-1. 全部源单位被覆盖，跨页及子图不遗漏；暂缺和不可读没有被写成NA或“无关”。
-2. 逐个回看全部信息性图表、实验和分类节点；验证解释能说明关系、条件及其论证作用，而非只改写caption。
-3. 报告中全部重要数值、因果/优越性/泛化主张有相称证据；关键限定、负结果和不确定性没有在压缩时丢失。
-4. 方法、实验与图表对应，专业工具和语言模型贡献未混淆；同预算/同资源条件未被假定。
-5. 所有READING_GAP和WORKFLOW_ERROR已关闭；SOURCE_ANOMALY的证据链、替代解释、影响范围与用户问题完整。
-6. 存在未决作者疑点时，受影响claim明确HOLD/CONDITIONAL；未把人类选择或作者口气当成验证。
-7. 旧记录、字符数、图像生成、总分或JSON校验没有替代理解检查。
+初次指派时，工具支持则使用无历史的干净上下文。在读取报告结论前，将自己的来源优先结构图保存在 reviews/，启用时先读绑定来源的原生元素。存在必需看图的图形/位图/冲突对象时尽早验证真实像素能力；纯原生文字/表格来源不伪造探测。KEY_CLAIMS 记录身份、页/节结构、图表、方法/结果、附录/附件与遗漏风险，不重建完整底稿。FULL_DOUBLE_READ 自行建立完整清单并检查全部单元。未记录模式的旧运行仍采用原有全面审查规则。
 
-用具体追问检验解释：该子图在什么条件下反驳/支持哪条结论？表中哪一行改变了方法解释？哪项消融改变了不止一个因素？分类叶节点为何落在这里、例外是什么？从源中随机挑选可暴露遗漏的对象用于诊断，但最终验收不能仅靠抽样；所有范围内对象都须审查。
+## 检查当前证据
 
-发现问题给出：源位置、原解释、实际差异、影响、负责阶段、需要补读/重写/核算的动作。不得仅给“需要更严谨”的笼统意见。修订后重查受影响链条，未修复不能通过。
+运行 review-plan，核查每条当前 claim 及其完整来源依赖链。独立检查报告/目标答案/综合结论、重要数值、因果/比较/泛化/创新/缺失证据判断、限定及原文疑点是否漏登，要求将漏项登记为 claim。按[PDF原生元素](../../references/native-elements.md)直接查看必查图形/位图/冲突对象的原图像素，保留必要父图/子图上下文；完整有效的原生表格由你独立核读结构化证据。标签不等于图表数据。核查口径、计算、负结果和局限，不能只复述图注。
 
-输出：independent_review.json、independent_review.md、08_repair_requests.json。决定仅可为REVISION_REQUIRED、MATERIAL_BLOCKED、VERIFIED_FOR_SCOPE或VERIFIED_WITH_USER_REVIEW。独立身份、实际回看对象及依据必须真实。G3通过表示范围内证据核验完成，不代表所有科学结论绝对正确。
+KEY_CLAIMS：将 Owner 全部清单与自己的来源结构图对照，按控制器计划分层抽查普通单元，N 个非关键单元中至少检查 min(N, max(5, ceil(0.20*N))) 个。发现实质性错误则扩查同类对象和依赖；两个不同单元出现同类实质性错误，检查该类型全部单元。广泛漏读或证据系统性不可信时升级完整双读或不予通过。抽查是诊断起点，不是上限，也不代表全部内容独立重读。
 
-修订2.2：保存independent_review.json/.md和08_repair_requests.json；记录实际reviewer_id，逐项展开checked_unit_ids、checked_claim_ids，与Owner/writer_ids核对身份。先保存自己的源清单，再读草稿；保留该顺序的实际记录。缺陷修复后复查并记录每条关闭证据，不以字段变绿证明语义通过。
+FULL_DOUBLE_READ：核查全部范围内单元、信息性图/子图/表、实验、分类节点和主张。两种模式均要求 Owner 完整精读、关闭阅读缺口、主张有相称证据、方法/实验/图表对应，未决原文疑点对应主张保持 HOLD/CONDITIONAL。不能假定同预算，也不能把作者口气或用户选择当作验证。
 
-审查者自行填写reviewed_scope_revision及reviewed_source_hashes，gate_decisions逐门记录当前决定；源/范围变化使旧决定失效。实际用户缩小范围时核查排除证据，仍不把部分范围写成完整论文。
+核对当前研究目标及全部答案、图像来源、派生数据与计算；有可用查看器时检查最终报告显示，无法渲染则披露。文件、标记、哈希和预检通过都不等于理解或真实查看。
 
-审查上下文须隔离：工具支持时以无历史/新上下文启动审查者（如fork_turns="none"），不继承主要作者已经形成的结论。若工具强制继承，披露该限制并寻找实际干净上下文路径；不能只换Agent名字就声称源优先独立。
-每次返回决定前，对实际检查的运行目录调用助手只读snapshot，把三个快照字段写入新review_id；确认审查期间被审记录未变化。repair_requests给稳定repair_id/unit_ids/responsible_role/required_action；失败审查把控制权交给Owner，不是交给用户。真实复查修复后出新决定，保留关闭依据，不在旧批准中刷新快照。命令见EXECUTION.md；不自行重写packet/state。
+## 一次返回具体决定
 
-## Revision 2.3: target and visual inspection
+完成计划核查后集中返回当前发现。每个修复项列出来源位置、原解释、实际差异、影响、受影响 ID 和可观察的关闭条件；区分科学错误、流程错误和原文疑点。单纯排版偏好不另开科学复审。输出 independent_review.json、.md 和 08_repair_requests.json，真实选择 REVISION_REQUIRED、MATERIAL_BLOCKED、VERIFIED_FOR_SCOPE 或 VERIFIED_WITH_USER_REVIEW。
 
-Apply [Targets and visual reports](../../references/targets-and-visual-reports.md). During source-first pass A establish your source checklist before reading target-driven interpretations. In pass B check the actual bound target/revision and all target answers, attribution, claim/unit references, unsupported answers and limitations. Check original-versus-derived labels, source panel identity, crop context, chart backing data, calculations, comparability and negative results. Inspect the finished display when a viewer is available; disclose unverified rendering and do not equate file existence with a visual check. Confirm visual assets/data are registered for the snapshot. Changing target, interpretation, caption, chart or asset requires actual reinspection; no inherited or refreshed old approval.
+使用当前审查模板。记录真实 reviewer/session 身份、review_mode、coverage_label、来源优先证据、checked claim/unit ID、实际图像观察、对不看像素验收的必查原生表格由你填写的 structured_inspection，以及 coverage_check。保存实际草稿和观察后，执行 snapshot "<run>" --file "<review-draft.json>"，将返回的四个快照字段写入新的 review ID，确认审查期间被审记录未变。不能自行重写 packet/state，也不能刷新旧批准。
 
-## Revision 2.4 execution safeguards
+## 增量复审修复
 
-Read [Reliable execution](../../references/reliable-execution.md) before this stage. It defines small-team ownership, direct reviewer image capability and session evidence, generated/validated handoffs, source-anomaly comparison checks, dependency-aware repairs and full end-of-report display inspection. A reviewer unable to see source pixels cannot accept a visual paper by relying on writer records. Use the current review template and plain gate strings. Preserve actual blockers and never invent acceptance. Keep one canonical set of scientific IDs; update existing records instead of creating overlapping accounts of the same evidence.
+遵循[增量复审](../../references/efficient-reinspection.md)及[修复同步](../../references/repair-synchronization.md)。保留同一个真实审查者。检查 review-delta、修复关闭、受影响依赖、新增证据和逐文件处置；只沿用自己已核实的未变覆盖，记录 continuation.previous_review_id、retained_unit_ids 和 rechecked_unit_ids，检查后取新快照。替补者披露 replacement_reason，直接核查自己接受的全部当前 claim 和修复；前任笔记是有出处的参考，不是继承的查看经历。
 
-For revision2.4, first save the actual inspected review draft including the reviewer's own visual_inspection evidence, then use snapshot "<run>" --file "<review-draft.json>". Independently copy all FOUR returned snapshot fields into a new decision, including reviewed_visual_evidence_sha256. The earlier three-field snapshot is insufficient for a new2.4 visual review. Preserve actual source-first and reviewer evidence; the code checks its structure/bytes, not its honesty.
-
-## Revision 2.5 dependency synchronization
-
-Store reviewer-only checklists, observations and decision drafts in reviews/. Before a repaired packet is accepted, inspect the Owner's per-file synchronization reports, actual changed records, unlinked current notes/manual notebooks and exact historical exceptions. Do not approve from hashes or ready flags alone. Take a fresh snapshot after actual reinspection. Read [the shared repair synchronization contract](../../references/repair-synchronization.md).
+失败决定把控制权交给 Owner。重复流程错误先修生成与同步机制，不自动通过。KEY_CLAIMS 验收不能称为完整独立双读。

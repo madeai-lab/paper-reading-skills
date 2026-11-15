@@ -11,8 +11,11 @@ from urllib.parse import unquote
 from reading_run_check import inspect_run, VERIFIED
 from reading_review_contracts import visual_review_errors, structure_errors, visual_fingerprint
 import reading_repair_sync as repair_sync
+from reading_review_modes import (review_mode, review_plan, coverage_errors, continuation_errors,
+                                  review_baseline, review_delta)
+from reading_element_contracts import element_errors, native_unit_errors, native_table_ready, enabled as elements_enabled
 
-REVISION = "2.5"
+REVISION = "2.7"
 VISUAL = {"FIGURE", "PANEL", "TABLE", "OTHER_VISUAL"}
 STATES = {"INVENTORIED", "READ", "UNDERSTOOD", "CHECKED", "BLOCKED", "NON_INFORMATIVE", "OUT_OF_SCOPE"}
 EXPERIMENT_FIELDS = set("experiment_id purpose unit_refs design data_and_sampling split ground_truth models_and_tools comparators budget metrics results uncertainty negative_results failure_cases limitations claim_refs".split())
@@ -77,7 +80,7 @@ def content_fingerprint(root, packet):
             'methods_taxonomy','experiments','claims','issues','owner_id','writer_ids']
     data = {key:packet.get(key) for key in keys}
     # Optional extensions leave legacy snapshots unchanged until actually used.
-    for key in ['research_target', 'report_visuals', 'review_requirements']:
+    for key in ['research_target', 'report_visuals', 'review_requirements', 'review_mode', 'content_acquisition']:
         if packet.get(key) is not None:
             data[key] = packet[key]
     data['inventory'] = read(root/'01_inventory.json', [])
@@ -86,8 +89,10 @@ def content_fingerprint(root, packet):
     def collect(value):
         if isinstance(value,dict):
             for key,item in value.items():
-                if key in {'evidence_refs','artifact_refs'} and isinstance(item,list):
+                if key in {'evidence_refs','artifact_refs','page_refs','conflict_resolution_refs'} and isinstance(item,list):
                     refs.update(x.split('#',1)[0] for x in item if isinstance(x,str))
+                elif key == 'manifest_ref' and isinstance(item, str):
+                    refs.add(item.split('#',1)[0])
                 else:
                     collect(item)
         elif isinstance(value,list):
@@ -128,13 +133,59 @@ def current_review(root, packet, review):
     return (review.get("reviewed_scope_revision") == packet.get("scope_revision")
             and review.get("reviewed_source_hashes") == hashes
             and review.get('reviewed_content_sha256') == content_fingerprint(root,packet)
-            and not visual_review_errors(root, packet, review))
+            and not visual_review_errors(root, packet, review)
+            and not coverage_errors(root, packet, review))
 
 
 def continue_with(kind, ids=None, **kwargs):
     return {"terminal_decision":"CONTINUE", "may_send_final":False, "paper_accepted":False,
             "next_action":{"kind":kind, "unit_ids":ids or [], **kwargs},
             "notice":"Perform the next action. This tool cannot intercept a host final message or prove understanding."}
+
+
+def preflight(root):
+    """Read-only Owner checks, deliberately excluding pending independent acceptance."""
+    packet = read(root/'paper_packet.json')
+    errors = []
+    def error(code, item, message):
+        errors.append({'code': code, 'item': item, 'next_action': message})
+    try:
+        plan = review_plan(packet)
+    except (ValueError, KeyError, TypeError) as exc:
+        plan = None
+        error('REVIEW_PLAN_INVALID', 'review_mode', str(exc))
+    task = read(root/'task.json', {})
+    if task.get('review_mode') is not None and task['review_mode'] != packet.get('review_mode'):
+        error('REVIEW_MODE_MISMATCH', 'task', 'Use the initialized mode; escalation updates task and packet together.')
+    try:
+        errors.extend(inspect_run(root, require_review=False))
+        for name in render(root, copy.deepcopy(packet), check_only=True):
+            error('GENERATED_OUTPUT_STALE', name, 'Regenerate once from canonical records before review.')
+        # Decode all current text before a reviewer spends time on a broken snapshot.
+        repair_sync.current_documents(root, packet)
+        content_fingerprint(root, packet)
+    except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        error('PREFLIGHT_RECORD_UNREADABLE', 'current_artifacts', str(exc))
+    if not packet.get('claims'):
+        error('CLAIMS_MISSING', 'claims', 'Record every report, target and synthesis conclusion as a claim.')
+    for claim in packet.get('claims', []):
+        if not claim.get('supporting_units') and not (claim.get('allowed_use') == 'HOLD' and claim.get('source_refs')):
+            error('CLAIM_EVIDENCE_MISSING', claim.get('claim_id'), 'Link source units or explicitly HOLD the unsupported claim with source context.')
+    if packet.get('research_target'):
+        target = packet['research_target']
+        try:
+            validate_target(target)
+            analysis = read(root/packet.get('deliverables', {}).get('target_analysis', 'target_analysis.json'))
+            if (analysis.get('target_id') != target['target_id'] or analysis.get('target_revision') != target['revision']
+                    or {x['question_id'] for x in analysis.get('answers', [])} != {q['id'] for q in target['questions']}):
+                raise ValueError('Complete every current target answer before review.')
+        except (OSError, ValueError, KeyError, TypeError, AttributeError) as exc:
+            error('TARGET_ANALYSIS_INCOMPLETE', 'target_analysis', str(exc))
+    state = read(root/'execution_state.json', {})
+    if any(value.get('count', 0) >= 2 for value in state.get('workflow_failures', {}).values()):
+        error('WORKFLOW_DIAGNOSIS_REQUIRED', 'workflow', 'Repair recurring generation/synchronization failures before another review.')
+    return {'ready_for_review': not errors, 'review_plan': plan, 'errors': errors,
+            'semantic_verification_automated': False}
 
 
 def assess(root):
@@ -173,6 +224,10 @@ def assess(root):
         return {"terminal_decision":"INTERRUPTED_WITH_EVIDENCE", "may_send_final":True,
                 "paper_accepted":False, "stop_reason":reason, "restart_action":state["restart_action"],
                 "notice":"The agent must verify the actual user/platform/material constraint; a record alone cannot authenticate it."}
+    acquisition_errors = element_errors(root, packet)
+    if acquisition_errors:
+        return continue_with('EXTRACT_ELEMENTS', errors=acquisition_errors,
+                             instruction='Use extract-elements in an explicitly provisioned pdfplumber interpreter for this new run. Do not install, OCR, overwrite evidence or migrate legacy runs.')
     if latest and latest.get("decision") in {"REVISION_REQUIRED","MATERIAL_BLOCKED"}:
         if accessible_repairs:
             batch = accessible_repairs[:3]
@@ -214,7 +269,13 @@ def assess(root):
             return continue_with('WRITE_TARGET_ANALYSIS', path=path,
                                  instruction='Answer every current target question from checked evidence; retain unsupported questions and limitations. Then obtain actual review.')
     if not latest or latest.get("decision") not in VERIFIED or not current_review(root,packet,latest):
-        return continue_with("REQUEST_REVIEW", instruction="Use the distinct source-first reviewer for this current full packet; ingest its actual decision and act on failed review.")
+        if 'review_mode' in packet:
+            checked = preflight(root)
+            if not checked['ready_for_review']:
+                return continue_with('PREFLIGHT_REVIEW', errors=checked['errors'],
+                                     instruction='Fix Owner-controlled defects together before spending independent review.')
+        return continue_with("REQUEST_REVIEW", review_plan=review_plan(packet),
+                             instruction="Use the distinct source-first reviewer for this mode; reuse the same actual session for delta review. Ingest its actual decision.")
     visual_errors = visual_review_errors(root, packet, latest)
     if visual_errors:
         return continue_with('REQUEST_REVIEW', errors=visual_errors,
@@ -226,6 +287,7 @@ def assess(root):
     if state.get("open_unit_ids") or state.get("paper_status") != packet.get("paper_status"):
         return continue_with("SYNC_STATE",instruction="Sync canonical state from current evidence without changing review decisions.")
     return {"terminal_decision":"ACCEPTED", "may_send_final":True, "paper_accepted":True,
+            "review_mode": review_mode(packet), "coverage_label": review_plan(packet)['coverage_label'],
             "next_action":{"kind":"FINAL_DELIVERY","unit_ids":[]},
             "notice":"Recorded independent acceptance and structural consistency, not automated scientific certification."}
 
@@ -287,7 +349,7 @@ def generated_target(root, requested, fallback):
         number += 1
 
 
-def render(root, packet):
+def render(root, packet, check_only=False):
     target = generated_target(root,packet['deliverables'].get('full_notebook','full_notebook.md'),'unit_notebook')
     index_target = generated_target(root,'material_index.md','material_index')
     lines = ["# Source-unit reading notebook","",MARKER,"",
@@ -305,6 +367,10 @@ def render(root, packet):
         index += [f'- [{uid}: {unit.get("label",uid)}]({target.relative_to(root).as_posix()}#{uid.lower()})']
     for key in ["methods_taxonomy","experiments","claims","issues"]:
         lines += [f"## {key}","",chr(96)*3+"json",json.dumps(packet.get(key,[]),ensure_ascii=False,indent=2),chr(96)*3,""]
+    expected = {target: "\n".join(lines), index_target: "\n".join(index)+"\n"}
+    if check_only:
+        return [str(path.relative_to(root)) for path, text in expected.items()
+                if not path.is_file() or path.read_text(encoding='utf8') != text]
     target.parent.mkdir(parents=True,exist_ok=True)
     target.write_text("\n".join(lines),encoding="utf8")
     index_target.write_text("\n".join(index)+"\n",encoding="utf8")
@@ -313,7 +379,7 @@ def render(root, packet):
 
 
 def commit(root, packet, state, event):
-    state.update({"skill_revision":REVISION,"scope_revision":packet["scope_revision"],
+    state.update({"skill_revision":packet.get('skill_revision', state.get('skill_revision', REVISION)),"scope_revision":packet["scope_revision"],
                   "paper_status":packet["paper_status"],"writer_ids":packet["writer_ids"],
                   "open_unit_ids":[u["unit_id"] for u in pending(packet)],
                   "source_versions":packet.get("sources",[])})
@@ -377,8 +443,9 @@ def set_target(root, target):
     return commit(root, packet, state, 'Bound explicit research target; retain source reading, recheck changed analysis/report.')
 
 
-def initialize(root, source, owner, language, target=None):
+def initialize(root, source, owner, language, target=None, mode='KEY_CLAIMS'):
     validate_target(target)
+    review_mode({'review_mode': mode})
     if root.exists():
         raise RunError("RUN_EXISTS","Choose a new output directory; existing runs are never overwritten.")
     source = source.resolve()
@@ -393,12 +460,16 @@ def initialize(root, source, owner, language, target=None):
     root.mkdir(parents=True)
     shutil.copyfile(source,root/"source.pdf")
     packet.update({"template_only":False,"skill_revision":REVISION,"task_id":root.name,"paper_id":root.name,
-                   "owner_id":owner,"writer_ids":[owner],"paper_status":"IN_PROGRESS","sources":[src]})
+                   "owner_id":owner,"writer_ids":[owner],"paper_status":"IN_PROGRESS","sources":[src],
+                   "review_mode":mode})
     packet['review_requirements'] = {'direct_visual_inspection': True, 'repair_dependency_sync': True}
+    packet['content_acquisition'] = {'method': 'PDFPLUMBER_NATIVE', 'manifest_ref': 'source_elements/manifest.json'}
     packet["deliverables"] = {k:k+".md" for k in ["full_notebook","report","material_index","user_review","independent_review"]}
     state.update({"template_only":False,"skill_revision":REVISION,"task_id":root.name,"owner_id":owner,
                   "writer_ids":[owner],"stage":"01","paper_status":"IN_PROGRESS","repair_progress":{}})
     task.update({"template_only":False,"skill_revision":REVISION,"task_id":root.name,"paper_id":root.name,
+                 "review_mode":mode,
+                 "content_acquisition":copy.deepcopy(packet['content_acquisition']),
                  "language":language,"source_files":["source.pdf"],"output_dir":str(root),"source_root":str(root)})
     if target is not None:
         task['research_target'] = copy.deepcopy(target)
@@ -448,7 +519,8 @@ def merge_handoff(root, payload, dry_run=False):
         if unit["read_state"] in {"UNDERSTOOD","CHECKED","NON_INFORMATIVE"}:
             if not unit.get("locators") or not evidence(root,unit.get("evidence_refs")):
                 raise RunError("INVALID_HANDOFF","Missing source locators/evidence for "+uid)
-            if unit.get("kind") in VISUAL and unit.get("visual_review",{}).get("actually_viewed") is not True:
+            if (unit.get("kind") in VISUAL and unit.get("visual_review",{}).get("actually_viewed") is not True
+                    and not native_table_ready(root, packet, unit)):
                 raise RunError("INVALID_HANDOFF","Actually view this informative visual before claiming understanding: "+uid)
         units[uid] = unit
     packet["units"] = list(units.values())
@@ -475,7 +547,7 @@ def merge_handoff(root, payload, dry_run=False):
         packet["gate_results"][gate] = copy.deepcopy(value)
     if writer not in packet["writer_ids"]:
         packet["writer_ids"].append(writer)
-    defects = structure_errors(packet)
+    defects = structure_errors(packet) + element_errors(root, packet) + native_unit_errors(root, packet)
     if defects:
         raise RunError('INVALID_HANDOFF', json.dumps(defects, ensure_ascii=True))
     if dry_run:
@@ -496,6 +568,13 @@ def ingest_review(root, review):
         if key in review and not isinstance(review[key], list):
             raise RunError('INVALID_REVIEW', key+' must be an array.')
     if review.get('decision') in VERIFIED:
+        if 'review_mode' in packet:
+            checked = preflight(root)
+            if not checked['ready_for_review']:
+                raise RunError('PREFLIGHT_REQUIRED', json.dumps(checked['errors'], ensure_ascii=True))
+        defects = coverage_errors(root, packet, review) + continuation_errors(root, packet, review)
+        if defects:
+            raise RunError('INVALID_REVIEW_COVERAGE', defects[0]['next_action'])
         defects = visual_review_errors(root, packet, review)
         if defects:
             raise RunError('INVALID_REVIEW_VISUAL', defects[0]['next_action'])
@@ -524,6 +603,10 @@ def ingest_review(root, review):
     rid = review['review_id']
     ref = "reviews/"+rid+".json"
     write(root/ref,review)
+    if 'review_mode' in packet:
+        baseline = root/'reviews'/(rid+'.baseline.json')
+        if not baseline.exists():
+            write(baseline, review_baseline(root, packet))
     packet["gate_results"]["G3"] = {"decision":review.get("gate_decisions",{}).get("G3","PENDING"),
                                    "evidence_refs":[ref],"open_items":[r["repair_id"] for r in requests(review,packet["owner_id"])]}
     for gate in ["G0","G1","G2"]:
@@ -565,12 +648,15 @@ def repair_ready(root, repair_id, ref, sync_file=None):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command",choices=["init","merge","ingest-review","repair-scan","repair-ready","sync","next","snapshot","set-target","validate-handoff","handoff-template","review-template"])
+    parser.add_argument("command",choices=["init","merge","ingest-review","repair-scan","repair-ready","sync","next","snapshot","set-target","validate-handoff","handoff-template","review-template",
+                                          "review-plan","preflight","review-delta","escalate-review","workflow-failure","workflow-repaired",
+                                          "extract-elements","read-elements"])
     parser.add_argument("run_directory",type=Path)
     parser.add_argument("--source",type=Path)
     parser.add_argument("--target",type=Path, help="Explicit research-target JSON for init.")
     parser.add_argument("--owner",default="root")
     parser.add_argument("--language",choices=["zh-CN","en"],default="zh-CN")
+    parser.add_argument('--review-mode', choices=['KEY_CLAIMS', 'FULL_DOUBLE_READ'], default='KEY_CLAIMS')
     parser.add_argument("--file",type=Path)
     parser.add_argument("--id")
     parser.add_argument("--evidence")
@@ -579,13 +665,46 @@ def main():
     parser.add_argument('--obsolete', nargs='+')
     parser.add_argument('--writer')
     parser.add_argument('--units', nargs='+')
+    parser.add_argument('--pages', nargs='+', type=int)
+    parser.add_argument('--bbox', nargs=4, type=float)
+    parser.add_argument('--source-id')
+    parser.add_argument('--max-chars', type=int, default=18000)
     args=parser.parse_args()
     root=args.run_directory.resolve()
     try:
         if args.command=="init":
             if args.source is None:
                 raise RunError("INVALID_ARGUMENT","init needs --source.")
-            result=initialize(root,args.source,args.owner,args.language,read(args.target) if args.target else None)
+            result=initialize(root,args.source,args.owner,args.language,read(args.target) if args.target else None,args.review_mode)
+        elif args.command=='review-plan':
+            result=review_plan(read(root/'paper_packet.json'))
+        elif args.command=='extract-elements':
+            from reading_pdf_elements import extract_elements
+            result=extract_elements(root)
+        elif args.command=='read-elements':
+            from reading_pdf_elements import read_elements
+            result=read_elements(root,args.pages,args.bbox,args.max_chars,args.source_id)
+        elif args.command=='preflight':
+            result=preflight(root)
+        elif args.command=='review-delta':
+            result=review_delta(root,read(root/'paper_packet.json'))
+        elif args.command=='escalate-review':
+            packet,state=read(root/'paper_packet.json'),read(root/'execution_state.json')
+            if packet.get('review_mode') != 'KEY_CLAIMS' or not evidence(root,[args.evidence]):
+                raise RunError('INVALID_REVIEW_MODE', 'Escalation needs a new KEY_CLAIMS run and existing evidence explaining systemic risk.')
+            packet['review_mode']='FULL_DOUBLE_READ'
+            task=read(root/'task.json')
+            task['review_mode']='FULL_DOUBLE_READ'
+            write(root/'task.json',task)
+            result=commit(root,packet,state,'Escalated independent coverage to FULL_DOUBLE_READ: '+args.evidence)
+        elif args.command in {'workflow-failure','workflow-repaired'}:
+            packet,state=read(root/'paper_packet.json'),read(root/'execution_state.json')
+            if not args.id or not evidence(root,[args.evidence]):
+                raise RunError('INVALID_ARGUMENT','Supply a stable --id category and existing --evidence note.')
+            row=state.setdefault('workflow_failures',{}).setdefault(args.id,{'count':0,'evidence_refs':[]})
+            row['count']=row['count']+1 if args.command=='workflow-failure' else 0
+            row['evidence_refs'].append(args.evidence)
+            result=commit(root,packet,state,args.command+': '+args.id)
         elif args.command=='set-target':
             if args.file is None:
                 raise RunError('INVALID_ARGUMENT', 'set-target needs --file (JSON object or null).')
@@ -602,6 +721,12 @@ def main():
         elif args.command=='review-template':
             result=read(Path(__file__).resolve().parent.parent/'shared/review-record.template.json')
             result['reviewer_id']=args.writer
+            packet=read(root/'paper_packet.json')
+            plan=review_plan(packet)
+            result.update({'review_mode':plan['review_mode'],'coverage_label':plan['coverage_label']})
+            if 'review_mode' in packet:
+                result['coverage_check']={'source_structure_checked':False,'owner_coverage_checked':False,
+                                          'omissions':[],'evidence_refs':[]}
         elif args.command=='validate-handoff':
             result=merge_handoff(root,read(args.file),dry_run=True)
         elif args.command=="next":
@@ -631,7 +756,10 @@ def main():
             packet,state=read(root/"paper_packet.json"),read(root/"execution_state.json")
             sync_inventory(root,packet,state)
             result=commit(root,packet,state,"Synced canonical inventory/state without granting acceptance.")
-        print(json.dumps(result,ensure_ascii=True,indent=2))
+        if args.command == 'read-elements':
+            print(json.dumps(result,ensure_ascii=True,separators=(',', ':')))
+        else:
+            print(json.dumps(result,ensure_ascii=True,indent=2))
         return 0
     except (RunError,OSError,ValueError,TypeError,KeyError,AttributeError) as exc:
         print(json.dumps({"error_code":getattr(exc,"code","RECORD_ERROR"),"message":str(exc),

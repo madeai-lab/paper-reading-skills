@@ -1,10 +1,18 @@
 # 执行与结束判断（修订2.2）
 
+## 修订2.6：审查模式
+
+先读[审查模式](../references/review-modes.md)，再应用旧版执行说明。新运行默认 KEY_CLAIMS；FULL_DOUBLE_READ 保留完整独立双读；未记录模式的旧运行维持原有全面审查。Owner 始终完整覆盖全部来源单元，阶段08的独立核查范围按模式确定。不迁移正在运行或冻结的批次。
+
 论文加skill调用即执行00—08。默认完整范围，不自动扩大为实验复现。本地助手只保存规范记录，不运行模型、建服务、证明已理解，也无法阻止宿主提前结束。
+
+## 修订2.7：提取并读取原生元素
+
+遵循[PDF原生元素](../references/native-elements.md)。新运行绑定 content_acquisition。用已提供 pdfplumber 的解释器运行 `extract-elements "<运行目录>"`，再用 `read-elements "<运行目录>" --pages 1 2` 连续分批阅读；局部区域使用 `--bbox x0 top x1 bottom`。正文、单元格和原生标签优先读取结构化结果；位图、图形关系及冲突仍实际看图。不默认把每页正文渲染进上下文；提取不升级 read_state。符合契约的原生 TABLE 记录 content_reading，不伪造 actually_viewed。旧运行不迁移。
 
 ## 1. 初始化，再建立源清单，之后才能分派依赖读者
 
-使用 python "<skill>/scripts/reading_run_control.py" init "<新运行目录>" --source "<论文.pdf>" --owner "<真实Owner标识>" --language zh-CN。
+使用 python "<skill>/scripts/reading_run_control.py" init "<新运行目录>" --source "<论文.pdf>" --owner "<真实Owner标识>" --language zh-CN --review-mode KEY_CLAIMS。
 新目录必须不存在。助手复制来源并记录哈希，建立task、assignment、state及packet JSON，所有gate为PENDING。自行补充可查身份信息，启动即安排真实独立审查容量。
 
 读取阶段01，实际检查源文件及全部页面，保存：
@@ -14,13 +22,13 @@
 
 编辑清单后用同一助手运行 sync "<运行目录>"，通过merge提交Owner的G0决定。G0有依据地PASS后，02—05才可开始。新发现/定位更正保留在清单中，并使受影响阅读/审查失效，不删除难读对象。
 
-有帮助时给专项读者完整来源、单元ID、阶段Prompt与数据契约；可合并阅读角色。独立审查者必须与作者不同，支持时使用无历史新上下文（如fork_turns="none"），先给来源及08要求，保存其独立清单后再给底稿/结论。已完成读者可释放容量，不能把主要作者换名充当审查者。
+有帮助时给专项读者完整来源、单元ID、阶段Prompt与数据契约；可合并阅读角色。独立审查者必须与作者不同，支持时使用无历史新上下文（如fork_turns="none"），先给来源及08要求，保存符合模式的独立来源结构图/清单后再给底稿/结论。已完成读者可释放容量，不能把主要作者换名充当审查者。
 
 ## 2. 每批保存真实理解，然后执行下一动作
 
 每次读完一段、交接或修复后运行 next "<运行目录>"。terminal_decision=CONTINUE时实际执行next_action后再判断；返回ID只是分批，不是允许省略其余对象。工作中发进度消息。
 
-角色交接JSON包含writer_id，以及units、methods_taxonomy、experiments、claims、issues、gate_results中的所需集合；不接受其他顶层键。units按已入清单的unit_id部分更新，不能在交接中改身份/kind/定位。提交read_state、源特定understanding_note及真实存在的evidence_refs。信息性视觉对象须实际打开原图，记录visual_review及artifact_refs/checks/limitations。视觉/形式化详细解释可放在unit及笔记中。READ/UNDERSTOOD不会自动升为CHECKED；只有实际完成内容与来源交叉检查才可标CHECKED，脚本收下交接不等于检查通过。
+角色交接JSON包含writer_id，以及units、methods_taxonomy、experiments、claims、issues、gate_results中的所需集合；不接受其他顶层键。units按已入清单的unit_id部分更新，不能在交接中改身份/kind/定位。提交read_state、源特定understanding_note及真实存在的evidence_refs。图形、位图及解析冲突须实际打开原图，记录visual_review及artifact_refs/checks/limitations；原生获取运行中仅完整有效的原生表格可按原生契约改用content_reading。视觉/形式化详细解释可放在unit及笔记中。READ/UNDERSTOOD不会自动升为CHECKED；只有实际完成内容与来源交叉检查才可标CHECKED，脚本收下交接不等于检查通过。
 
 使用 merge "<运行目录>" --file "<角色交接.json>"。助手保留原交接，合并逐单元解释/专项记录，生成full_notebook.md和material_index.md，省去重复手抄同一份底稿。生成文件不证明理解；“细节稍后再写”不是完成证据。实验记录须包含DATA_CONTRACT全部字段，填写与该实验对应的内容或有依据的NOT_REPORTED/NOT_APPLICABLE，不能全套机械填NA。
 
@@ -32,7 +40,7 @@
 
 完成06/07，从完整记录写report.md及user_review.md。报告可标“待独立审查，当前决定见paper_packet.json”；审查前写完科学内容，避免为了更新状态而改变已审文本。
 
-独立审查者先自建源清单，再逐项比较packet/底稿/报告与原位置。决定前运行 snapshot "<运行目录>"，把reviewed_scope_revision、reviewed_source_hashes、reviewed_content_sha256填入新的真实审查记录。快照只绑定已查版本，不证明身份或理解。审查期间不改被审材料；若改了，由审查者复查受影响内容后重新取快照。review_id只用字母、数字、下划线、点、连字符，每个新决定使用新ID。
+独立审查者先建立符合模式的来源结构图/清单，再按 review-plan 对原始证据核查；KEY_CLAIMS 检查全部当前 claim 与分层普通样本，FULL_DOUBLE_READ 检查全部单元。决定前保存实际审查草稿，再运行 snapshot "<运行目录>" --file "<审查草稿.json>"，把返回的四个快照字段填入新的真实审查记录。快照只绑定已查版本，不证明身份或理解。审查期间不改被审材料；若改了，由审查者复查受影响内容后重新取快照。review_id只用字母、数字、下划线、点、连字符，每个新决定使用新ID。
 
 审查返回后，Owner立即运行 ingest-review "<运行目录>" --file "<真实审查.json>"，保留实际决定和失败gate。REVISION_REQUIRED表示继续执行返回的REPAIR动作：
 1. 回源核查并修复记录、解释和依赖主张，为每个repair_id保存修复依据。
@@ -61,8 +69,18 @@ For inspected source panels, run python "<skill>/scripts/reading_report_assets.p
 
 ## Revision 2.4
 
-The shared [Reliable execution contract](../references/reliable-execution.md) is required. New runs bind review_requirements.direct_visual_inspection and require the reviewer's own visual_inspection/session/observation evidence for accepted G3. Use handoff-template and review-template to generate correct shapes; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing earlier runs are not silently migrated. Templates, viewing flags and structural checks cannot establish actual image access, independence or understanding. If reviewer image access remains unavailable after permitted local alternatives, finish accessible work and record a truthful capability block with G3 unaccepted.
+The shared [Reliable execution contract](../references/reliable-execution.md) is required. Graphical/raster/conflict objects require the reviewer's own visual_inspection/session/observation evidence for accepted G3; new native-acquisition runs may independently inspect validated complete tables under [Native PDF elements](../references/native-elements.md). Runs without that explicit acquisition contract retain their prior visual requirements. Use handoff-template and review-template; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing runs are not migrated. Templates and structural checks cannot establish actual inspection, independence or understanding. A blocked required image channel retains G3 unaccepted.
 
 ## Revision 2.5 dependency synchronization
 
 For failed-review repairs, finish canonical records, claims, notes, manual and generated notebooks, gate evidence, report, target analysis and visual data/captions as one batch. Regenerate outputs before scanning. New runs require repair-scan and a completed per-file report under repair_sync/; then use repair-ready --sync-file. Later current-file changes reopen readiness. Read [the shared repair synchronization contract](../references/repair-synchronization.md).
+
+## Efficient reinspection
+
+Read [Efficient independent reinspection](../references/efficient-reinspection.md) before dispatching repair review. Reuse the actual independent reviewer and its own source-first evidence. A new decision needs a new review ID and fresh snapshot, not a fresh agent. Reinspect changes and their affected dependencies while retaining the same reviewer's verified unchanged coverage; expand the review when source, scope or reliability changes. Never invent resumed identity, viewing or approval.
+
+## 修订2.6命令与送审
+
+新运行使用 --review-mode KEY_CLAIMS（默认）或 --review-mode FULL_DOUBLE_READ。请求审查前完成全部当前产出，执行 preflight "<run>" 和 review-plan "<run>"；Owner 可修复的错误先在本地解决。review-plan 计算全部强制 claim、依赖单元、普通样本 ID 和覆盖标签，不能用空的手工关键列表豁免 packet 中的主张。
+
+修复作为一次事务完成后，用 review-delta "<run>" 生成变化定位，将简短差异交回原审查者。记录 continuation.previous_review_id、retained_unit_ids、rechecked_unit_ids；替补时说明 replacement_reason。同类流程错误重复两轮则暂停送审，先修本地生成与同步，不自动通过。交付分别说明 Owner 完整精读、关键结论核查或完整独立双读。

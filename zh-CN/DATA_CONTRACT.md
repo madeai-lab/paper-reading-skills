@@ -1,5 +1,13 @@
 # 交接数据约定
 
+## 修订2.7获取记录
+
+新运行的 `content_acquisition` 绑定 `method=PDFPLUMBER_NATIVE` 与 `manifest_ref=source_elements/manifest.json`；manifest 记录来源哈希、解析器及逐页文件哈希。每个新运行已检查单元均记录 `content_reading`，含 `mode=NATIVE_ELEMENTS|VISUAL|MIXED`、已有 `page_refs`、准确 `element_ids` 和 `conflict_resolution_refs`。ID必须连回正确来源/页面/对象，不得隐藏未解决解析冲突。只有完整有效的原生 TABLE 可据此替代看图；未看像素时仍保留 `actually_viewed=false`。FIGURE/PANEL/OTHER_VISUAL 仍需实际查看。对不看像素而验收的必查原生表格，审查者用自己的 `structured_inspection` 记录已查 `unit_ids` 与本地 `evidence_refs`；其他文字证据仍须真实回源核查主张，不能继承 Owner 标志。获取路径、证据边界及命令见[PDF原生元素](../references/native-elements.md)。元素文件与冲突解决依据受快照绑定，变化会重新打开依赖。旧运行缺少字段不等于启用例外，也不自动迁移。
+
+## 修订2.6：审查模式
+
+先读[审查模式](../references/review-modes.md)，再应用旧版执行说明。新运行默认 KEY_CLAIMS；FULL_DOUBLE_READ 保留完整独立双读；未记录模式的旧运行维持原有全面审查。Owner 始终完整覆盖全部来源单元，阶段08的独立核查范围按模式确定。不迁移正在运行或冻结的批次。
+
 所有阶段使用同一任务编号、source_id、unit_id、experiment_id、claim_id和issue_id。字段名保持英文，内容可中文。模板在[shared](../shared/packet.template.json)；空模板不是已完成记录。
 
 ## 1. 定位和单元
@@ -95,4 +103,12 @@ Register display images and derived-chart backing data with artifact_refs/eviden
 
 ## Revision 2.4
 
-The shared [Reliable execution contract](../references/reliable-execution.md) is required. New runs bind review_requirements.direct_visual_inspection and require the reviewer's own visual_inspection/session/observation evidence for accepted G3. Use handoff-template and review-template to generate correct shapes; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing earlier runs are not silently migrated. Templates, viewing flags and structural checks cannot establish actual image access, independence or understanding. If reviewer image access remains unavailable after permitted local alternatives, finish accessible work and record a truthful capability block with G3 unaccepted.
+The shared [Reliable execution contract](../references/reliable-execution.md) is required. Graphical/raster/conflict objects require the reviewer's own visual_inspection/session/observation evidence for accepted G3; new native-acquisition runs may independently inspect validated complete tables under [Native PDF elements](../references/native-elements.md). Runs without that explicit acquisition contract retain their prior visual requirements. Use handoff-template and review-template; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing runs are not migrated. Templates and structural checks cannot establish actual inspection, independence or understanding. A blocked required image channel retains G3 unaccepted.
+
+## 修订2.6审查字段
+
+任务、packet 和 review 的 review_mode 使用 KEY_CLAIMS 或 FULL_DOUBLE_READ。packet 未记录模式表示旧版 FULL_DOUBLE_READ，不是新默认；不迁移正在运行/冻结的批次。控制器将全部当前 claim ID 计算为强制 key_claim_ids；review_requirements.key_unit_ids 可增加必查单元。claim supporting_units、experiment unit_refs、疑点链接与递归单元依赖/父图上下文决定证据范围。报告、目标答案和综合中的实质性判断均须登记，审查者独立检查语义完整性。
+
+review 记录计算得到的 coverage_label、实际 checked_unit_ids/checked_claim_ids，以及 coverage_check：source_structure_checked=true、owner_coverage_checked=true、omissions=[]、evidence_refs 指向已有审查证据。true 必须来自实际工作。KEY_CLAIMS 覆盖全部当前 claim、必查依赖单元及控制器计算的分层普通样本，审查者视觉记录覆盖必查的已检查视觉单元。FULL_DOUBLE_READ 仍检查全部单元，明确启用原生获取时按原生契约选择证据；旧运行维持其原有全部单元/图像要求。Owner 在两种模式下均须完整阅读。
+
+已有审查后的 continuation 记录 previous_review_id、retained_unit_ids、rechecked_unit_ids，替补时说明 replacement_reason。沿用覆盖要求真实 reviewer_session_id 相同且内容未变；rechecked ID 表示实际新核查，替补不能继承前任查看经历。新决定使用新 review ID 和四个新快照字段。分别说明 Owner 完整精读与独立审查模式，不能将 KEY_CLAIMS 的通过状态表述为完整独立双读。

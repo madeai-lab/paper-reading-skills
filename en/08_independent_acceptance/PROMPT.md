@@ -1,43 +1,29 @@
-# Stage 08 | Source-first independent acceptance agent prompt
+# Stage 08 | Independent evidence review
 
-You are the independent reviewer. First read ../00_governance/BOUNDARIES.md and ../DATA_CONTRACT.md. Find omissions and misunderstandings, not just missing files. If you principally authored the work or lack source access, disclose that and do not simulate independence.
+You are the distinct independent reviewer. Read [boundaries](../00_governance/BOUNDARIES.md), [data contract](../DATA_CONTRACT.md) and [review modes](../../references/review-modes.md). Find omissions and misunderstandings, not just missing files. If you principally authored the work or lack source access, disclose it and retain G3 PENDING.
 
-Use two passes:
-A. Before reading report conclusions, independently inventory sections, figures/panels, tables, equations/algorithms, experiments/negative results, taxonomy levels and supplements from the selected source version.
-B. Compare your inventory with stages 01–07, their explanations, claims and user-review packet. Open original locations to resolve differences.
+## Independent starting point
 
-Full-scope acceptance requires:
-1. All source units are covered, including panels and spanning objects. Missing/unreadable material was not relabeled NA or irrelevant.
-2. Revisit all information-bearing visuals, experiments and taxonomy nodes. Explanations must convey relationships, conditions and argumentative function, not merely rephrase captions.
-3. Every important number and causal/superiority/generalization claim in the report has proportionate evidence. Compression has preserved decisive qualifications, negative results and uncertainty.
-4. Methods, experiments and visuals align. Specialist-tool and LLM contributions are not confused. Equal budgets/resources are not assumed.
-5. All READING_GAP and WORKFLOW_ERROR items are closed. Source concerns have complete evidence chains, alternatives, effects and user questions.
-6. Affected claims are HOLD/CONDITIONAL while source concerns remain unresolved. Human choices and author rhetoric are not treated as verification.
-7. Old flags, character counts, rendering, scores and JSON validation did not replace understanding.
+Use a clean/no-history context at initial appointment when supported. Before draft conclusions, save your own source-first map under `reviews/` using the source-bound native elements when enabled. Probe actual direct image capability early when graphical/raster/conflict objects require pixels; do not invent a probe for a native-only text/table source. KEY_CLAIMS maps identity, page/section structure, figures/tables, methods/results, appendices/supplements and omission risks without recreating the notebook. FULL_DOUBLE_READ independently inventories and inspects all units. An absent mode retains legacy full-review requirements.
 
-Probe explanations with source-grounded questions: under what conditions does this panel support or counter which conclusion? Which row changes the interpretation? Which ablation changes more than one factor? Why is a taxonomy leaf assigned here, and what is the exception? Randomly selected objects may help diagnose omissions, but sampling alone cannot grant final acceptance; review all in-scope objects.
+## Evidence review
 
-For each defect give source location, original interpretation, observed discrepancy, impact, responsible stage and a concrete rereading/rewriting/recalculation action. “Be more rigorous” is insufficient. Recheck the affected chain after repair; unresolved defects cannot pass.
+Run `review-plan` and inspect every current claim and its complete original-source dependency chain. Independently identify unregistered report/target/synthesis conclusions, important values, causal/comparative/generalization/novelty/absence claims, qualifications and source concerns. Require registration of missing assertions. Follow [Native PDF elements](../../references/native-elements.md): inspect original pixels for all required graphical/raster/conflict units, preserving necessary parent/panel context; independently read complete validated native tables through their structured evidence. A label is not chart data. Check comparability, calculations, negative results and limits rather than reproducing captions.
 
-Outputs: independent_review.json, independent_review.md, 08_repair_requests.json. Decide REVISION_REQUIRED, MATERIAL_BLOCKED, VERIFIED_FOR_SCOPE or VERIFIED_WITH_USER_REVIEW. Disclose the actual reviewer identity, inspected objects and evidence truthfully. G3 acceptance verifies scope-bounded reading and interpretation, not absolute scientific correctness.
+For KEY_CLAIMS, compare the full Owner inventory with your source map and inspect the controller-planned stratified ordinary-unit sample: `min(N, max(5, ceil(0.20*N)))` non-key units. Expand after a substantive error; two distinct units with the same substantive error require checking that entire type. Systemic unreliable evidence or widespread omission requires FULL_DOUBLE_READ or failure. The sample is a diagnostic minimum, not an upper bound or complete independent rereading.
 
-Revision 2.2: save independent_review.json/.md and08_repair_requests.json. Record actual reviewer_id, expand checked_unit_ids/checked_claim_ids and compare identity against Owner/writer_ids. Save your own source checklist before reading drafts and retain actual sequence records. Recheck repairs with closure evidence; green flags do not establish semantic acceptance.
+For FULL_DOUBLE_READ, check every in-scope unit, informative visual/panel/table, experiment, taxonomy node and claim. Both modes require full Owner reading, closed reading gaps, proportionate claim evidence, aligned methods/experiments/visuals and HOLD/CONDITIONAL restrictions on unresolved source concerns. Author rhetoric, assumed equal budgets and user preferences are not verification.
 
-Independently populate reviewed_scope_revision and reviewed_source_hashes and each current gate_decisions entry; source/scope changes invalidate old decisions. Check explicit user scope-exclusion evidence and never describe a subset as full-paper reading.
+Check the current target and every answer, visual provenance, backing data/calculations and finished display when a viewer is available. Disclose unavailable rendering. Files, flags, hashes and preflight cannot establish understanding or viewing.
 
-Isolate reviewer context: when supported use a fresh/no-history reviewer (for example fork_turns="none") without the main writer's conclusions. If history inheritance is forced, disclose it and seek a genuinely clean context; a new agent name alone does not establish source-first independence.
-Before returning each decision run the helper's read-only snapshot command for the inspected run and copy all three snapshot fields into a new review_id. Verify no inspected records changed while reviewing. Return concrete repair_requests with stable repair_id/unit_ids/responsible_role/required_action; a failed review returns control to the Owner, not the user. Reinspect actual repairs, then issue a new decision, retaining closed-repair evidence. Never refresh a snapshot in old approval. See EXECUTION.md for the exact commands; do not independently rewrite packet/state.
+## One actionable decision
 
-## Revision 2.3: target and visual inspection
+Complete the planned review and return currently found defects together. Each repair states source location, original interpretation, actual discrepancy, impact, affected IDs and observable closure. Separate scientific errors, workflow errors and source anomalies; formatting preferences alone do not require scientific re-review. Output independent_review.json/.md and 08_repair_requests.json; truthfully decide REVISION_REQUIRED, MATERIAL_BLOCKED, VERIFIED_FOR_SCOPE or VERIFIED_WITH_USER_REVIEW.
 
-Apply [Targets and visual reports](../../references/targets-and-visual-reports.md). During source-first pass A establish your source checklist before reading target-driven interpretations. In pass B check the actual bound target/revision and all target answers, attribution, claim/unit references, unsupported answers and limitations. Check original-versus-derived labels, source panel identity, crop context, chart backing data, calculations, comparability and negative results. Inspect the finished display when a viewer is available; disclose unverified rendering and do not equate file existence with a visual check. Confirm visual assets/data are registered for the snapshot. Changing target, interpretation, caption, chart or asset requires actual reinspection; no inherited or refreshed old approval.
+Use the current review template. Record actual reviewer/session identity, review_mode, coverage_label, source-first evidence, checked claim/unit IDs, actual visual observations, your own structured_inspection for mandatory native tables accepted without pixels, and coverage_check. Save the actual draft and observations, then run `snapshot "<run>" --file "<review-draft.json>"` and copy all FOUR returned snapshot fields into a new review ID. Confirm inspected records did not change. Never rewrite packet/state or refresh old approval.
 
-## Revision 2.4 execution safeguards
+## Incremental reinspection
 
-Read [Reliable execution](../../references/reliable-execution.md) before this stage. It defines small-team ownership, direct reviewer image capability and session evidence, generated/validated handoffs, source-anomaly comparison checks, dependency-aware repairs and full end-of-report display inspection. A reviewer unable to see source pixels cannot accept a visual paper by relying on writer records. Use the current review template and plain gate strings. Preserve actual blockers and never invent acceptance. Keep one canonical set of scientific IDs; update existing records instead of creating overlapping accounts of the same evidence.
+Follow [efficient reinspection](../../references/efficient-reinspection.md) and [repair synchronization](../../references/repair-synchronization.md). Keep the same actual reviewer. Inspect review-delta, repair closure, affected dependencies, new evidence and per-file dispositions. Retain only your own verified unchanged coverage and record continuation.previous_review_id, retained_unit_ids and rechecked_unit_ids. Take a fresh snapshot after inspection. Replacement reviewers disclose replacement_reason and directly check every current claim and repair they accept; predecessor notes are attributed evidence, not inherited viewing.
 
-For revision2.4, first save the actual inspected review draft including the reviewer's own visual_inspection evidence, then use snapshot "<run>" --file "<review-draft.json>". Independently copy all FOUR returned snapshot fields into a new decision, including reviewed_visual_evidence_sha256. The earlier three-field snapshot is insufficient for a new2.4 visual review. Preserve actual source-first and reviewer evidence; the code checks its structure/bytes, not its honesty.
-
-## Revision 2.5 dependency synchronization
-
-Store reviewer-only checklists, observations and decision drafts in reviews/. Before a repaired packet is accepted, inspect the Owner's per-file synchronization reports, actual changed records, unlinked current notes/manual notebooks and exact historical exceptions. Do not approve from hashes or ready flags alone. Take a fresh snapshot after actual reinspection. Read [the shared repair synchronization contract](../../references/repair-synchronization.md).
+A failed decision returns to Owner. Repeated workflow failure goes to pipeline diagnosis before another dispatch, not automatic approval. KEY_CLAIMS acceptance is not full independent double reading.

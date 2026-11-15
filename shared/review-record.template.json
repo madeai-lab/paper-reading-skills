@@ -29,5 +29,25 @@
     "tool_evidence_refs": [],
     "units": []
   },
-  "reviewed_visual_evidence_sha256": null
+  "reviewed_visual_evidence_sha256": null,
+  "review_mode": "KEY_CLAIMS",
+  "coverage_label": "COMPLETE_READING_KEY_CLAIMS_CHECKED",
+  "coverage_check": {
+    "source_structure_checked": false,
+    "owner_coverage_checked": false,
+    "omissions": [],
+    "evidence_refs": []
+  },
+  "continuation": {
+    "previous_review_id": null,
+    "retained_unit_ids": [],
+    "rechecked_unit_ids": [],
+    "rechecked_claim_ids": [],
+    "inspected_changed_files": [],
+    "replacement_reason": null
+  },
+  "structured_inspection": {
+    "unit_ids": [],
+    "evidence_refs": []
+  }
 }

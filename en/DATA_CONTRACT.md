@@ -1,5 +1,13 @@
 # Handoff data contract
 
+## Revision 2.7 acquisition records
+
+`content_acquisition` binds `method=PDFPLUMBER_NATIVE` and `manifest_ref=source_elements/manifest.json` for new runs only. The manifest binds the source hash, parser and detailed page-file hashes. Every checked new-run unit records `content_reading` with `mode=NATIVE_ELEMENTS|VISUAL|MIXED`, existing `page_refs`, exact `element_ids` and `conflict_resolution_refs`. IDs must resolve to the correct source/page/object; no unresolved parsing conflict may be hidden. Only a complete validated TABLE can substitute this for pixel viewing, preserving `actually_viewed=false` when appropriate. FIGURE/PANEL/OTHER_VISUAL remain actual-viewing objects. For required native tables accepted without pixels, the reviewer records its own `structured_inspection` with inspected `unit_ids` and local `evidence_refs`; other textual evidence still requires actual source/claim checking. Owner flags do not transfer. Read [Native PDF elements](../references/native-elements.md) for routing, evidence limits and commands. Extraction files and resolution evidence are snapshot-bound; changes reopen affected dependencies. Missing fields in earlier runs do not enable the exception or migrate the run.
+
+## Revision 2.6: review mode
+
+Read [Review modes](../references/review-modes.md) before applying earlier revision guidance. New runs default to KEY_CLAIMS; FULL_DOUBLE_READ retains complete independent double reading. Missing mode retains legacy full-review behavior. The Owner still covers all source units; stage-08 scope depends on the recorded mode. Existing active/frozen runs are never migrated.
+
 Use the same task, source, unit, experiment, claim and issue IDs across stages. Field names remain English; prose may use the selected language. The [shared template](../shared/packet.template.json) is empty scaffolding, not completed evidence.
 
 ## 1. Locators and units
@@ -95,4 +103,12 @@ Register display images and derived-chart backing data with artifact_refs/eviden
 
 ## Revision 2.4
 
-The shared [Reliable execution contract](../references/reliable-execution.md) is required. New runs bind review_requirements.direct_visual_inspection and require the reviewer's own visual_inspection/session/observation evidence for accepted G3. Use handoff-template and review-template to generate correct shapes; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing earlier runs are not silently migrated. Templates, viewing flags and structural checks cannot establish actual image access, independence or understanding. If reviewer image access remains unavailable after permitted local alternatives, finish accessible work and record a truthful capability block with G3 unaccepted.
+The shared [Reliable execution contract](../references/reliable-execution.md) is required. Graphical/raster/conflict objects require the reviewer's own visual_inspection/session/observation evidence for accepted G3; new native-acquisition runs may independently inspect validated complete tables under [Native PDF elements](../references/native-elements.md). Runs without that explicit acquisition contract retain their prior visual requirements. Use handoff-template and review-template; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing runs are not migrated. Templates and structural checks cannot establish actual inspection, independence or understanding. A blocked required image channel retains G3 unaccepted.
+
+## Revision 2.6 review fields
+
+`task.review_mode`, `packet.review_mode` and `review.review_mode` use KEY_CLAIMS or FULL_DOUBLE_READ. Missing packet mode means legacy FULL_DOUBLE_READ, not the new default. No active/frozen migration is implied. The controller computes all current claim IDs as mandatory key_claim_ids; `review_requirements.key_unit_ids` adds mandatory unit IDs. Claim supporting_units, experiment unit_refs, issue links and recursive unit dependencies/parent context determine required evidence units. All report/target/synthesis substantive assertions must be registered; the reviewer checks semantic completeness.
+
+The review records the computed coverage_label, actual checked_unit_ids/checked_claim_ids and `coverage_check` with source_structure_checked=true, owner_coverage_checked=true, omissions=[], evidence_refs pointing to existing reviewer evidence. These true values require actual work. In KEY_CLAIMS checked IDs cover every current claim, required dependency unit and controller-planned stratified ordinary sample; direct reviewer visual records cover the required inspected visual units. FULL_DOUBLE_READ retains all-unit coverage using the native contract when explicitly enabled; legacy runs retain their previous all-unit/all-visual requirements. Owner coverage remains complete in every mode.
+
+After an earlier review, `continuation` records previous_review_id, retained_unit_ids, rechecked_unit_ids and replacement_reason when relevant. Retained coverage requires the same actual reviewer_session_id and verified unchanged content. Rechecked IDs mean actual new inspection; replacements do not inherit predecessor viewing. A new review ID and all four fresh snapshot fields bind the actual current decision. State complete Owner reading and independent coverage mode separately; the same accepted state must not imply full independent double reading for KEY_CLAIMS.

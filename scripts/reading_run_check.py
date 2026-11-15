@@ -4,11 +4,13 @@ import hashlib
 import json
 from pathlib import Path
 from reading_review_contracts import structure_errors, visual_review_errors
+from reading_review_modes import coverage_errors
+from reading_element_contracts import element_errors, native_unit_errors, native_table_ready
 
 VERIFIED = {"VERIFIED_FOR_SCOPE", "VERIFIED_WITH_USER_REVIEW"}
 
 
-def inspect_run(root):
+def inspect_run(root, require_review=True):
     root = Path(root).resolve()
     errors = []
 
@@ -41,6 +43,8 @@ def inspect_run(root):
         error("EMPTY_INVENTORY", "units", "Inventory the source before claiming complete coverage.")
     units = packet.get("units", [])
     errors.extend(structure_errors(packet))
+    errors.extend(element_errors(root, packet))
+    errors.extend(native_unit_errors(root, packet))
     ids = [u.get("unit_id") for u in units]
     if len(set(ids)) != len(ids) or None in ids:
         error("UNIT_ID_INVALID", "units", "Assign unique, non-null unit IDs.")
@@ -91,16 +95,18 @@ def inspect_run(root):
         for ref in unit.get("evidence_refs", []):
             evidence(ref, uid)
         visual = unit.get("visual_review", {})
-        if visual.get("required") or unit.get("kind") in {"FIGURE", "PANEL", "TABLE", "OTHER_VISUAL"}:
+        if (visual.get("required") or unit.get("kind") in {"FIGURE", "PANEL", "TABLE", "OTHER_VISUAL"}) and not native_table_ready(root, packet, unit):
             if visual.get("actually_viewed") is not True:
                 error("VISUAL_NOT_VIEWED", uid, "Actually open and inspect the original visual.")
             if not visual.get("artifact_refs"):
                 error("EVIDENCE_MISSING", uid, "Link the visual actually inspected.")
             for ref in visual.get("artifact_refs", []):
                 evidence(ref, uid)
-    if packet.get("paper_status") not in VERIFIED:
+    if require_review and packet.get("paper_status") not in VERIFIED:
         error("PAPER_NOT_ACCEPTED", "paper_status", "Continue work or record a concrete interruption; do not mark complete.")
     for gate in ["G0", "G1", "G2", "G3"]:
+        if gate == 'G3' and not require_review:
+            continue
         record = packet.get("gate_results", {}).get(gate, {})
         if record.get("decision") != "PASS":
             error("GATE_PENDING", gate, "Complete and review this gate.")
@@ -120,7 +126,7 @@ def inspect_run(root):
         if opened and issue.get("kind") in {"READING_GAP", "WORKFLOW_ERROR"}:
             error("OPEN_READING_OR_WORKFLOW_GAP", issue.get("issue_id"), "Repair the agent error or close the reading gap.")
         if opened and issue.get("kind") in {"SOURCE_ANOMALY", "VERSION_DIFFERENCE"}:
-            if packet.get("paper_status") != "VERIFIED_WITH_USER_REVIEW":
+            if require_review and packet.get("paper_status") != "VERIFIED_WITH_USER_REVIEW":
                 error("ANOMALY_STATUS", issue.get("issue_id"), "Preserve the user-review state.")
             for cid in issue.get("affected_claims", []):
                 if claims.get(cid, {}).get("allowed_use") not in {"HOLD", "CONDITIONAL"}:
@@ -137,9 +143,11 @@ def inspect_run(root):
                 if not progress_current(root, packet, state, request, failed.get('review_id')):
                     error('REPAIR_SYNC_REQUIRED', request['repair_id'],
                           'Rescan current dependencies, inspect every disposition and obtain fresh review.')
-    if not reviews:
+    if not require_review:
+        reviews = []
+    if require_review and not reviews:
         error("REVIEW_MISSING", "G3", "Obtain independent source-first review.")
-    else:
+    elif reviews:
         review = reviews[-1]
         errors.extend(visual_review_errors(root, packet, review))
         if review.get("template_only") is True:
@@ -162,12 +170,13 @@ def inspect_run(root):
             if review['reviewed_content_sha256'] != content_fingerprint(root, packet):
                 error('REVIEW_CONTENT_STALE', 'G3', 'Reinspect changed report, target, records and visual assets; obtain a new actual review.')
         evidence(review.get("source_first_inventory_ref"), "source-first review")
-        if set(ids) - set(review.get("checked_unit_ids", [])) or set(claims) - set(review.get("checked_claim_ids", [])):
-            error("REVIEW_COVERAGE_MISSING", "G3", "Review every unit and important claim; expand IDs rather than using ranges.")
+        errors.extend(coverage_errors(root, packet, review))
         if review.get("unresolved_reading_gaps") or review.get("repair_requests"):
             error("REVIEW_REPAIRS_OPEN", "G3", "Complete requested repairs and obtain re-review.")
     deliverables = packet.get("deliverables", {})
     for key in ["full_notebook", "report", "material_index", "user_review", "independent_review"]:
+        if key == 'independent_review' and not require_review:
+            continue
         evidence(deliverables.get(key), key)
     return errors
 

@@ -2,6 +2,14 @@
 
 [English](../en/README.md)
 
+## 修订2.7：原生来源元素
+
+先读[PDF原生元素](../references/native-elements.md)。新运行先从绑定源文件的 pdfplumber 记录读取正文、表格和原生标签；位图、图形关系和解析冲突仍须实际核读来源。Owner 完整精读和两种审查模式不变；旧运行与冻结批次沿用原规则。
+
+## 修订2.6：审查模式
+
+先读[审查模式](../references/review-modes.md)，再应用旧版执行说明。新运行默认 KEY_CLAIMS；FULL_DOUBLE_READ 保留完整独立双读；未记录模式的旧运行维持原有全面审查。Owner 始终完整覆盖全部来源单元，阶段08的独立核查范围按模式确定。不迁移正在运行或冻结的批次。
+
 目的：让每篇论文的正文、实验、图表、细分结构及相关补充材料得到可追溯的理解；发现论文疑点时，提供用户可复查的证据链。
 
 ## 运行顺序
@@ -19,7 +27,7 @@
 | 08 | [独立验收](08_independent_acceptance/PROMPT.md) | 独立审查Agent | 先看源材料，再对照交付；决定G3 |
 | 09 | [跨篇综合](09_cross_paper_synthesis/PROMPT.md) | 综合Agent | 只采用通过G3的单篇主张，逐项保留限制 |
 
-阶段02—05在G0通过后可并行，必须互相交接发现。它们先独立从完整源材料工作，其他角色的记录尚未生成时不等待；在06前再闭合相互依赖。各角色写入独立阶段目录，由Owner合并，避免互相覆盖。07以06为基础；08发现问题时退回相应阶段，修改后重新审查。09的新事实或新比较也须经过08核验。
+阶段01—07是职责，默认由同一 Owner 完成。只有具体来源难点才增加专项读者，提供完整来源并合并发现，避免覆盖。07以06为基础；08发现问题时退回相应阶段，修改后重新审查。09的新事实或新比较也须经过08核验。
 
 每个Agent先读[边界](00_governance/BOUNDARIES.md)和[交接数据约定](DATA_CONTRACT.md)，再读自己的Prompt。协调者为每项任务填入任务JSON、源材料根目录、分配的单元ID、输出目录和已有交接包。Prompt中的“你”指该角色Agent，不是论文作者。
 
@@ -43,4 +51,4 @@ Use [Targets and visual reports](../references/targets-and-visual-reports.md) fo
 
 ## Revision 2.4
 
-The shared [Reliable execution contract](../references/reliable-execution.md) is required. New runs bind review_requirements.direct_visual_inspection and require the reviewer's own visual_inspection/session/observation evidence for accepted G3. Use handoff-template and review-template to generate correct shapes; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing earlier runs are not silently migrated. Templates, viewing flags and structural checks cannot establish actual image access, independence or understanding. If reviewer image access remains unavailable after permitted local alternatives, finish accessible work and record a truthful capability block with G3 unaccepted.
+The shared [Reliable execution contract](../references/reliable-execution.md) is required. Graphical/raster/conflict objects require the reviewer's own visual_inspection/session/observation evidence for accepted G3; new native-acquisition runs may independently inspect validated complete tables under [Native PDF elements](../references/native-elements.md). Runs without that explicit acquisition contract retain their prior visual requirements. Use handoff-template and review-template; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing runs are not migrated. Templates and structural checks cannot establish actual inspection, independence or understanding. A blocked required image channel retains G3 unaccepted.
