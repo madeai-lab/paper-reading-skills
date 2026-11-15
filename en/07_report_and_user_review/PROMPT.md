@@ -1,38 +1,17 @@
-# Stage 07 | Complete notebook, report and user-review agent prompt
+# Stage 07 | Reader-facing report and user-review packet
 
-You faithfully organize the evidence for the user. First read ../00_governance/BOUNDARIES.md and ../DATA_CONTRACT.md. Inputs are all stage-01–06 records and sources, not merely upstream summaries.
+Read the [data contract](../DATA_CONTRACT.md), [boundaries](../00_governance/BOUNDARIES.md), [targets/visuals](../../references/targets-and-visual-reports.md) and [reader explanations](../../references/reader-explanations.md). Inputs are current 01–06 records and sources, not summaries alone.
 
-Write the full_notebook first. Every section, detailed node, experiment, figure/panel, table, equation, algorithm and appendix must be findable through material_index with an explanation and locator. Preserve negative results, conditions, uncertainty and open concerns. Check that compression has not erased source units. A target length cannot narrow reading.
+The controller generates the complete notebook/material_index from packet. Confirm that every source unit, taxonomy leaf, experiment, visual, formalism and appendix has an explanation. Repair canonical records and regenerate instead of hand-editing generated outputs or adding mirrors.
 
-Then write the report: research question, mechanism/taxonomy, every experiment type and key outcome, contributions/evidence, author-stated limitations, analyst judgments and field challenges. Separate LLMs from specialist tools, training from runtime, feedback from reflection, execution from goal achievement. Important numbers retain version, denominator, baseline, budget and location. Link table details to the notebook rather than selecting only favorable results.
+Write a connected problem–mechanism–evidence–usable-conclusion narrative. Define terms; explain inputs/outputs, central components, symbols/objective terms and training versus runtime. Adapt theory/review papers to derivations or taxonomy relations. Explain metric meaning, units, denominators, direction and proxy limitations before results.
 
-In user_review.md, lead with issues that change interpretation or use decisions. Put lower-impact details in the issue ledger and avoid duplicate concerns. For each unresolved SOURCE_ANOMALY include:
-- Issue ID, one-sentence concern and source version.
-- Source A/B pages, sections, figures/panels/cells with legible evidence or links; describe observations.
-- Necessary calculation or like-for-like comparison.
-- Eliminated/still-plausible explanations and missing evidence.
-- Affected conclusions and unaffected findings.
-- Exact claims currently recommended as HOLD or CONDITIONAL.
-- The specific source and decision for the user to double-check; keep user_decision empty until answered.
-Use “locatable inconsistency,” “currently unexplained” or “requires confirmation.” Do not declare an author wrong, a whole paper unreliable or fabrication proved unless evidence supports precisely that level and attribution is explicit. Even a definite arithmetic error does not broaden the verdict.
+Explain every experiment/case/ablation: variation, comparator, samples/budget, actual observations and inference limits. Preserve manual intervention, shared samples, missing configurations, negative results and absent statistics. Clear tables are allowed; opaque short cells and machine-ID lookups do not replace explanations. Important numbers retain source, conditions and baseline.
 
-The report starts as READING_COMPLETE_REVIEW_PENDING or its actual lower state. Stage 08 decides acceptance. Do not independently claim every agent verified the paper or that understanding is exhaustive. If the user requests brevity, retain the complete notebook and issue entry points.
+Select useful actually inspected source panels with legible labels, reading guidance, source locations, full-resolution links and limits. Retain derived-chart data/transforms. Separate general findings from target inference; answer every target question, including unsupported/contrary evidence, in target_analysis.json. Register substantive new explanations as claims.
 
-Outputs: full_notebook.md, report.md, material_index.md, user_review.md, 07_report_claim_map.json. Send them to 08. Carry restrictions into cards and summaries rather than hiding them in a final disclaimer.
+Lead user_review.md with genuine concerns changing use decisions. Preserve issue_id/version, A/B locations/images, calculations, eliminated/plausible explanations, affected/unaffected claims, HOLD/CONDITIONAL recommendations and precise double-check questions. Keep user_decision=null without an answer; local discrepancies do not invalidate a whole paper. State checked scope honestly when no concerns remain.
 
-Revision 2.2: use canonical full_notebook.md, report.md, material_index.md and user_review.md, and hand off to08 instead of ending with this summary. Continue scheduling while review remains; a partial disclaimer cannot replace review. The report may be brief while the notebook covers every unit.
-Execution handoff (2.2): follow [EXECUTION.md](../EXECUTION.md). Return source-specific unit explanations and specialist records using its merge payload; keep raw role evidence. Do not defer granular content or change inventory identity in a handoff. The Owner merges and performs next_action; a stage summary alone does not complete the paper. Stage 01 saves inventories before dependent readers; stage 07 finishes report/user-review text before the review snapshot.
+Complete report_readability.json from the template: six dimensions and all experiments, exact report excerpts, short assessments, valid unit links, final report hash and actual display evidence. Put machine JSON, hashes and workflow history in linked evidence, not narrative. Use neutral provenance pointing to packet/latest review rather than stale pending-review claims or post-approval status edits.
 
-## Revision 2.3: target-aware, visually readable reports
-
-Read [Targets and visual reports](../../references/targets-and-visual-reports.md) and the packet's explicit research_target. Produce a general source-grounded report plus a clearly separated target relevance section and target_analysis.json when a target exists. Answer every target question, including unsupported/contrary findings; use actual claim/unit IDs and preserve limits. Do not inject an old review direction when research_target is null.
-
-Embed useful inspected original figure/panel images inline with captions, source locations, full-resolution links, interpretation and limits. Use a mechanism diagram, evidence table or quantitative chart where it helps explain the paper; avoid decorative chart quotas. Generate report_visuals.md with the local gallery helper for original images, and register derived visual assets/backing data as specified in the shared contract. Open the final report in an available viewer and inspect legibility and image resolution; disclose if rendered layout could not be checked. Save all text, target analysis, assets and backing data before handing off to 08. A report's target, captions and charts are reviewed evidence, not post-approval cosmetic additions.
-
-## Revision 2.4 execution safeguards
-
-Read [Reliable execution](../../references/reliable-execution.md) before this stage. It defines small-team ownership, direct reviewer image capability and session evidence, generated/validated handoffs, source-anomaly comparison checks, dependency-aware repairs and full end-of-report display inspection. A reviewer unable to see source pixels cannot accept a visual paper by relying on writer records. Use the current review template and plain gate strings. Preserve actual blockers and never invent acceptance. Keep one canonical set of scientific IDs; update existing records instead of creating overlapping accounts of the same evidence.
-
-## Revision 2.5 dependency synchronization
-
-For failed-review repairs, finish canonical records, claims, notes, manual and generated notebooks, gate evidence, report, target analysis and visual data/captions as one batch. Regenerate outputs before scanning. New runs require repair-scan and a completed per-file report under repair_sync/; then use repair-ready --sync-file. Later current-file changes reopen readiness. Read [the shared repair synchronization contract](../../references/repair-synchronization.md).
+Finish all text, targets and assets and inspect final display, then pass preflight under [EXECUTION.md](../EXECUTION.md) and send to 08 for the same-round accuracy/explanation check. Owner cannot approve readability. No word-count, heading or keyword quota grants acceptance. A concise report still explains its argument; the notebook remains complete. DATA_CONTRACT.md defines output ownership.

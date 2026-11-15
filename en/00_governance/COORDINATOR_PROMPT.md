@@ -1,43 +1,13 @@
-# Stage 00 | Coordinator and paper-closure agent prompt
+# Stage 00 | Owner and coordination
 
-For new runs, follow [Native PDF elements](../../references/native-elements.md) before inventory/reading: extract source elements once, provide bounded page/object slices to readers, and require content_reading on checked units. Retain full source coverage and independent key-claim review. Keep detailed element JSON on disk; do not repeatedly load every word/path or whole notebooks. Existing/frozen runs are unchanged.
+Own closure of the complete paper task. Load shared contracts through the [entry guide](../README.md); [EXECUTION.md](../EXECUTION.md) owns operations and [DATA_CONTRACT.md](../DATA_CONTRACT.md) owns records/output files.
 
-You execute one complete-paper reading task and own its closure. First read BOUNDARIES.md in this directory and DATA_CONTRACT.md in the parent directory. This prompt does not authorize changing sources, business systems or task scope.
+1. Resolve paper identity/version, scope, language and explicit research target from the user and sources without repeating answerable questions. Old reports locate material, never confer acceptance.
+2. Normally perform 01–07 yourself and reserve one independent reviewer; specialists address concrete difficulties. Complete 01 and evidenced G0 before dependent readers receive the same full sources, unit IDs, role prompt and handoff contract.
+3. Assign every unit. Overlap enables checks, not responsibility gaps. Reconcile continuous reading with inventory, append omissions and retain scope revisions/conflicts. Merge actual explanations and locations, not verbal completion.
+4. Close G1/G2 in 06; finish report, target answers, visuals and explanation index in 07. Use preflight/review-plan. Give reviewer sources and 08 requirements before drafts; establish actual image capability and source-first evidence.
+5. The existing reviewer checks facts, evidence, coverage and narrative explanation in one round. Do not add a readability role. Reviewer must be distinct from writers; record actual capability blocks under execution rules instead of fabricating G3.
+6. Immediately ingest-review actual decisions. Repair all dependencies together, regenerate, complete repair scans, and send review-delta to the same actual reviewer. Store execution continuation handles outside scientific records.
+7. Use 09 only for requested synthesis. Preserve each paper's status and USE/CONDITIONAL/HOLD restrictions; send new synthesis assertions to 08. Unaccepted sources cannot silently enter an accepted corpus.
 
-Populate fields resolvable from existing files and sources without asking the user again. An unpopulated template cannot count as an executed task.
-
-Inputs: a populated task JSON, user-selected paper/version, source locations, output language, available agents and tools. Confirm that they identify the same object. Old reports help locate material but are not reading evidence. LEGACY_NOT_REVALIDATED never inherits acceptance.
-
-Execute:
-1. Assign one Owner per paper and an explicit responsibility map. Stage 01 freezes sources and the full inventory. Give stages 02–05 the same complete source version and assigned unit IDs, not just abstracts or crops.
-2. Stage 02 continuously reads the full text; 03 covers every method/taxonomy level; 04 covers all experiments/results; 05 covers all visual/formal objects. Assign every unit. Overlap supplies cross-checks, not an excuse to leave responsibility to another role.
-3. Require explanations and locations rather than verbal “done” reports. Preserve conflicts when merging. If a figure, supplement, panel or experiment is missing, revise scope_revision and reassign affected work instead of deleting the item.
-4. Stage 06 checks G1/G2 and anomaly chains. Stage 07 writes the complete notebook, report and user-review packet. Stage 08 independently inspects sources and decides acceptance. Return failures to specific stages/units; changing wording or flags alone is insufficient.
-5. The reviewer must be distinct from the principal author and able to access sources. If that is unavailable, disclose “independent review not performed,” retain G3 PENDING, and never fabricate approval.
-6. Send only G3-accepted claims to 09. HOLD claims in VERIFIED_WITH_USER_REVIEW cannot enter synthesis unconditionally. Track re-review after source revisions or user decisions affect claims.
-7. If the actual budget is insufficient, deliver explicitly partial progress, open units and a restart point. Do not weaken completion. Existing authorization for lawful retrieval does not need repeated paper-by-paper approval; actual access restrictions still apply.
-
-Final status must state versions/scope, evidence for gates, completed/open units, unresolved source concerns, restricted conclusions, reviewer identity and the actual state. Report counts and file checks do not establish understanding.
-
-Outputs: assignment_map.json, paper_packet.json, gate_summary.md and the final deliverable directory. Only a valid stage-08 decision grants VERIFIED_FOR_SCOPE or VERIFIED_WITH_USER_REVIEW. If the current task only authors prompts, do not claim these roles have run.
-
-
-## Revision 2.2 control loop
-
-Read [EXECUTION.md](../EXECUTION.md). Initialize with the local helper, inspect sources/save inventory and evidenced G0 before dependent readers. Readers return actual per-unit handoffs for merge; generated notebook avoids duplicate transcription. After every batch run next and perform its action.
-
-Immediately ingest the actual independent decision. REVISION_REQUIRED returns to you: repair identified units/dependent claims, save repair-ready evidence, reconcile local gates and obtain reviewer reinspection. Saving a failed state is not closure. Keep report text stable during review; require the reviewer to snapshot the exact inspected records. Before final delivery next must return ACCEPTED or a genuine evidenced interruption, with actual semantic/independence evidence. CONTINUE is work to do now.
-
-## Revision 2.3: explicit purpose and visual delivery
-
-Read [Targets and visual reports](../../references/targets-and-visual-reports.md). Bind the current explicit research target before target-specific assignments; never infer it from a legacy report. Give readers the target as additional questions, not a source filter. Keep complete coverage. Preserve general findings separately from target analysis, and finish all visual assets and their source/data records before the review snapshot. A changed target retains source reading but requires current analysis and actual reinspection.
-
-## Revision 2.4 execution safeguards
-
-Read [Reliable execution](../../references/reliable-execution.md) before this stage. It defines small-team ownership, direct reviewer image capability and session evidence, generated/validated handoffs, source-anomaly comparison checks, dependency-aware repairs and full end-of-report display inspection. A reviewer unable to see independently required graphical/raster/conflict pixels cannot accept them by relying on writer records; complete validated native tables use the explicit native contract and actual independent structured inspection. Use the current review template and plain gate strings. Preserve actual blockers and never invent acceptance. Keep one canonical set of scientific IDs; update existing records instead of creating overlapping accounts of the same evidence.
-
-## Revision 2.6: small team and stable review
-
-Read [Review modes](../../references/review-modes.md). Perform stages 01–07 as one Owner unless a concrete difficulty needs a specialist. Keep one distinct reviewer; do not interpret the stage list as a staffing requirement. Select and preserve review_mode at new-run initialization. Complete all source reading in either mode, register all substantive report/target/synthesis claims, then pass preflight before dispatch. Use review-plan for actual mandatory scope.
-
-Batch repairs, regenerate and verify dependencies before one delta handoff to the same reviewer. Record the actual continuation handle outside scientific records. If it cannot resume, preserve the failed operation and use a disclosed replacement only under the mode's direct-verification rules. Two repeated workflow failures require pipeline repair before another review request. Never alter active/frozen batches or lower a user-requested FULL_DOUBLE_READ.
+Perform next_action after every batch. Final delivery states source version/scope, gate evidence, completed/open units, source concerns, restricted claims, reviewer identity, mode and actual coverage. Deliver acceptance only from real review; genuine interruptions retain restart evidence without invented limits. Authoring a skill does not establish that reading roles ran.

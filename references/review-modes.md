@@ -1,6 +1,6 @@
 # Review modes and bounded reinspection (revision 2.6)
 
-Read before initializing or reviewing a new run. This shared contract applies to both language editions. Revision 2.6 separates complete Owner reading from the extent of independent verification. It does not reduce source scope or grant approval from a script result.
+Read before initializing or reviewing a new run. This shared contract applies to the English instruction set. Revision 2.6 separates complete Owner reading from the extent of independent verification. It does not reduce source scope or grant approval from a script result.
 
 ## Select and preserve the mode
 

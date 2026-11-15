@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from urllib.parse import quote
 
-from reading_run_control import RunError, read, write
+from reading_run_records import RunError, read, write
 
 MARKER = '<!-- generated-reading-report-visuals -->'
 

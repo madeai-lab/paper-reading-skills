@@ -1,12 +1,4 @@
-# Handoff data contract
-
-## Revision 2.7 acquisition records
-
-`content_acquisition` binds `method=PDFPLUMBER_NATIVE` and `manifest_ref=source_elements/manifest.json` for new runs only. The manifest binds the source hash, parser and detailed page-file hashes. Every checked new-run unit records `content_reading` with `mode=NATIVE_ELEMENTS|VISUAL|MIXED`, existing `page_refs`, exact `element_ids` and `conflict_resolution_refs`. IDs must resolve to the correct source/page/object; no unresolved parsing conflict may be hidden. Only a complete validated TABLE can substitute this for pixel viewing, preserving `actually_viewed=false` when appropriate. FIGURE/PANEL/OTHER_VISUAL remain actual-viewing objects. For required native tables accepted without pixels, the reviewer records its own `structured_inspection` with inspected `unit_ids` and local `evidence_refs`; other textual evidence still requires actual source/claim checking. Owner flags do not transfer. Read [Native PDF elements](../references/native-elements.md) for routing, evidence limits and commands. Extraction files and resolution evidence are snapshot-bound; changes reopen affected dependencies. Missing fields in earlier runs do not enable the exception or migrate the run.
-
-## Revision 2.6: review mode
-
-Read [Review modes](../references/review-modes.md) before applying earlier revision guidance. New runs default to KEY_CLAIMS; FULL_DOUBLE_READ retains complete independent double reading. Missing mode retains legacy full-review behavior. The Owner still covers all source units; stage-08 scope depends on the recorded mode. Existing active/frozen runs are never migrated.
+# Handoff data contract — current contract 2.8
 
 Use the same task, source, unit, experiment, claim and issue IDs across stages. Field names remain English; prose may use the selected language. The [shared template](../shared/packet.template.json) is empty scaffolding, not completed evidence.
 
@@ -57,58 +49,38 @@ paper_packet contains task_id, paper_id, scope_mode, scope_revision, paper_statu
 
 Each gate_results entry records PASS, FAIL or PENDING, reasons and open items. Only the independent review decision grants G3 PASS. Do not reconstruct approvals from a report title or checked boxes without underlying evidence.
 
-## 5. Final deliverables
+## Current records, handoffs and deliverables
 
-- paper_packet.json: coordinator's merged index.
-- full_notebook.md: complete unit-level reading notebook linking specialist records.
-- report.md: readable report with explicit scope and status.
-- material_index.md: sections, figures/panels, experiments, taxonomy, equations and appendices.
-- user_review.md: unresolved SOURCE_ANOMALY chains. If none are found, state the review scope; do not invent concerns.
-- independent_review.json / .md: independent review outcome.
-- Other specialist JSON/Markdown files follow stage prompt names. Preserve source files/renderings only in authorized locations and respect source rights when sharing.
+paper_packet.json is the canonical current scientific record. 01_sources.json and 01_inventory.json own source identity and unit identity/locators; sync after changing them. A reading handoff cannot change unit identity, kind, hierarchy or locators. The packet also records owner_id, writer_ids, skill_revision, review_mode, research_target, content_acquisition, review_requirements and deliverables. execution_state.json owns stage, open_unit_ids, next_actions, blockers and repair progress, not a second scientific account.
 
-## 6. Revision 2.2 run records and checker
+Handoff top-level keys are limited to writer_id, units, methods_taxonomy, experiments, claims, issues and gate_results. Collections are arrays of objects; gate_results is an object. Use handoff-template, validate-handoff, then merge. Only Owner supplies evidenced G0–G2 with decision=PASS|FAIL|PENDING, evidence_refs and open_items. Only actual independent review supplies G3. READ/UNDERSTOOD never automatically becomes CHECKED.
 
-Also record owner_id, writer_ids (all actual writing agents) and skill_revision in paper_packet. Maintain stage, open IDs, next actions, blocker reasons/attempts/outcomes and repair history in execution_state.json using the [template](../shared/execution-state.template.json). Update on every handoff. Never remove inventoried IDs to satisfy the checker; append discoveries with scope revisions and retain locator-correction history.
+| Artifact | Writer and purpose |
+|---|---|
+| paper_packet.json | Controller merges current units, methods, experiments, claims and issues |
+| full_notebook.md, material_index.md | Controller-generated from packet; do not hand-edit; follow actual deliverables paths |
+| report.md, user_review.md | Owner explains the paper and unresolved source concerns; state checked scope if none remain |
+| report_readability.json | Owner passage/display index bound to final report bytes |
+| target_analysis.json | Owner answers all current explicit target questions when a target exists |
+| report_visuals.md | Gallery helper generates from registered inspected assets; retain derived-data provenance |
+| reviews/, independent_review | Reviewer evidence and decisions; controller preserves actual decisions/history |
+| handoffs/, repair_sync/ | Raw handoff history and per-request repair scans, never current note mirrors |
 
-The read-only checker expects 01_inventory.json as a unit array and paper_packet under this contract. Gate evidence_refs, unit evidence_refs, visual artifact_refs, source_first_inventory_ref and deliverables values use existing local path strings relative to the run directory or absolute. Keep source locators separately in locators and URLs in source_refs. The five deliverables keys are full_notebook, report, material_index, user_review and independent_review.
+Former stage filenames such as 02_units.json, 04_experiments.json and 06_claims.json are not additional mandatory canonical files. Keep useful specialist evidence notes and reference them through evidence_refs; avoid parallel current numerical, claim or experiment accounts. Existing manual notebooks are preserved; the generator may select an alternative output path. Existing current notes participate in applicable repair scans/snapshots even if unlinked.
 
-Expand checked_unit_ids and checked_claim_ids into actual ID lists rather than natural-language ranges. The last reviews entry is the actual current-revision decision. Explain NON_INFORMATIVE objects and include them in review. Use comparison_id/same_as for repeated presentation of one experimental comparison without double-counting evidence.
+## Detailed field authorities
 
-The script detects record inconsistencies. It cannot judge semantic understanding, authenticate reviewer identity or actual viewing, or detect a source object absent from the inventory. Actual work, source-first review and tool records establish those; exit code0 is not G3 evidence.
+- [Native elements](../references/native-elements.md): content_acquisition, content_reading, structured_inspection, source/page/element binding and conflict evidence. Only complete validated native TABLE records qualify for the structured alternative.
+- [Review modes](../references/review-modes.md): review_mode, coverage_label, coverage_check, mandatory IDs, sampling and continuation. Every current claim is mandatory; comparison_id/same_as prevent duplicate evidence counting.
+- [Reliable execution](../references/reliable-execution.md): reviewer_session_id, visual_inspection and the four reviewed_* snapshot fields. The actual reviewer supplies these; review.gate_decisions uses plain gate strings.
+- [Targets and visuals](../references/targets-and-visual-reports.md): explicit research_target, target_analysis, report_visuals and derived data provenance. Target purpose is distinct from paper identity and does not reduce coverage.
+- [Reader explanations](../references/reader-explanations.md): six passage checks, all experiments, display evidence, report hash and the same reviewer's semantic judgment. Use the [template](../shared/report-readability.template.json); no word-count score grants approval.
+- [Repair synchronization](../references/repair-synchronization.md) and [incremental review](../references/efficient-reinspection.md): repair_requests, repair_progress and per-file dispositions. READY_FOR_REVIEW is not acceptance.
 
-### Current review snapshot and narrowed scope
+Evidence paths resolve to existing local files, relative to the run or absolute. Keep page/object locations in locators and URLs in source_refs. Expand checked_unit_ids/checked_claim_ids into actual IDs. The last reviews entry is the current decision; template_only cannot be true. Use new review IDs and preserve failed decisions/closure evidence.
 
-Reviews must include reviewed_scope_revision and reviewed_source_hashes (source_id to actual sha256), populated independently by the reviewer from inspected materials. Review gate_decisions must agree with every packet gate. Source/scope changes invalidate old review; the Owner must not copy new hashes into an old approval. Important interpretation/value/claim changes require B16 re-review. The helper binds recorded explanations and local evidence with reviewed_content_sha256; semantic adequacy still requires actual review.
+## Compatibility and completion
 
-Only explicit user narrowing permits scope_mode=USER_DEFINED_SCOPE while retaining original inventory IDs. Each scope_exclusions entry records unit_id, reason, a local user_authorization_ref containing actual user authorization and the current scope_revision. The retained unit uses read_state=OUT_OF_SCOPE without fabricated understanding. The reviewer checks exclusion evidence and lists its ID. The report prominently states PARTIAL_SCOPE and the actual subset, never full-paper completion. COMPLETE_PAPER permits no such exclusion. HOLD claims relying on excluded unread objects. The Owner cannot narrow scope to satisfy the checker.
+New 2.8 runs enable reader_explanation; new runs since 2.7 bind native acquisition; missing review_mode retains legacy full independent review. Never retrofit active/frozen runs or delete new-run fields to evade their contract. Only USER_DEFINED_SCOPE permits evidenced user-authorized OUT_OF_SCOPE exclusions; retain units and scope revision without claiming complete-paper coverage.
 
-repair_requests contains currently open requests only. Move repaired items into closed_repairs or retain previous reviews/history with closure evidence. The last review cannot have template_only=true; an empty template grants no acceptance.
-
-### Executable handoffs and current-content snapshot
-
-See [EXECUTION.md](EXECUTION.md) for helper commands. Use init/sync/merge rather than rebuilding canonical JSON. Gate objects use decision, evidence_refs, open_items; execution_state uses stage, open_unit_ids, next_actions (not phase/open_ids/next_action). A raw handoff has writer_id and only units/methods_taxonomy/experiments/claims/issues/gate_results as needed. The notebook is rendered from these records; put the complete source-specific explanation in the unit, not a promise of future detail. Preserve other roles' work and record unresolved conflicts as issues.
-
-The reviewer independently runs snapshot after inspecting the final packet and copies reviewed_content_sha256 into its review along with reviewed_scope_revision and reviewed_source_hashes. It binds inventory, source inventory, recorded units/methods/experiments/claims/issues, local source/evidence files, notebook/index and report/user_review text. It excludes execution/review outputs to avoid circular hashes. A changed source locator, explanation, evidence or report requires reinspection and a new review. Snapshot tokens can be copied falsely, so actual tool sequence/identity remains necessary evidence. Older review records without this field are historical evidence, not current 2.2 acceptance.
-
-repair_requests entries use repair_id, unit_ids, responsible_role and required_action with source/impact evidence. repair-ready stores READY_FOR_REVIEW and evidence_refs in state.repair_progress, never closes reviewer requests. Reviews are append-only by unique safe review_id. Use ingest-review, including failed decisions, so the Owner receives an executable repair queue. Current failed requests remain open until actual reinspection.
-
-next returns CONTINUE, ACCEPTED or INTERRUPTED_WITH_EVIDENCE with may_send_final/paper_accepted. CONTINUE requires doing next_action, not a final answer listing it. The helper cannot force the host/model to continue. An interruption record must match an actual documented constraint; generated text alone is not evidence of one.
-
-## Revision 2.3 extensions
-
-The optional research_target and report_visuals packet fields, target_analysis.json, report_visuals.md and quantitative backing-data contracts are defined in [Targets and visual reports](../references/targets-and-visual-reports.md). research_target is distinct from bibliographic target_identity. The helper binds it at init --target or set-target --file; target changes preserve source units but invalidate acceptance of changed interpretation/report. Target-specific analysis remains separate from general source findings. Optional fields are omitted from legacy fingerprints when null/absent; existing runs are not automatically migrated or reapproved.
-
-Register display images and derived-chart backing data with artifact_refs/evidence_refs. The snapshot also binds simple inline Markdown images; complex/reference-style or HTML images require explicit registration. Generated display and structural validation do not establish actual viewing, scientific understanding or semantic acceptance. Complete target analysis and visual output before the reviewer snapshots the packet.
-
-## Revision 2.4
-
-The shared [Reliable execution contract](../references/reliable-execution.md) is required. Graphical/raster/conflict objects require the reviewer's own visual_inspection/session/observation evidence for accepted G3; new native-acquisition runs may independently inspect validated complete tables under [Native PDF elements](../references/native-elements.md). Runs without that explicit acquisition contract retain their prior visual requirements. Use handoff-template and review-template; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing runs are not migrated. Templates and structural checks cannot establish actual inspection, independence or understanding. A blocked required image channel retains G3 unaccepted.
-
-## Revision 2.6 review fields
-
-`task.review_mode`, `packet.review_mode` and `review.review_mode` use KEY_CLAIMS or FULL_DOUBLE_READ. Missing packet mode means legacy FULL_DOUBLE_READ, not the new default. No active/frozen migration is implied. The controller computes all current claim IDs as mandatory key_claim_ids; `review_requirements.key_unit_ids` adds mandatory unit IDs. Claim supporting_units, experiment unit_refs, issue links and recursive unit dependencies/parent context determine required evidence units. All report/target/synthesis substantive assertions must be registered; the reviewer checks semantic completeness.
-
-The review records the computed coverage_label, actual checked_unit_ids/checked_claim_ids and `coverage_check` with source_structure_checked=true, owner_coverage_checked=true, omissions=[], evidence_refs pointing to existing reviewer evidence. These true values require actual work. In KEY_CLAIMS checked IDs cover every current claim, required dependency unit and controller-planned stratified ordinary sample; direct reviewer visual records cover the required inspected visual units. FULL_DOUBLE_READ retains all-unit coverage using the native contract when explicitly enabled; legacy runs retain their previous all-unit/all-visual requirements. Owner coverage remains complete in every mode.
-
-After an earlier review, `continuation` records previous_review_id, retained_unit_ids, rechecked_unit_ids and replacement_reason when relevant. Retained coverage requires the same actual reviewer_session_id and verified unchanged content. Rechecked IDs mean actual new inspection; replacements do not inherit predecessor viewing. A new review ID and all four fresh snapshot fields bind the actual current decision. State complete Owner reading and independent coverage mode separately; the same accepted state must not imply full independent double reading for KEY_CLAIMS.
+Changes to sources, locators, explanations, reports or evidence reopen affected dependencies and review. Four snapshot fields bind the actual inspected version; never refresh an old approval token. See [EXECUTION.md](EXECUTION.md) for the control loop and evidenced interruption. Scripts cannot prove reading, understanding, viewing, independence or complete source inventory.

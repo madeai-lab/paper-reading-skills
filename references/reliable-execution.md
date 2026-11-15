@@ -1,6 +1,6 @@
 # Reliable execution (revision 2.7)
 
-Read this before executing or reviewing a reading run, together with [Native PDF elements](native-elements.md) and [Review modes](review-modes.md). It supplements both language editions. Reviewer coverage below is mode-specific for new 2.6 runs; complete Owner reading is unchanged. Existing source, authorization and full-coverage boundaries still apply. These rules address observed failures; they do not turn structural checks into proof of understanding.
+Read this before executing or reviewing a reading run, together with [Native PDF elements](native-elements.md) and [Review modes](review-modes.md). It supplements the English instruction set. Reviewer coverage below is mode-specific for new 2.6 runs; complete Owner reading is unchanged. Existing source, authorization and full-coverage boundaries still apply. These rules address observed failures; they do not turn structural checks into proof of understanding.
 
 ## Keep the team and records small
 

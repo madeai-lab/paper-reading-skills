@@ -20,9 +20,10 @@ For qualitative work, inspect case selection, coding, observations and argument.
 
 Before flagging anomalies, recheck definitions, versions, rounding and extraction. Send original values, calculations and effects to 06. Never repair the paper silently or reject its entire contribution because of one reporting concern.
 
-Outputs: 04_experiments.json, 04_experiment_notes.md, 04_open_questions.md. Record every experiment, including appendix-only results. An average success rate does not replace understanding all experimental conditions.
+Delivery: submit source-specific unit explanations and specialist records through a validated handoff under the [data contract](../DATA_CONTRACT.md). Save stage notes only as useful evidence; do not maintain parallel current scientific JSON mirrors.
 
-Revision 2.2: read the [execution contract](../EXECUTION.md). After each chunk update records/open IDs and continue the next accessible unit. Do not stop with a partial report after representative items. Only an actual EXECUTION interruption permits checkpointed handoff.
+Record every experiment, including appendix-only results. An average success rate does not replace understanding all experimental conditions.
 
 Population discipline: batch-initialize IDs and empty fields, not completed interpretations from generic defaults. Ground truth, comparators, budgets and uncertainty need source passages applicable to each experiment. A global setting applies only where its stated scope covers that experiment. Separate author assertions of sufficient samples/reference stability from displayed stability tests; the clustering output being evaluated cannot serve as its own independent ground truth. External references or proxy labels require provenance and limitations.
-Execution handoff (2.2): follow [EXECUTION.md](../EXECUTION.md). Return source-specific unit explanations and specialist records using its merge payload; keep raw role evidence. Do not defer granular content or change inventory identity in a handoff. The Owner merges and performs next_action; a stage summary alone does not complete the paper. Stage 01 saves inventories before dependent readers; stage 07 finishes report/user-review text before the review snapshot.
+
+Follow the shared loop in [EXECUTION.md](../EXECUTION.md) and [file ownership/loading routes](../../references/architecture.md). Keep the stage-specific checks above; perform next after each batch. Finishing this responsibility is not paper acceptance.

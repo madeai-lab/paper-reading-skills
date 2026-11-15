@@ -1,6 +1,6 @@
 # Research targets and visual reports (revision 2.3)
 
-Read this reference when configuring a research purpose or preparing/reviewing a report. It applies to both language editions; write deliverables in the user's requested language. The source-reading and independent-review requirements remain in force. New acquisitions follow [Native PDF elements](native-elements.md): body text/table cells/native labels use structured evidence first, while displayed image assets and graphical/raster/conflict content still require actual viewing. The table exception never grants a gallery image viewing flag.
+Read this reference when configuring a research purpose or preparing/reviewing a report. It applies to the English instruction set; write deliverables in the user's requested language. The source-reading and independent-review requirements remain in force. New acquisitions follow [Native PDF elements](native-elements.md): body text/table cells/native labels use structured evidence first, while displayed image assets and graphical/raster/conflict content still require actual viewing. The table exception never grants a gallery image viewing flag.
 
 ## Explicit research target
 
@@ -111,3 +111,7 @@ Before snapshotting, open the finished report in an available Markdown/document 
 The reviewer checks the current target, every new target-specific assertion, visual provenance, backing data/calculations and finished display, in addition to existing source-first review. Captions and charts must preserve the same restrictions as claims. No presentation preference can weaken a gate.
 
 Snapshots bind optional target/visual records, their registered assets/backing data, `report_visuals.md` and `target_analysis.json`. Simple inline Markdown image destinations in registered Markdown files are also hashed, including URL-encoded local paths; complex/reference-style Markdown and raw HTML images must use registered `artifact_refs` because the helper is not a full Markdown/HTML parser. For portable reports keep all assets inside the run. Any change to source interpretations, target, data, chart or caption requires real reinspection and a new review; never update a token in an old approval.
+
+## Revision 2.8
+
+Read [Reader explanations](reader-explanations.md). New reports must explain core mechanisms, metric interpretation and every experimental comparison, with a compact Owner passage index and the same independent reviewer's semantic judgment. The local preflight enforces current records and hashes, not prose quality. No extra agent, full rereading for styling, or migration of old runs is introduced.

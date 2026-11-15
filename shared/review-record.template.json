@@ -49,5 +49,12 @@
   "structured_inspection": {
     "unit_ids": [],
     "evidence_refs": []
+  },
+  "report_readability": {
+    "decision": "PENDING",
+    "report_sha256": null,
+    "checked_dimensions": [],
+    "checked_experiment_ids": [],
+    "assessment": ""
   }
 }

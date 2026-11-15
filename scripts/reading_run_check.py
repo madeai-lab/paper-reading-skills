@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 from reading_review_contracts import structure_errors, visual_review_errors
 from reading_review_modes import coverage_errors
+from reading_report_quality import quality_errors
 from reading_element_contracts import element_errors, native_unit_errors, native_table_ready
 
 VERIFIED = {"VERIFIED_FOR_SCOPE", "VERIFIED_WITH_USER_REVIEW"}
@@ -45,6 +46,7 @@ def inspect_run(root, require_review=True):
     errors.extend(structure_errors(packet))
     errors.extend(element_errors(root, packet))
     errors.extend(native_unit_errors(root, packet))
+    errors.extend(quality_errors(root, packet))
     ids = [u.get("unit_id") for u in units]
     if len(set(ids)) != len(ids) or None in ids:
         error("UNIT_ID_INVALID", "units", "Assign unique, non-null unit IDs.")
@@ -171,6 +173,7 @@ def inspect_run(root, require_review=True):
                 error('REVIEW_CONTENT_STALE', 'G3', 'Reinspect changed report, target, records and visual assets; obtain a new actual review.')
         evidence(review.get("source_first_inventory_ref"), "source-first review")
         errors.extend(coverage_errors(root, packet, review))
+        errors.extend(quality_errors(root, packet, review))
         if review.get("unresolved_reading_gaps") or review.get("repair_requests"):
             error("REVIEW_REPAIRS_OPEN", "G3", "Complete requested repairs and obtain re-review.")
     deliverables = packet.get("deliverables", {})

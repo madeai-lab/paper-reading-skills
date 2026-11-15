@@ -105,8 +105,8 @@ Verification means coverage and interpretation within the source scope have unde
 A source/version, inventory, important value, interpretation or report-claim change triggers re-review of affected units and dependent claims, visuals, cards and synthesis. The coordinator cannot just change a completion flag or inherit an old approval. Roles cannot delete inventory units to improve coverage.
 
 
-Revision2.1: actually execute and close B14 gates. B15 PARTIAL_SCOPE describes incompleteness; it does not authorize early stopping without a genuine block. Follow the [execution contract](../EXECUTION.md); never invent resource/permission limits.
+Execution closure: actually execute and close B14 gates. B15 PARTIAL_SCOPE describes incompleteness; it does not authorize early stopping without a genuine block. Follow the [execution contract](../EXECUTION.md); never invent resource/permission limits.
 
-## Revision 2.6: complete reading versus independent scope
+## Complete reading versus independent scope
 
 Apply [Review modes](../../references/review-modes.md). B02–B08 require full Owner coverage in every mode. KEY_CLAIMS independently verifies all current claims, their evidence dependencies and a stratified ordinary sample, checking source/Owner coverage and expanding on errors. FULL_DOUBLE_READ independently checks every unit through the source-appropriate route, including the narrow native-table exception only when explicitly enabled; absent acquisition/mode fields retain legacy requirements. Record actual mode/coverage and never call sampled ordinary verification complete independent double reading. NON_INFORMATIVE and scope exclusions still require independent justification. Do not modify active/frozen runs to adopt the new default.

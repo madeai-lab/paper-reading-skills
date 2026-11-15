@@ -17,5 +17,4 @@ Give every unit a stable ID and parent/child links. Keep units INVENTORIED until
 
 Outputs: 01_sources.json, 01_inventory.json, 01_scope_gaps.md. Recommend G0 with evidence; inventory completion does not pass G1 or G3. Repair omissions discovered later, increment scope_revision and preserve the change record.
 
-Revision 2.2: save the complete source inventory before dependent stages02–05 start. Establish the baseline page by page; append required IDs rather than removing them to pass acceptance. Preserve scope/locator correction history. Record missing material and next actions in execution_state; an inventory is not final paper delivery.
-Execution handoff (2.2): follow [EXECUTION.md](../EXECUTION.md). Return source-specific unit explanations and specialist records using its merge payload; keep raw role evidence. Do not defer granular content or change inventory identity in a handoff. The Owner merges and performs next_action; a stage summary alone does not complete the paper. Stage 01 saves inventories before dependent readers; stage 07 finishes report/user-review text before the review snapshot.
+Follow the shared loop in [EXECUTION.md](../EXECUTION.md) and [file ownership/loading routes](../../references/architecture.md). Keep the stage-specific checks above; perform next after each batch. Finishing this responsibility is not paper acceptance.

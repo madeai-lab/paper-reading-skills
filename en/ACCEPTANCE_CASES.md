@@ -1,5 +1,6 @@
 # Acceptance scenarios: does the workflow change behavior?
 
+These are regression scenarios, not execution overrides or completed trials. Version labels identify legacy compatibility cases; new runs follow the current shared contracts.
 These are workflow counterexamples, not paper facts or results of actual agent runs. For behavioral evaluation, give an agent the raw materials/task without the expected answer; an evaluator then checks this table. Static comparison alone is not a successful real-agent behavior test.
 
 | ID | Input or temptation | Required behavior | Failure behavior |
@@ -87,3 +88,12 @@ These scenarios specify expected behavior, not executed trial results. Report ac
 | N10 | Existing/frozen run lacks content_acquisition | Keep its original acquisition/visual rules | Retrofit a native-table exception into old acceptance |
 
 These are behavioral acceptance scenarios, not claims of completed live trials.
+
+## Revision 2.8 cases
+
+- All units CHECKED but losses or comparator groups unexplained: semantic review requires repair; coverage counts cannot offset the gap.
+- Missing explanation index, omitted experiment, nonexistent excerpt or stale report hash: local dispatch/acceptance check fails.
+- Complete Owner index but no independent PASS assessment: acceptance fails; failed reviews still ingest concrete repairs.
+- Theory paper without experiments: empty experiment array allowed; explain actual derivation/evidence without inventing experiments.
+- Demonstrably unavailable viewer: retain failure evidence and layout limits; do not claim viewing or waive source-image requirements.
+- Frozen revision-2.7 run: new fields are not imposed; FULL_DOUBLE_READ retains complete independent coverage.

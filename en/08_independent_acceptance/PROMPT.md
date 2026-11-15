@@ -27,3 +27,9 @@ Use the current review template. Record actual reviewer/session identity, review
 Follow [efficient reinspection](../../references/efficient-reinspection.md) and [repair synchronization](../../references/repair-synchronization.md). Keep the same actual reviewer. Inspect review-delta, repair closure, affected dependencies, new evidence and per-file dispositions. Retain only your own verified unchanged coverage and record continuation.previous_review_id, retained_unit_ids and rechecked_unit_ids. Take a fresh snapshot after inspection. Replacement reviewers disclose replacement_reason and directly check every current claim and repair they accept; predecessor notes are attributed evidence, not inherited viewing.
 
 A failed decision returns to Owner. Repeated workflow failure goes to pipeline diagnosis before another dispatch, not automatic approval. KEY_CLAIMS acceptance is not full independent double reading.
+
+## Explanation check in the existing review
+
+Read [Reader explanations](../../references/reader-explanations.md). Judge whether the current report lets a reader reconstruct the problem, mechanism, metrics, each experiment comparison, visual encoding and conclusion limits without opening internal JSON. The Owner index locates passages; it does not grant your acceptance. Check all six dimensions and experiments, adapting theory/review evidence. No word count, heading, keyword or record-count score establishes quality.
+
+In review.report_readability record your own decision=PASS|NEEDS_REPAIR, report_sha256, checked_dimensions, checked_experiment_ids and concrete assessment. Acceptance requires PASS with complete coverage. Return all explanation defects and dependencies together with scientific repairs; reuse this reviewer and check affected new assertions, without full rereading for style changes. Preserve FULL_DOUBLE_READ.

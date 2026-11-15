@@ -39,9 +39,10 @@
     "report": null,
     "material_index": null,
     "user_review": null,
-    "independent_review": null
+    "independent_review": null,
+    "report_readability": null
   },
-  "skill_revision": "2.7",
+  "skill_revision": "2.8",
   "owner_id": null,
   "writer_ids": [],
   "scope_exclusions": [],
@@ -49,7 +50,8 @@
   "review_requirements": {
     "direct_visual_inspection": true,
     "repair_dependency_sync": true,
-    "key_unit_ids": []
+    "key_unit_ids": [],
+    "reader_explanation": true
   },
   "review_mode": "KEY_CLAIMS",
   "content_acquisition": {

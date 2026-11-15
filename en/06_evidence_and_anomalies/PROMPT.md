@@ -19,17 +19,13 @@ Handle concerns:
 
 Keep READING_GAP, WORKFLOW_ERROR, SOURCE_ANOMALY and VERSION_DIFFERENCE distinct. Repair agent errors. Preserve source anomalies for the user. user_decision remains null until a reply, and human choice is not automatically factual evidence.
 
-Outputs: 06_claims.json, 06_issues.json, 06_gate_G1_G2.md. Each issue follows the complete contract with source links. G2 may pass with unresolved SOURCE_ANOMALY items if affected claims are HOLD/CONDITIONAL. G1 cannot pass with open reading gaps. This is reading/argument verification, not experimental replication.
+Delivery: submit source-specific unit explanations and specialist records through a validated handoff under the [data contract](../DATA_CONTRACT.md). Save stage notes only as useful evidence; do not maintain parallel current scientific JSON mirrors.
 
-Revision 2.2: return repairable gaps to specific units and continue; an interesting anomaly analysis is not an endpoint. Verify field provenance during merge, preventing one ground truth/negative result from being assigned to unrelated experiments; deduplicate repeated comparisons. After G1/G2 hand off to07 and08 without signing independent approval yourself.
+Each issue follows the complete contract with source links. G2 may pass with unresolved SOURCE_ANOMALY items if affected claims are HOLD/CONDITIONAL. G1 cannot pass with open reading gaps. This is reading/argument verification, not experimental replication.
 
 Use heterogeneous-object spot checks to diagnose merge errors, never to grant complete acceptance. If template defaults contaminate one object, inspect every object produced by the same path and all dependents, not just the example. Preserve an author's prospective use/benefit as prospective; do not strengthen it into demonstrated improvement and then criticize the stronger claim.
-Execution handoff (2.2): follow [EXECUTION.md](../EXECUTION.md). Return source-specific unit explanations and specialist records using its merge payload; keep raw role evidence. Do not defer granular content or change inventory identity in a handoff. The Owner merges and performs next_action; a stage summary alone does not complete the paper. Stage 01 saves inventories before dependent readers; stage 07 finishes report/user-review text before the review snapshot.
 
-## Revision 2.4 execution safeguards
+Follow the shared loop in [EXECUTION.md](../EXECUTION.md) and [file ownership/loading routes](../../references/architecture.md). Keep the stage-specific checks above; perform next after each batch. Finishing this responsibility is not paper acceptance.
 
-Read [Reliable execution](../../references/reliable-execution.md) before this stage. It defines small-team ownership, direct reviewer image capability and session evidence, generated/validated handoffs, source-anomaly comparison checks, dependency-aware repairs and full end-of-report display inspection. A reviewer unable to see source pixels cannot accept a visual paper by relying on writer records. Use the current review template and plain gate strings. Preserve actual blockers and never invent acceptance. Keep one canonical set of scientific IDs; update existing records instead of creating overlapping accounts of the same evidence.
 
-## Revision 2.5 dependency synchronization
-
-For failed-review repairs, finish canonical records, claims, notes, manual and generated notebooks, gate evidence, report, target analysis and visual data/captions as one batch. Regenerate outputs before scanning. New runs require repair-scan and a completed per-file report under repair_sync/; then use repair-ready --sync-file. Later current-file changes reopen readiness. Read [the shared repair synchronization contract](../../references/repair-synchronization.md).
+During merge compare field provenance: do not copy one ground truth or negative result onto unrelated experiments. Deduplicate repeated evidence. After G1/G2 proceed to 07/08; the verification role cannot sign independent approval.

@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "template_only": true,
+  "report_sha256": null,
+  "checks": [
+    {
+      "dimension": "problem",
+      "report_excerpt": "",
+      "assessment": "",
+      "unit_refs": []
+    },
+    {
+      "dimension": "mechanism",
+      "report_excerpt": "",
+      "assessment": "",
+      "unit_refs": []
+    },
+    {
+      "dimension": "metrics",
+      "report_excerpt": "",
+      "assessment": "",
+      "unit_refs": []
+    },
+    {
+      "dimension": "experiments",
+      "report_excerpt": "",
+      "assessment": "",
+      "unit_refs": []
+    },
+    {
+      "dimension": "visuals",
+      "report_excerpt": "",
+      "assessment": "",
+      "unit_refs": []
+    },
+    {
+      "dimension": "limitations",
+      "report_excerpt": "",
+      "assessment": "",
+      "unit_refs": []
+    }
+  ],
+  "experiments": [],
+  "display": {
+    "status": "PENDING",
+    "evidence_refs": [],
+    "limitations": ""
+  }
+}

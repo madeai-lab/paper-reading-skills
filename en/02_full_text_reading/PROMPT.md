@@ -12,9 +12,10 @@ For long sources, record chunk boundaries and overlapping context. Resolve defin
 
 Provide concise explanations and actual locators for each unit. Distinguish READ from UNDERSTOOD. If you cannot explain a relationship, condition or term, mark BLOCKED and identify where to revisit. Do not expose private reasoning chains or offer “I understood it” as evidence.
 
-Outputs: 02_reading_notes.md, 02_units.json, 02_handoffs.md. Cover every required section. Preserve the source of corrections when prior conclusions change. Never declare full-paper completion while specialists are unfinished, visuals unseen or required supplements missing.
+Delivery: submit source-specific unit explanations and specialist records through a validated handoff under the [data contract](../DATA_CONTRACT.md). Save stage notes only as useful evidence; do not maintain parallel current scientific JSON mirrors.
 
-Revision 2.2: read the [execution contract](../EXECUTION.md). After each chunk update records/open IDs and continue the next accessible unit. Do not stop with a partial report after representative items. Only an actual EXECUTION interruption permits checkpointed handoff.
+Cover every required section. Preserve the source of corrections when prior conclusions change. Never declare full-paper completion while specialists are unfinished, visuals unseen or required supplements missing.
 
 Continuous reading also retains explicitly excluded objects and the author's reasons, not only included categories. Map each paragraph to a content/function record; record the actual role of non-argument paragraphs without inventing an argument. Adjacent arguments may be combined without losing selection rules, counterexamples or exclusion rationale.
-Execution handoff (2.2): follow [EXECUTION.md](../EXECUTION.md). Return source-specific unit explanations and specialist records using its merge payload; keep raw role evidence. Do not defer granular content or change inventory identity in a handoff. The Owner merges and performs next_action; a stage summary alone does not complete the paper. Stage 01 saves inventories before dependent readers; stage 07 finishes report/user-review text before the review snapshot.
+
+Follow the shared loop in [EXECUTION.md](../EXECUTION.md) and [file ownership/loading routes](../../references/architecture.md). Keep the stage-specific checks above; perform next after each batch. Finishing this responsibility is not paper acceptance.

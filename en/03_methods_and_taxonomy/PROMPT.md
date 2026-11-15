@@ -18,7 +18,8 @@ Theory/algorithms:
 - Separate author proofs, numerical observations and analyst interpretation. Reading an equation does not certify absolute proof correctness.
 - Create locatable issues when a symbol or definition changes between sections.
 
-Outputs: 03_methods_taxonomy.md, 03_units.json, 03_method_experiment_links.json. Link every detailed node to sources and relevant experiments/visuals. Design reasons not empirically demonstrated remain author motivations. Deliver mechanisms a reviewer can explain, not just component names.
+Delivery: submit source-specific unit explanations and specialist records through a validated handoff under the [data contract](../DATA_CONTRACT.md). Save stage notes only as useful evidence; do not maintain parallel current scientific JSON mirrors.
 
-Revision 2.2: read the [execution contract](../EXECUTION.md). After each chunk update records/open IDs and continue the next accessible unit. Do not stop with a partial report after representative items. Only an actual EXECUTION interruption permits checkpointed handoff.
-Execution handoff (2.2): follow [EXECUTION.md](../EXECUTION.md). Return source-specific unit explanations and specialist records using its merge payload; keep raw role evidence. Do not defer granular content or change inventory identity in a handoff. The Owner merges and performs next_action; a stage summary alone does not complete the paper. Stage 01 saves inventories before dependent readers; stage 07 finishes report/user-review text before the review snapshot.
+Link every detailed node to sources and relevant experiments/visuals. Design reasons not empirically demonstrated remain author motivations. Deliver mechanisms a reviewer can explain, not just component names.
+
+Follow the shared loop in [EXECUTION.md](../EXECUTION.md) and [file ownership/loading routes](../../references/architecture.md). Keep the stage-specific checks above; perform next after each batch. Finishing this responsibility is not paper acceptance.
