@@ -86,3 +86,13 @@ repair_requests仅列当前未关闭请求；已修复项移入closed_repairs或
 repair_requests每项用repair_id、unit_ids、responsible_role、required_action，包含源位置及影响依据。repair-ready在state.repair_progress保存READY_FOR_REVIEW及evidence_refs，不关闭审查请求。审查使用唯一安全review_id追加保存；失败决定也须ingest-review，让Owner取得可执行修复队列。未决请求由真实复查关闭。
 
 next返回CONTINUE、ACCEPTED或INTERRUPTED_WITH_EVIDENCE，以及may_send_final/paper_accepted。CONTINUE要求实际执行next_action，不是最终回复列计划。助手无法强制宿主/模型继续。中断记录必须对应真实有据限制，自行生成文字无法证明限制。
+
+## Revision 2.3 extensions
+
+The optional research_target and report_visuals packet fields, target_analysis.json, report_visuals.md and quantitative backing-data contracts are defined in [Targets and visual reports](../references/targets-and-visual-reports.md). research_target is distinct from bibliographic target_identity. The helper binds it at init --target or set-target --file; target changes preserve source units but invalidate acceptance of changed interpretation/report. Target-specific analysis remains separate from general source findings. Optional fields are omitted from legacy fingerprints when null/absent; existing runs are not automatically migrated or reapproved.
+
+Register display images and derived-chart backing data with artifact_refs/evidence_refs. The snapshot also binds simple inline Markdown images; complex/reference-style or HTML images require explicit registration. Generated display and structural validation do not establish actual viewing, scientific understanding or semantic acceptance. Complete target analysis and visual output before the reviewer snapshots the packet.
+
+## Revision 2.4
+
+The shared [Reliable execution contract](../references/reliable-execution.md) is required. New runs bind review_requirements.direct_visual_inspection and require the reviewer's own visual_inspection/session/observation evidence for accepted G3. Use handoff-template and review-template to generate correct shapes; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing earlier runs are not silently migrated. Templates, viewing flags and structural checks cannot establish actual image access, independence or understanding. If reviewer image access remains unavailable after permitted local alternatives, finish accessible work and record a truthful capability block with G3 unaccepted.

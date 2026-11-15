@@ -86,3 +86,13 @@ The reviewer independently runs snapshot after inspecting the final packet and c
 repair_requests entries use repair_id, unit_ids, responsible_role and required_action with source/impact evidence. repair-ready stores READY_FOR_REVIEW and evidence_refs in state.repair_progress, never closes reviewer requests. Reviews are append-only by unique safe review_id. Use ingest-review, including failed decisions, so the Owner receives an executable repair queue. Current failed requests remain open until actual reinspection.
 
 next returns CONTINUE, ACCEPTED or INTERRUPTED_WITH_EVIDENCE with may_send_final/paper_accepted. CONTINUE requires doing next_action, not a final answer listing it. The helper cannot force the host/model to continue. An interruption record must match an actual documented constraint; generated text alone is not evidence of one.
+
+## Revision 2.3 extensions
+
+The optional research_target and report_visuals packet fields, target_analysis.json, report_visuals.md and quantitative backing-data contracts are defined in [Targets and visual reports](../references/targets-and-visual-reports.md). research_target is distinct from bibliographic target_identity. The helper binds it at init --target or set-target --file; target changes preserve source units but invalidate acceptance of changed interpretation/report. Target-specific analysis remains separate from general source findings. Optional fields are omitted from legacy fingerprints when null/absent; existing runs are not automatically migrated or reapproved.
+
+Register display images and derived-chart backing data with artifact_refs/evidence_refs. The snapshot also binds simple inline Markdown images; complex/reference-style or HTML images require explicit registration. Generated display and structural validation do not establish actual viewing, scientific understanding or semantic acceptance. Complete target analysis and visual output before the reviewer snapshots the packet.
+
+## Revision 2.4
+
+The shared [Reliable execution contract](../references/reliable-execution.md) is required. New runs bind review_requirements.direct_visual_inspection and require the reviewer's own visual_inspection/session/observation evidence for accepted G3. Use handoff-template and review-template to generate correct shapes; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing earlier runs are not silently migrated. Templates, viewing flags and structural checks cannot establish actual image access, independence or understanding. If reviewer image access remains unavailable after permitted local alternatives, finish accessible work and record a truthful capability block with G3 unaccepted.

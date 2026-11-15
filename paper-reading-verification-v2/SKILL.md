@@ -2,14 +2,18 @@
 name: paper-reading-verification-v2
 description: Use when a user requests comprehensive paper reading or revalidation beyond abstracts, highlights, or selected sections.
 metadata:
-  revision: "2.2"
+  revision: "2.4"
 ---
 
 # Paper Reading Verification
 
 A skill and paper path mean **execute the complete reading task**, including saved evidence and independent review. Choose [Chinese](zh-CN/README.md) or [English](en/README.md). Read that edition's EXECUTION.md, DATA_CONTRACT.md, boundaries and coordinator prompt before starting; load each role prompt when using that role. One paper executes 00–08. Stage 09 applies only to requested synthesis.
 
+First read [Reliable execution](references/reliable-execution.md): use a small team, probe the actual independent reviewer's image capability early, generate/validate canonical handoffs, verify suspected anomalies, and inspect the full final display. New 2.4 runs require direct reviewer visual evidence for accepted G3; a blocked image channel cannot be waived by a disclaimer. For an unassisted trial, the supervising host observes without rescuing the run.
+
 ## Start with canonical records
+
+For research targets and report preparation/review, read [Targets and visual reports](references/targets-and-visual-reports.md). Bind an explicitly supplied research target using `init --target <target.json>` or `set-target --file <target.json>`; otherwise remain general-purpose within paper reading. A target changes additional questions and presentation, never full source coverage. Keep source findings and target-specific inference separate. Embed useful inspected original panels, retain readable labels and source locators, and register derived-chart data and assets before review. The local gallery helper provides inline Markdown figures with captions, interpretation and limitations. Both language editions use this shared contract.
 
 Act as Owner. With Python, use the bundled local helper rather than inventing another schema:
 

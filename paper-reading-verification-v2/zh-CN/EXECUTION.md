@@ -52,3 +52,13 @@ INTERRUPTED_WITH_EVIDENCE明确表示未完成，不能叫验收。字段无法�
 作者疑点通常不中断阅读。保留证据链、替代解释、受影响HOLD/CONDITIONAL主张和明确double-check问题，可用VERIFIED_WITH_USER_REVIEW；用户判断与科学证据分别记录。
 
 没有Python时手工维护等价规范记录，披露未运行自动检查，仍须真实审查。确无独立能力时完成可做工作，保留G3 PENDING。来源边界及既有授权始终有效。
+
+## Revision 2.3: target and report commands
+
+Read [Targets and visual reports](../references/targets-and-visual-reports.md) before configuration or report preparation. init accepts optional --target <target.json>. Use python "<skill>/scripts/reading_run_control.py" set-target "<run>" --file "<target.json>" to change the explicit purpose; a JSON null clears it. A changed target under the same ID requires a higher revision. This retains source-unit state, not approval of changed analysis. Fill target_analysis.json for every current question before requesting review; next returns WRITE_TARGET_ANALYSIS for missing/stale target identity or question coverage.
+
+For inspected source panels, run python "<skill>/scripts/reading_report_assets.py" "<run>" --manifest "<visual-manifest.json>". It creates a local inline-image gallery and registers its records/assets without changing reading or approval. Embed selected figures in report.md and register any derived-chart data. Finish and visually inspect the report before the review snapshot. The current workflow uses a single review envelope; separate target-only approvals are not implemented.
+
+## Revision 2.4
+
+The shared [Reliable execution contract](../references/reliable-execution.md) is required. New runs bind review_requirements.direct_visual_inspection and require the reviewer's own visual_inspection/session/observation evidence for accepted G3. Use handoff-template and review-template to generate correct shapes; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing earlier runs are not silently migrated. Templates, viewing flags and structural checks cannot establish actual image access, independence or understanding. If reviewer image access remains unavailable after permitted local alternatives, finish accessible work and record a truthful capability block with G3 unaccepted.

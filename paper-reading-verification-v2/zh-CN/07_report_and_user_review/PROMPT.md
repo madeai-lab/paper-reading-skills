@@ -22,3 +22,13 @@
 
 修订2.2：统一保存为full_notebook.md、report.md、material_index.md、user_review.md，交08而不是以本阶段摘要结束。07完成后仍有08待做时继续调度；不能以“已声明部分”替代独立审查。报告可简，底稿须覆盖全部单元。
 执行交接（2.2）：遵循[EXECUTION.md](../EXECUTION.md)，按merge格式提交源特定逐单元解释及专项记录，保留原角色依据；不能推迟细节，也不能在交接中改清单身份。Owner合并并实际执行next_action，阶段摘要不等于论文完成。01先保存清单再分派依赖读者；07在审查快照前写完报告/用户复核文本。
+
+## Revision 2.3: target-aware, visually readable reports
+
+Read [Targets and visual reports](../../references/targets-and-visual-reports.md) and the packet's explicit research_target. Produce a general source-grounded report plus a clearly separated target relevance section and target_analysis.json when a target exists. Answer every target question, including unsupported/contrary findings; use actual claim/unit IDs and preserve limits. Do not inject an old review direction when research_target is null.
+
+Embed useful inspected original figure/panel images inline with captions, source locations, full-resolution links, interpretation and limits. Use a mechanism diagram, evidence table or quantitative chart where it helps explain the paper; avoid decorative chart quotas. Generate report_visuals.md with the local gallery helper for original images, and register derived visual assets/backing data as specified in the shared contract. Open the final report in an available viewer and inspect legibility and image resolution; disclose if rendered layout could not be checked. Save all text, target analysis, assets and backing data before handing off to 08. A report's target, captions and charts are reviewed evidence, not post-approval cosmetic additions.
+
+## Revision 2.4 execution safeguards
+
+Read [Reliable execution](../../references/reliable-execution.md) before this stage. It defines small-team ownership, direct reviewer image capability and session evidence, generated/validated handoffs, source-anomaly comparison checks, dependency-aware repairs and full end-of-report display inspection. A reviewer unable to see source pixels cannot accept a visual paper by relying on writer records. Use the current review template and plain gate strings. Preserve actual blockers and never invent acceptance. Keep one canonical set of scientific IDs; update existing records instead of creating overlapping accounts of the same evidence.

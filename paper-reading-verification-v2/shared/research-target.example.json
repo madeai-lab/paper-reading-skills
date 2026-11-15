@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "target_id": "agent-methodology-review",
+  "revision": 1,
+  "purpose": "Collect bounded evidence for a cross-domain review of AI agent methodology.",
+  "questions": [
+    {"id": "Q1", "text": "Which organizational mechanisms might transfer across domains, and under which conditions?"},
+    {"id": "Q2", "text": "Do the controls distinguish agent architecture from specialist tools and human intervention?"}
+  ],
+  "comparison_dimensions": ["role_organization", "coordination", "tools_and_domain_knowledge", "feedback", "human_involvement", "validation_and_cost"],
+  "hypotheses_to_test": [],
+  "output_preferences": {"language": "zh-CN", "audience": "researcher", "figure_density": "selective"}
+}

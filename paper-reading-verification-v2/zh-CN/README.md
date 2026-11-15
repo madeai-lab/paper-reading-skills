@@ -35,3 +35,11 @@
 
 先读[执行与停止条件](EXECUTION.md)。只给本skill和论文路径也须自行建任务及输出目录、执行00—08、安排独立审查并闭合修复；不因已写出部分分析而结束。单篇不执行09。
 按EXECUTION.md使用本地控制助手统一初始化、逐单元交接、失败审查修复队列及实际被审内容快照。它不运行模型，也不证明语义通过。CONTINUE要求Owner实际完成返回的工作。
+
+## Revision 2.3: configurable purpose and visual reports
+
+Use [Targets and visual reports](../references/targets-and-visual-reports.md) for explicit research-target JSON, separate target analysis, original-panel galleries, derived-chart provenance and final rendering checks. A target controls additional questions and report emphasis, never complete source coverage or evidence thresholds. No target means a general paper report. Targets and displayed assets are bound to the current review snapshot.
+
+## Revision 2.4
+
+The shared [Reliable execution contract](../references/reliable-execution.md) is required. New runs bind review_requirements.direct_visual_inspection and require the reviewer's own visual_inspection/session/observation evidence for accepted G3. Use handoff-template and review-template to generate correct shapes; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing earlier runs are not silently migrated. Templates, viewing flags and structural checks cannot establish actual image access, independence or understanding. If reviewer image access remains unavailable after permitted local alternatives, finish accessible work and record a truthful capability block with G3 unaccepted.

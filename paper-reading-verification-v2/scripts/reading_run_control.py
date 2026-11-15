@@ -6,10 +6,12 @@ import json
 from pathlib import Path
 import re
 import shutil
+from urllib.parse import unquote
 
 from reading_run_check import inspect_run, VERIFIED
+from reading_review_contracts import visual_review_errors, structure_errors, visual_fingerprint
 
-REVISION = "2.2"
+REVISION = "2.4"
 VISUAL = {"FIGURE", "PANEL", "TABLE", "OTHER_VISUAL"}
 STATES = {"INVENTORIED", "READ", "UNDERSTOOD", "CHECKED", "BLOCKED", "NON_INFORMATIVE", "OUT_OF_SCOPE"}
 EXPERIMENT_FIELDS = set("experiment_id purpose unit_refs design data_and_sampling split ground_truth models_and_tools comparators budget metrics results uncertainty negative_results failure_cases limitations claim_refs".split())
@@ -73,6 +75,10 @@ def content_fingerprint(root, packet):
     keys = ['scope_mode','scope_revision','scope_exclusions','sources','units',
             'methods_taxonomy','experiments','claims','issues','owner_id','writer_ids']
     data = {key:packet.get(key) for key in keys}
+    # Optional extensions leave legacy snapshots unchanged until actually used.
+    for key in ['research_target', 'report_visuals', 'review_requirements']:
+        if packet.get(key) is not None:
+            data[key] = packet[key]
     data['inventory'] = read(root/'01_inventory.json', [])
     data['source_inventory'] = read(root/'01_sources.json', packet.get('sources',[]))
     refs = set()
@@ -90,7 +96,18 @@ def content_fingerprint(root, packet):
     collect([packet.get('gate_results',{}).get(g,{}) for g in ['G0','G1','G2']])
     refs.update(s.get('local_path') for s in packet.get('sources',[]) if s.get('local_path'))
     refs.update(packet.get('deliverables',{}).get(key) for key in
-                ['report','user_review','full_notebook','material_index'])
+                ['report','user_review','full_notebook','material_index',
+                 'report_visuals','target_analysis'])
+    # Inline images belong to the exact report being reviewed, even without a manifest.
+    for ref in list(refs):
+        if not isinstance(ref, str):
+            continue
+        document = root/ref
+        if document.suffix.lower() == '.md' and document.is_file():
+            for match in re.finditer(r'!\[[^\]]*\]\((<[^>]+>|[^\s)]+)(?:\s+"[^"]*")?\)', document.read_text(encoding='utf-8-sig')):
+                destination = unquote(match[1].strip('<>').split('#', 1)[0])
+                if destination and not re.match(r'^[a-zA-Z][a-zA-Z0-9+.-]*://', destination) and not destination.startswith('data:'):
+                    refs.add(str((document.parent/destination).resolve()))
     files = {}
     for ref in sorted(x for x in refs if isinstance(x,str)):
         path = (root/ref).resolve()
@@ -106,7 +123,8 @@ def current_review(root, packet, review):
     hashes = {s["source_id"]:s.get("sha256") for s in packet.get("sources", [])}
     return (review.get("reviewed_scope_revision") == packet.get("scope_revision")
             and review.get("reviewed_source_hashes") == hashes
-            and review.get('reviewed_content_sha256') == content_fingerprint(root,packet))
+            and review.get('reviewed_content_sha256') == content_fingerprint(root,packet)
+            and not visual_review_errors(root, packet, review))
 
 
 def continue_with(kind, ids=None, **kwargs):
@@ -175,8 +193,27 @@ def assess(root):
         if not evidence(root,[packet.get("deliverables",{}).get(key)]):
             return continue_with("WRITE_REPORT_PACKAGE", missing=key,
                                  instruction="Write the readable report/issue packet from complete records, then continue to full independent review.")
+    if packet.get('research_target'):
+        target = packet['research_target']
+        validate_target(target)
+        path = packet.get('deliverables', {}).get('target_analysis', 'target_analysis.json')
+        try:
+            analysis = read(root/path, {})
+            answered = {row['question_id'] for row in analysis.get('answers', [])}
+            matches = (analysis.get('target_id') == target['target_id']
+                       and analysis.get('target_revision') == target['revision']
+                       and answered == {q['id'] for q in target['questions']})
+        except (ValueError, TypeError, KeyError, AttributeError):
+            matches = False
+        if not matches:
+            return continue_with('WRITE_TARGET_ANALYSIS', path=path,
+                                 instruction='Answer every current target question from checked evidence; retain unsupported questions and limitations. Then obtain actual review.')
     if not latest or latest.get("decision") not in VERIFIED or not current_review(root,packet,latest):
         return continue_with("REQUEST_REVIEW", instruction="Use the distinct source-first reviewer for this current full packet; ingest its actual decision and act on failed review.")
+    visual_errors = visual_review_errors(root, packet, latest)
+    if visual_errors:
+        return continue_with('REQUEST_REVIEW', errors=visual_errors,
+                             instruction='Obtain actual direct visual review; blocked image access is not acceptance.')
     errors = inspect_run(root)
     if errors:
         return continue_with("REPAIR_RECORDS",errors=errors[:6],error_count=len(errors),
@@ -285,7 +322,58 @@ def commit(root, packet, state, event):
     return result
 
 
-def initialize(root, source, owner, language):
+def validate_target(target):
+    def text(value):
+        return isinstance(value, str) and bool(value.strip())
+
+    if target is None:
+        return
+    if not isinstance(target, dict):
+        raise RunError('INVALID_TARGET', 'Research target must be an object or null.')
+    required = {'schema_version', 'target_id', 'revision', 'purpose', 'questions',
+                'comparison_dimensions', 'hypotheses_to_test', 'output_preferences'}
+    valid = (required == target.keys() and type(target.get('schema_version')) is int and target.get('schema_version') == 1
+             and text(target.get('target_id')) and text(target.get('purpose'))
+             and type(target.get('revision')) is int and target['revision'] > 0)
+    if not valid:
+        raise RunError('INVALID_TARGET', 'Use the versioned research-target contract.')
+    questions = target['questions']
+    if (not isinstance(questions, list) or not questions
+            or any(not isinstance(q, dict) or not text(q.get('id')) or not text(q.get('text')) for q in questions)
+            or len({q['id'] for q in questions}) != len(questions)):
+        raise RunError('INVALID_TARGET', 'Questions need unique IDs and nonempty text.')
+    for key in ['comparison_dimensions', 'hypotheses_to_test']:
+        if not isinstance(target[key], list) or any(not text(x) for x in target[key]):
+            raise RunError('INVALID_TARGET', key + ' must be a list of nonempty strings.')
+    if not isinstance(target['output_preferences'], dict):
+        raise RunError('INVALID_TARGET', 'output_preferences must be an object.')
+
+
+def set_target(root, target):
+    validate_target(target)
+    packet, state = read(root/'paper_packet.json'), read(root/'execution_state.json')
+    old = packet.get('research_target')
+    history = state.get('research_target_history', [])
+    if target:
+        previous = [entry for entry in history+[old] if entry and entry.get('target_id') == target['target_id']]
+        if any(entry != target and target['revision'] <= entry.get('revision', 0) for entry in previous):
+            raise RunError('INVALID_TARGET', 'Changed content under the same target_id needs a higher revision, including after clearing the target.')
+    if old and old not in history:
+        history.append(copy.deepcopy(old))
+    state['research_target_history'] = history
+    packet['research_target'] = copy.deepcopy(target)
+    if target is not None:
+        packet['deliverables']['target_analysis'] = 'target_analysis.json'
+    else:
+        packet['deliverables'].pop('target_analysis', None)
+    task = read(root/'task.json', {})
+    task['research_target'] = copy.deepcopy(target)
+    write(root/'task.json', task)
+    return commit(root, packet, state, 'Bound explicit research target; retain source reading, recheck changed analysis/report.')
+
+
+def initialize(root, source, owner, language, target=None):
+    validate_target(target)
     if root.exists():
         raise RunError("RUN_EXISTS","Choose a new output directory; existing runs are never overwritten.")
     source = source.resolve()
@@ -301,18 +389,31 @@ def initialize(root, source, owner, language):
     shutil.copyfile(source,root/"source.pdf")
     packet.update({"template_only":False,"skill_revision":REVISION,"task_id":root.name,"paper_id":root.name,
                    "owner_id":owner,"writer_ids":[owner],"paper_status":"IN_PROGRESS","sources":[src]})
+    packet['review_requirements'] = {'direct_visual_inspection': True}
     packet["deliverables"] = {k:k+".md" for k in ["full_notebook","report","material_index","user_review","independent_review"]}
     state.update({"template_only":False,"skill_revision":REVISION,"task_id":root.name,"owner_id":owner,
                   "writer_ids":[owner],"stage":"01","paper_status":"IN_PROGRESS","repair_progress":{}})
     task.update({"template_only":False,"skill_revision":REVISION,"task_id":root.name,"paper_id":root.name,
                  "language":language,"source_files":["source.pdf"],"output_dir":str(root),"source_root":str(root)})
+    if target is not None:
+        task['research_target'] = copy.deepcopy(target)
+        packet['research_target'] = copy.deepcopy(target)
+        packet['deliverables']['target_analysis'] = 'target_analysis.json'
     for name,value in [("task.json",task),("assignment_map.json",{"owner":owner,"roles":{},"review_capacity":"PLAN_AT_STARTUP"}),
                        ("01_inventory.json",[]),("01_sources.json",[src])]:
         write(root/name,value)
     return commit(root,packet,state,"Initialized canonical records; source identity/reading still require inspection.")
 
 
-def merge_handoff(root, payload):
+def merge_handoff(root, payload, dry_run=False):
+    if not isinstance(payload, dict):
+        raise RunError('INVALID_HANDOFF', 'Handoff must be a JSON object; use handoff-template.')
+    for key in ['units', 'methods_taxonomy', 'experiments', 'claims', 'issues']:
+        if key in payload and (not isinstance(payload[key], list) or any(not isinstance(x, dict) for x in payload[key])):
+            raise RunError('INVALID_HANDOFF', key+' must be an array of objects.')
+    if 'gate_results' in payload and (not isinstance(payload['gate_results'], dict)
+            or any(not isinstance(x, dict) for x in payload['gate_results'].values())):
+        raise RunError('INVALID_HANDOFF', 'gate_results must be an object ({} when unused), not an array.')
     packet,state = read(root/"paper_packet.json"),read(root/"execution_state.json")
     sync_inventory(root,packet,state)
     writer = payload.get("writer_id")
@@ -369,6 +470,11 @@ def merge_handoff(root, payload):
         packet["gate_results"][gate] = copy.deepcopy(value)
     if writer not in packet["writer_ids"]:
         packet["writer_ids"].append(writer)
+    defects = structure_errors(packet)
+    if defects:
+        raise RunError('INVALID_HANDOFF', json.dumps(defects, ensure_ascii=True))
+    if dry_run:
+        return {'valid': True, 'writer_id': writer, 'notice': 'Read-only shape/reference validation; no files written and no semantic verification.'}
     payload_hash = hashlib.sha256(json.dumps(payload,sort_keys=True,ensure_ascii=False).encode("utf8")).hexdigest()
     write(root/"handoffs"/(payload_hash+".json"),payload)
     return commit(root,packet,state,"Merged actual handoff from "+writer+"; read states were not automatically promoted.")
@@ -376,6 +482,18 @@ def merge_handoff(root, payload):
 
 def ingest_review(root, review):
     packet,state = read(root/"paper_packet.json"),read(root/"execution_state.json")
+    if not isinstance(review, dict) or not isinstance(review.get('gate_decisions'), dict):
+        raise RunError('INVALID_REVIEW', 'Review and gate_decisions must be objects; use review-template.')
+    if (set(review['gate_decisions']) != {'G0','G1','G2','G3'}
+            or any(not isinstance(x, str) or x not in {'PASS','FAIL','PENDING'} for x in review['gate_decisions'].values())):
+        raise RunError('INVALID_REVIEW', 'All four gate_decisions must be plain PASS/FAIL/PENDING strings.')
+    for key in ['checked_unit_ids','checked_claim_ids','findings','repair_requests','unresolved_reading_gaps']:
+        if key in review and not isinstance(review[key], list):
+            raise RunError('INVALID_REVIEW', key+' must be an array.')
+    if review.get('decision') in VERIFIED:
+        defects = visual_review_errors(root, packet, review)
+        if defects:
+            raise RunError('INVALID_REVIEW_VISUAL', defects[0]['next_action'])
     if (not isinstance(review.get('review_id'),str) or not re.fullmatch(r'[A-Za-z0-9_.-]+',review['review_id'])
             or not review.get("reviewer_id") or review.get("template_only") is True
             or review.get("decision") not in VERIFIED|{"REVISION_REQUIRED","MATERIAL_BLOCKED"}):
@@ -424,21 +542,42 @@ def repair_ready(root, repair_id, ref):
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command",choices=["init","merge","ingest-review","repair-ready","sync","next","snapshot"])
+    parser.add_argument("command",choices=["init","merge","ingest-review","repair-ready","sync","next","snapshot","set-target","validate-handoff","handoff-template","review-template"])
     parser.add_argument("run_directory",type=Path)
     parser.add_argument("--source",type=Path)
+    parser.add_argument("--target",type=Path, help="Explicit research-target JSON for init.")
     parser.add_argument("--owner",default="root")
     parser.add_argument("--language",choices=["zh-CN","en"],default="zh-CN")
     parser.add_argument("--file",type=Path)
     parser.add_argument("--id")
     parser.add_argument("--evidence")
+    parser.add_argument('--writer')
+    parser.add_argument('--units', nargs='+')
     args=parser.parse_args()
     root=args.run_directory.resolve()
     try:
         if args.command=="init":
             if args.source is None:
                 raise RunError("INVALID_ARGUMENT","init needs --source.")
-            result=initialize(root,args.source,args.owner,args.language)
+            result=initialize(root,args.source,args.owner,args.language,read(args.target) if args.target else None)
+        elif args.command=='set-target':
+            if args.file is None:
+                raise RunError('INVALID_ARGUMENT', 'set-target needs --file (JSON object or null).')
+            result=set_target(root,read(args.file))
+        elif args.command=='handoff-template':
+            packet=read(root/'paper_packet.json')
+            ids=args.units or [u['unit_id'] for u in packet.get('units',[])]
+            known={u['unit_id'] for u in packet.get('units',[])}
+            if not args.writer or set(ids)-known:
+                raise RunError('INVALID_ARGUMENT', 'Supply --writer and existing --units IDs.')
+            result={'writer_id':args.writer, 'units':[{'unit_id':uid,'read_state':'READ',
+                    'understanding_note':'','evidence_refs':[]} for uid in ids],
+                    'methods_taxonomy':[], 'experiments':[], 'claims':[], 'issues':[], 'gate_results':{}}
+        elif args.command=='review-template':
+            result=read(Path(__file__).resolve().parent.parent/'shared/review-record.template.json')
+            result['reviewer_id']=args.writer
+        elif args.command=='validate-handoff':
+            result=merge_handoff(root,read(args.file),dry_run=True)
         elif args.command=="next":
             result=assess(root)
         elif args.command=='snapshot':
@@ -447,6 +586,8 @@ def main():
                     'reviewed_source_hashes':{s['source_id']:s.get('sha256') for s in packet.get('sources',[])},
                     'reviewed_content_sha256':content_fingerprint(root,packet),
                     'notice':'Read-only snapshot. Reviewer must inspect this exact version; copying the token proves no reading.'}
+            if args.file:
+                result['reviewed_visual_evidence_sha256'] = visual_fingerprint(root, read(args.file))
         elif args.command=="merge":
             result=merge_handoff(root,read(args.file))
         elif args.command=="ingest-review":

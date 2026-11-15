@@ -19,5 +19,15 @@
   "repair_requests": [],
   "reviewed_scope_revision": null,
   "reviewed_source_hashes": {},
-  "reviewed_content_sha256": null
+  "reviewed_content_sha256": null,
+  "reviewer_session_id": null,
+  "visual_inspection": {
+    "status": "PENDING",
+    "direct_pixels_available": false,
+    "session_id": null,
+    "blocked_unit_ids": [],
+    "tool_evidence_refs": [],
+    "units": []
+  },
+  "reviewed_visual_evidence_sha256": null
 }

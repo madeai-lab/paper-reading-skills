@@ -41,8 +41,12 @@
     "user_review": null,
     "independent_review": null
   },
-  "skill_revision": "2.2",
+  "skill_revision": "2.4",
   "owner_id": null,
   "writer_ids": [],
-  "scope_exclusions": []
+  "scope_exclusions": [],
+  "research_target": null,
+  "review_requirements": {
+    "direct_visual_inspection": true
+  }
 }

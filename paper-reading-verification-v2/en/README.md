@@ -35,3 +35,11 @@ Use the [acceptance scenarios](ACCEPTANCE_CASES.md) to detect omitted panels/sup
 
 First read [execution and stopping conditions](EXECUTION.md). A skill and paper path suffice: create task/output records, execute 00–08, plan independent review and close repairs. A partial analysis is not a stopping condition. A single-paper task does not run 09.
 Use the bundled local control helper in EXECUTION.md for canonical initialization, unit handoffs, failed-review repair queues and exact inspected-content snapshots. It never launches models or proves semantic acceptance. A CONTINUE assessment requires the Owner to do the returned work.
+
+## Revision 2.3: configurable purpose and visual reports
+
+Use [Targets and visual reports](../references/targets-and-visual-reports.md) for explicit research-target JSON, separate target analysis, original-panel galleries, derived-chart provenance and final rendering checks. A target controls additional questions and report emphasis, never complete source coverage or evidence thresholds. No target means a general paper report. Targets and displayed assets are bound to the current review snapshot.
+
+## Revision 2.4
+
+The shared [Reliable execution contract](../references/reliable-execution.md) is required. New runs bind review_requirements.direct_visual_inspection and require the reviewer's own visual_inspection/session/observation evidence for accepted G3. Use handoff-template and review-template to generate correct shapes; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing earlier runs are not silently migrated. Templates, viewing flags and structural checks cannot establish actual image access, independence or understanding. If reviewer image access remains unavailable after permitted local alternatives, finish accessible work and record a truthful capability block with G3 unaccepted.

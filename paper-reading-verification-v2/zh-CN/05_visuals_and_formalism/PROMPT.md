@@ -22,3 +22,7 @@
 
 逐对象关联：文献关系表、算法教学图、重构曲线、分类矩阵不能共用默认conditions、experiment_links或claim_links。只有源文明确共同适用的设置可交叉引用，说明适用边界；不适用关联留空并解释，优于制造关系。批量脚本仅能初始化空结构或计算从已核对源值可复算的结果，不能把同一套解释/关联复制给所有对象后标CHECKED。矩阵保留原单元格及对应页图；后续计算与正文断言分开，发现转录错误须重算全部依赖。
 执行交接（2.2）：遵循[EXECUTION.md](../EXECUTION.md)，按merge格式提交源特定逐单元解释及专项记录，保留原角色依据；不能推迟细节，也不能在交接中改清单身份。Owner合并并实际执行next_action，阶段摘要不等于论文完成。01先保存清单再分派依赖读者；07在审查快照前写完报告/用户复核文本。
+
+## Revision 2.3: report-ready visual evidence
+
+Follow [Targets and visual reports](../../references/targets-and-visual-reports.md). Save legible original panels or crops with source/page/panel identity, full-page context, actual viewing records and limits. Preserve labels, axes, legends, units and footnotes. Distinguish source images from analyst diagrams and computed charts. Derived charts retain per-value source locators, backing data, transformations, comparability and uncertainty; do not invent scores or plot missing values as zero. Register all display assets and backing data in report_visuals before review. These display selections do not reduce the full visual inventory.

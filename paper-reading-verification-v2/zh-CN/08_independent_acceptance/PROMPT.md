@@ -27,3 +27,13 @@ B. 再与01—07的清单、解释、主张和用户复核包比较，直接打�
 
 审查上下文须隔离：工具支持时以无历史/新上下文启动审查者（如fork_turns="none"），不继承主要作者已经形成的结论。若工具强制继承，披露该限制并寻找实际干净上下文路径；不能只换Agent名字就声称源优先独立。
 每次返回决定前，对实际检查的运行目录调用助手只读snapshot，把三个快照字段写入新review_id；确认审查期间被审记录未变化。repair_requests给稳定repair_id/unit_ids/responsible_role/required_action；失败审查把控制权交给Owner，不是交给用户。真实复查修复后出新决定，保留关闭依据，不在旧批准中刷新快照。命令见EXECUTION.md；不自行重写packet/state。
+
+## Revision 2.3: target and visual inspection
+
+Apply [Targets and visual reports](../../references/targets-and-visual-reports.md). During source-first pass A establish your source checklist before reading target-driven interpretations. In pass B check the actual bound target/revision and all target answers, attribution, claim/unit references, unsupported answers and limitations. Check original-versus-derived labels, source panel identity, crop context, chart backing data, calculations, comparability and negative results. Inspect the finished display when a viewer is available; disclose unverified rendering and do not equate file existence with a visual check. Confirm visual assets/data are registered for the snapshot. Changing target, interpretation, caption, chart or asset requires actual reinspection; no inherited or refreshed old approval.
+
+## Revision 2.4 execution safeguards
+
+Read [Reliable execution](../../references/reliable-execution.md) before this stage. It defines small-team ownership, direct reviewer image capability and session evidence, generated/validated handoffs, source-anomaly comparison checks, dependency-aware repairs and full end-of-report display inspection. A reviewer unable to see source pixels cannot accept a visual paper by relying on writer records. Use the current review template and plain gate strings. Preserve actual blockers and never invent acceptance. Keep one canonical set of scientific IDs; update existing records instead of creating overlapping accounts of the same evidence.
+
+For revision2.4, first save the actual inspected review draft including the reviewer's own visual_inspection evidence, then use snapshot "<run>" --file "<review-draft.json>". Independently copy all FOUR returned snapshot fields into a new decision, including reviewed_visual_evidence_sha256. The earlier three-field snapshot is insufficient for a new2.4 visual review. Preserve actual source-first and reviewer evidence; the code checks its structure/bytes, not its honesty.

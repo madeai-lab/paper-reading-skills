@@ -3,6 +3,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+from reading_review_contracts import structure_errors, visual_review_errors
 
 VERIFIED = {"VERIFIED_FOR_SCOPE", "VERIFIED_WITH_USER_REVIEW"}
 
@@ -39,6 +40,7 @@ def inspect_run(root):
     if not inventory or not packet.get("units"):
         error("EMPTY_INVENTORY", "units", "Inventory the source before claiming complete coverage.")
     units = packet.get("units", [])
+    errors.extend(structure_errors(packet))
     ids = [u.get("unit_id") for u in units]
     if len(set(ids)) != len(ids) or None in ids:
         error("UNIT_ID_INVALID", "units", "Assign unique, non-null unit IDs.")
@@ -128,6 +130,7 @@ def inspect_run(root):
         error("REVIEW_MISSING", "G3", "Obtain independent source-first review.")
     else:
         review = reviews[-1]
+        errors.extend(visual_review_errors(root, packet, review))
         if review.get("template_only") is True:
             error("REVIEW_TEMPLATE_NOT_EXECUTED", "G3", "Replace the review template with an actual current review.")
         writers = set(packet.get("writer_ids", [])) | {packet.get("owner_id")}
@@ -142,6 +145,11 @@ def inspect_run(root):
         if (review.get("reviewed_scope_revision") != packet.get("scope_revision")
                 or review.get("reviewed_source_hashes") != source_hashes):
             error("REVIEW_STALE", "G3", "Re-review this scope and source version; record reviewed_scope_revision and reviewed_source_hashes independently.")
+        if review.get('reviewed_content_sha256'):
+            # Import lazily: the controller also uses this structural preflight.
+            from reading_run_control import content_fingerprint
+            if review['reviewed_content_sha256'] != content_fingerprint(root, packet):
+                error('REVIEW_CONTENT_STALE', 'G3', 'Reinspect changed report, target, records and visual assets; obtain a new actual review.')
         evidence(review.get("source_first_inventory_ref"), "source-first review")
         if set(ids) - set(review.get("checked_unit_ids", [])) or set(claims) - set(review.get("checked_claim_ids", [])):
             error("REVIEW_COVERAGE_MISSING", "G3", "Review every unit and important claim; expand IDs rather than using ranges.")

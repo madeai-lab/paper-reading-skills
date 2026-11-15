@@ -25,3 +25,11 @@ Outputs: assignment_map.json, paper_packet.json, gate_summary.md and the final d
 Read [EXECUTION.md](../EXECUTION.md). Initialize with the local helper, inspect sources/save inventory and evidenced G0 before dependent readers. Readers return actual per-unit handoffs for merge; generated notebook avoids duplicate transcription. After every batch run next and perform its action.
 
 Immediately ingest the actual independent decision. REVISION_REQUIRED returns to you: repair identified units/dependent claims, save repair-ready evidence, reconcile local gates and obtain reviewer reinspection. Saving a failed state is not closure. Keep report text stable during review; require the reviewer to snapshot the exact inspected records. Before final delivery next must return ACCEPTED or a genuine evidenced interruption, with actual semantic/independence evidence. CONTINUE is work to do now.
+
+## Revision 2.3: explicit purpose and visual delivery
+
+Read [Targets and visual reports](../../references/targets-and-visual-reports.md). Bind the current explicit research target before target-specific assignments; never infer it from a legacy report. Give readers the target as additional questions, not a source filter. Keep complete coverage. Preserve general findings separately from target analysis, and finish all visual assets and their source/data records before the review snapshot. A changed target retains source reading but requires current analysis and actual reinspection.
+
+## Revision 2.4 execution safeguards
+
+Read [Reliable execution](../../references/reliable-execution.md) before this stage. It defines small-team ownership, direct reviewer image capability and session evidence, generated/validated handoffs, source-anomaly comparison checks, dependency-aware repairs and full end-of-report display inspection. A reviewer unable to see source pixels cannot accept a visual paper by relying on writer records. Use the current review template and plain gate strings. Preserve actual blockers and never invent acceptance. Keep one canonical set of scientific IDs; update existing records instead of creating overlapping accounts of the same evidence.

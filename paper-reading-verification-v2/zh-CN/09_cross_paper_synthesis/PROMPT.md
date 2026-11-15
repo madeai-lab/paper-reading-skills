@@ -14,3 +14,6 @@
 
 输出：09_synthesis.md、09_synthesis_claims.json、09_user_review.md和09_coverage_summary.json。总报告列出全部目标论文状态与未决疑点；完成措辞依真实G3覆盖，不能以总报告已经写出作为完成证明。新综合主张由08复核后再交付。
 
+## Revision 2.3: explicit synthesis target
+
+Use the explicit versioned research target and [visual-report contract](../../references/targets-and-visual-reports.md). Separate source evidence from target-specific relevance. Changing the synthesis target does not change source-paper facts or grant approval for new synthesis claims. Align comparison dimensions and conditions before charting across papers. Keep missing, incomparable and contrary evidence visible, and preserve per-value source locations and backing data. Send new target interpretations and visualized comparisons to actual independent review.

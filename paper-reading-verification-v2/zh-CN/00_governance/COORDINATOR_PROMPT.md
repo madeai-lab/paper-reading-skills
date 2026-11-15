@@ -25,3 +25,11 @@
 先读[EXECUTION.md](../EXECUTION.md)。用本地助手初始化，实际检查来源、保存清单及有依据的G0后才分派依赖读者。读者提交真实逐单元交接，由merge生成底稿，避免重复手抄；每批后运行next并执行返回动作。
 
 真实独立决定返回后立即ingest-review。REVISION_REQUIRED将任务交回你：修复指定单元及依赖主张、保存repair-ready依据、重核本地gate，再由审查者复查。保存失败状态不是闭环。审查期间保持报告文本稳定，审查者为实际检查版本取snapshot。最终交付前next须为ACCEPTED或真实有据中断，并有实际语义/独立依据；CONTINUE表示现在继续做。
+
+## Revision 2.3: explicit purpose and visual delivery
+
+Read [Targets and visual reports](../../references/targets-and-visual-reports.md). Bind the current explicit research target before target-specific assignments; never infer it from a legacy report. Give readers the target as additional questions, not a source filter. Keep complete coverage. Preserve general findings separately from target analysis, and finish all visual assets and their source/data records before the review snapshot. A changed target retains source reading but requires current analysis and actual reinspection.
+
+## Revision 2.4 execution safeguards
+
+Read [Reliable execution](../../references/reliable-execution.md) before this stage. It defines small-team ownership, direct reviewer image capability and session evidence, generated/validated handoffs, source-anomaly comparison checks, dependency-aware repairs and full end-of-report display inspection. A reviewer unable to see source pixels cannot accept a visual paper by relying on writer records. Use the current review template and plain gate strings. Preserve actual blockers and never invent acceptance. Keep one canonical set of scientific IDs; update existing records instead of creating overlapping accounts of the same evidence.

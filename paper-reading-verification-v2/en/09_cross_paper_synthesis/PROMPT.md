@@ -14,3 +14,6 @@ A new claim absent from the accepted paper records must return to sources and st
 
 Outputs: 09_synthesis.md, 09_synthesis_claims.json, 09_user_review.md, 09_coverage_summary.json. List all target-paper states and open concerns. Completion follows actual G3 coverage, not the existence of a written synthesis. Stage 08 reviews new synthesis claims before delivery.
 
+## Revision 2.3: explicit synthesis target
+
+Use the explicit versioned research target and [visual-report contract](../../references/targets-and-visual-reports.md). Separate source evidence from target-specific relevance. Changing the synthesis target does not change source-paper facts or grant approval for new synthesis claims. Align comparison dimensions and conditions before charting across papers. Keep missing, incomparable and contrary evidence visible, and preserve per-value source locations and backing data. Send new target interpretations and visualized comparisons to actual independent review.

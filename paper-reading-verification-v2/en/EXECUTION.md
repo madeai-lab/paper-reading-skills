@@ -52,3 +52,13 @@ INTERRUPTED_WITH_EVIDENCE is explicitly unfinished, never accepted. A record can
 Author concerns normally do not interrupt reading. Preserve an evidence chain, alternative explanations, affected HOLD/CONDITIONAL claims and a clear double-check question under VERIFIED_WITH_USER_REVIEW. User judgment is separate from scientific verification.
 
 Without Python, keep equivalent canonical records manually and disclose the omitted automated checks; use actual review. Without genuine independent capability finish accessible work and retain G3 PENDING. Source boundaries and existing authorizations still apply.
+
+## Revision 2.3: target and report commands
+
+Read [Targets and visual reports](../references/targets-and-visual-reports.md) before configuration or report preparation. init accepts optional --target <target.json>. Use python "<skill>/scripts/reading_run_control.py" set-target "<run>" --file "<target.json>" to change the explicit purpose; a JSON null clears it. A changed target under the same ID requires a higher revision. This retains source-unit state, not approval of changed analysis. Fill target_analysis.json for every current question before requesting review; next returns WRITE_TARGET_ANALYSIS for missing/stale target identity or question coverage.
+
+For inspected source panels, run python "<skill>/scripts/reading_report_assets.py" "<run>" --manifest "<visual-manifest.json>". It creates a local inline-image gallery and registers its records/assets without changing reading or approval. Embed selected figures in report.md and register any derived-chart data. Finish and visually inspect the report before the review snapshot. The current workflow uses a single review envelope; separate target-only approvals are not implemented.
+
+## Revision 2.4
+
+The shared [Reliable execution contract](../references/reliable-execution.md) is required. New runs bind review_requirements.direct_visual_inspection and require the reviewer's own visual_inspection/session/observation evidence for accepted G3. Use handoff-template and review-template to generate correct shapes; validate-handoff is read-only and precedes merge. Parent/panel links must be reciprocal and same_as references must resolve. Existing earlier runs are not silently migrated. Templates, viewing flags and structural checks cannot establish actual image access, independence or understanding. If reviewer image access remains unavailable after permitted local alternatives, finish accessible work and record a truthful capability block with G3 unaccepted.

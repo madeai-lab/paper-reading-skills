@@ -25,3 +25,7 @@
 
 语义合并抽查用于发现问题，不授予完整验收：先对不同类型对象核对字段来源；若发现模板默认值污染，检查同生成路径的全部对象和依赖，而不是仅修发现的示例。作者的潜在用途/未来收益不能先改成“已证明改善”再批评；主张必须先忠实归因。
 执行交接（2.2）：遵循[EXECUTION.md](../EXECUTION.md)，按merge格式提交源特定逐单元解释及专项记录，保留原角色依据；不能推迟细节，也不能在交接中改清单身份。Owner合并并实际执行next_action，阶段摘要不等于论文完成。01先保存清单再分派依赖读者；07在审查快照前写完报告/用户复核文本。
+
+## Revision 2.4 execution safeguards
+
+Read [Reliable execution](../../references/reliable-execution.md) before this stage. It defines small-team ownership, direct reviewer image capability and session evidence, generated/validated handoffs, source-anomaly comparison checks, dependency-aware repairs and full end-of-report display inspection. A reviewer unable to see source pixels cannot accept a visual paper by relying on writer records. Use the current review template and plain gate strings. Preserve actual blockers and never invent acceptance. Keep one canonical set of scientific IDs; update existing records instead of creating overlapping accounts of the same evidence.
