@@ -2,7 +2,7 @@
 name: paper-reading-verification-v2
 description: Use when a user requests comprehensive paper reading or revalidation beyond abstracts, highlights, or selected sections.
 metadata:
-  revision: "2.4"
+  revision: "2.5"
 ---
 
 # Paper Reading Verification
@@ -32,6 +32,8 @@ CONTINUE means perform next_action now, then reassess after the chunk/handoff/re
 Use merge --file <handoff.json> for actual unit explanations and specialist records; it preserves raw handoffs and renders the complete notebook/index. Follow EXECUTION.md for exact payload fields. Never defer the required explanation to a future notebook or automatically promote READ/UNDERSTOOD to CHECKED.
 
 After an actual reviewer returns, immediately ingest-review --file <review.json>. A failed decision returns concrete repairs to the Owner. Repair source-grounded records and dependent claims, save evidence using repair-ready, then obtain actual reviewer reinspection. Saving failed state or repair plans does not finish the task. Owner repair evidence never grants approval.
+
+For repairs, read [Synchronize repaired dependencies](references/repair-synchronization.md). New 2.5 runs require a completed `repair-scan` report with per-file dispositions before `repair-ready --sync-file`; later file/record changes reopen the repair. Repair all related records and generated/manual outputs as one batch before scanning. Store reviewer-only outputs in `reviews/` and repair reports in `repair_sync/`, preserving raw history. Actual semantic reinspection remains required.
 
 The reviewer records a read-only snapshot of the exact inspected packet/evidence. Changed records, source locators, evidence images or report text invalidate an old accepted snapshot. Do not refresh a token inside an old review to make it pass. Finish report text before review; final status lives in the packet/review.
 

@@ -28,3 +28,7 @@ Research targets are now explicit versioned JSON, independent of paper identity.
 ## Revision 2.4
 
 [Execution safeguards](references/reliable-execution.md) address observed false visual acceptance, manufactured concerns, duplicate evidence, malformed handoffs, repair propagation and clipped report rendering. New executable controls enforce a direct reviewer visual contract, parent/reference integrity and read-only pre-merge validation. They do not prove semantic understanding. Use one reader/Owner plus one independent reviewer unless source complexity warrants more. Minimally supervised trials receive inputs and skill only; the host does not repair or replace their outcomes.
+
+## Revision 2.5
+
+[Repair synchronization](references/repair-synchronization.md) adds read-only discovery of all current text/data artifacts, including unlinked notes and old manual notebooks. New runs require per-file inspection dispositions before repair readiness. Changed files/records, omitted files and declared obsolete wording prevent dispatch or acceptance until rechecked. Explicit historical exceptions retain provenance. Current notes also participate in review snapshots. Semantic correctness still requires actual independent inspection; existing frozen runs are not migrated.

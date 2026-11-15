@@ -1,4 +1,4 @@
-# Reliable execution (revision 2.4)
+# Reliable execution (revision 2.5)
 
 Read this before executing or reviewing a reading run. It supplements both language editions. Existing source, authorization and full-coverage boundaries still apply. These rules address observed failures; they do not turn structural checks into proof of understanding.
 
@@ -8,7 +8,7 @@ Start with one Owner/reader and one distinct source-first reviewer. The Owner ca
 
 The packet is the canonical scientific record. Give every source object, comparison, claim and issue one stable ID. Reuse those IDs in updates. A composite figure has a FIGURE parent and PANEL children with reciprocal parent_id/children. Repeated presentations of the same experiment share a comparison_id; if duplicate records must be preserved, link same_as to actual IDs and count the evidence once. Distinct independent runs are not duplicates merely because they use the same units. Inventory decisions still require source inspection; code cannot identify an omitted parent or infer whether two experiments are genuinely the same.
 
-Prefer canonical handoffs over custom scripts rewriting many files. Do not maintain additional current methods/experiment/claim JSON mirrors unless another tool genuinely needs them. Immutable raw handoffs and prior decisions remain history; the generated notebook and index come from the current packet. Correct current claims and dependent report/target/visual text, while retaining an explicit correction trail. A repair is complete only after this whole dependency chain has been rechecked.
+Prefer canonical handoffs over custom scripts rewriting many files. Do not maintain additional current methods/experiment/claim JSON mirrors unless another tool genuinely needs them. Immutable raw handoffs and prior decisions remain history; the generated notebook and index come from the current packet. Correct current claims and dependent report/target/visual text, while retaining an explicit correction trail. A repair is complete only after this whole dependency chain has been rechecked. For revision 2.5, follow [repair synchronization](repair-synchronization.md): the controller requires per-file inspection evidence and invalidates readiness when current files change. Store new reviewer-only outputs under reviews/.
 
 ## Verify image capability before relying on a reviewer
 

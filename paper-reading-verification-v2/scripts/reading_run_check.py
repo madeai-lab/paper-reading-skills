@@ -126,6 +126,17 @@ def inspect_run(root):
                 if claims.get(cid, {}).get("allowed_use") not in {"HOLD", "CONDITIONAL"}:
                     error("ANOMALY_CLAIM_UNRESTRICTED", cid, "Hold or qualify the affected claim.")
     reviews = packet.get("reviews", [])
+    if packet.get('review_requirements', {}).get('repair_dependency_sync'):
+        from reading_run_control import requests
+        from reading_repair_sync import progress_current
+        state = read_json('execution_state.json') or {}
+        failed = next((r for r in reversed(reviews) if r.get('decision') in
+                       {'REVISION_REQUIRED', 'MATERIAL_BLOCKED'}), None)
+        if failed:
+            for request in requests(failed, packet.get('owner_id')):
+                if not progress_current(root, packet, state, request, failed.get('review_id')):
+                    error('REPAIR_SYNC_REQUIRED', request['repair_id'],
+                          'Rescan current dependencies, inspect every disposition and obtain fresh review.')
     if not reviews:
         error("REVIEW_MISSING", "G3", "Obtain independent source-first review.")
     else:

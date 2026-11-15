@@ -41,12 +41,13 @@
     "user_review": null,
     "independent_review": null
   },
-  "skill_revision": "2.4",
+  "skill_revision": "2.5",
   "owner_id": null,
   "writer_ids": [],
   "scope_exclusions": [],
   "research_target": null,
   "review_requirements": {
-    "direct_visual_inspection": true
+    "direct_visual_inspection": true,
+    "repair_dependency_sync": true
   }
 }

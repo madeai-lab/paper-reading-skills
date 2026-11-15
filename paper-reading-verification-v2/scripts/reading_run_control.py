@@ -10,8 +10,9 @@ from urllib.parse import unquote
 
 from reading_run_check import inspect_run, VERIFIED
 from reading_review_contracts import visual_review_errors, structure_errors, visual_fingerprint
+import reading_repair_sync as repair_sync
 
-REVISION = "2.4"
+REVISION = "2.5"
 VISUAL = {"FIGURE", "PANEL", "TABLE", "OTHER_VISUAL"}
 STATES = {"INVENTORIED", "READ", "UNDERSTOOD", "CHECKED", "BLOCKED", "NON_INFORMATIVE", "OUT_OF_SCOPE"}
 EXPERIMENT_FIELDS = set("experiment_id purpose unit_refs design data_and_sampling split ground_truth models_and_tools comparators budget metrics results uncertainty negative_results failure_cases limitations claim_refs".split())
@@ -116,6 +117,9 @@ def content_fingerprint(root, packet):
             continue
         files[ref] = digest(path) if path.is_file() else 'MISSING'
     data['files'] = files
+    if packet.get('review_requirements', {}).get('repair_dependency_sync'):
+        data['current_documents'] = {name: repair_sync.sha(text.encode('utf8'))
+                                     for name, text in repair_sync.current_documents(root, packet).items()}
     return hashlib.sha256(json.dumps(data,sort_keys=True,ensure_ascii=False).encode('utf8')).hexdigest()
 
 
@@ -152,7 +156,8 @@ def assess(root):
         progress.get(r['repair_id'],{}).get('status') == 'READY_FOR_REVIEW'
         and progress[r['repair_id']].get('review_id') == latest.get('review_id')
         and progress[r['repair_id']].get('request_sha256') == hashlib.sha256(json.dumps(r,sort_keys=True,ensure_ascii=False).encode('utf8')).hexdigest()
-        and progress[r['repair_id']].get('scope_revision') == packet.get('scope_revision'))] if latest and latest.get('decision') in {'REVISION_REQUIRED','MATERIAL_BLOCKED'} else []
+        and progress[r['repair_id']].get('scope_revision') == packet.get('scope_revision')
+        and repair_sync.progress_current(root, packet, state, r, latest.get('review_id')))] if latest and latest.get('decision') in {'REVISION_REQUIRED','MATERIAL_BLOCKED'} else []
     affected_repairs = set(interrupt.get('affected_repair_ids',[])) if isinstance(interrupt,dict) else set()
     accessible_repairs = [r for r in active if r['repair_id'] not in affected_repairs]
     checkpoint = (evidence(root,[packet.get('deliverables',{}).get('report')])
@@ -389,7 +394,7 @@ def initialize(root, source, owner, language, target=None):
     shutil.copyfile(source,root/"source.pdf")
     packet.update({"template_only":False,"skill_revision":REVISION,"task_id":root.name,"paper_id":root.name,
                    "owner_id":owner,"writer_ids":[owner],"paper_status":"IN_PROGRESS","sources":[src]})
-    packet['review_requirements'] = {'direct_visual_inspection': True}
+    packet['review_requirements'] = {'direct_visual_inspection': True, 'repair_dependency_sync': True}
     packet["deliverables"] = {k:k+".md" for k in ["full_notebook","report","material_index","user_review","independent_review"]}
     state.update({"template_only":False,"skill_revision":REVISION,"task_id":root.name,"owner_id":owner,
                   "writer_ids":[owner],"stage":"01","paper_status":"IN_PROGRESS","repair_progress":{}})
@@ -500,6 +505,11 @@ def ingest_review(root, review):
         raise RunError("INVALID_REVIEW","Actual reviewer identity, stable review_id and decision are required.")
     if review["reviewer_id"] in packet.get("writer_ids",[]):
         raise RunError("INVALID_REVIEW","Reviewer must be distinct from actual writers.")
+    previous = packet.get('reviews', [])[-1] if packet.get('reviews') else {}
+    if review['decision'] in VERIFIED and previous.get('decision') in {'REVISION_REQUIRED', 'MATERIAL_BLOCKED'}:
+        for request in requests(previous, packet['owner_id']):
+            if not repair_sync.progress_current(root, packet, state, request, previous.get('review_id')):
+                raise RunError('REPAIR_SYNC_REQUIRED', 'Recheck every current dependency before accepted reinspection: ' + request['repair_id'])
     if review["decision"] in VERIFIED and (not current_review(root,packet,review) or review.get("repair_requests")
             or review.get("unresolved_reading_gaps")
             or any(review.get("gate_decisions",{}).get(g)!="PASS" for g in ["G0","G1","G2","G3"])):
@@ -527,22 +537,35 @@ def ingest_review(root, review):
     return commit(root,packet,state,"Actual review returned "+review["decision"]+"; Owner must act on remaining requests.")
 
 
-def repair_ready(root, repair_id, ref):
+def repair_ready(root, repair_id, ref, sync_file=None):
     packet,state = read(root/"paper_packet.json"),read(root/"execution_state.json")
     latest = packet.get("reviews",[])[-1] if packet.get("reviews") else {}
     request = next((r for r in requests(latest,packet['owner_id']) if r['repair_id']==repair_id),None)
     if request is None or not evidence(root,[ref]):
         raise RunError("INVALID_REPAIR","Use a latest-review repair ID and existing repair evidence.")
+    sync_record = {}
+    if packet.get('review_requirements', {}).get('repair_dependency_sync'):
+        if sync_file is None:
+            raise RunError('REPAIR_SYNC_REQUIRED', 'Run repair-scan, inspect dependencies and provide --sync-file under repair_sync/.')
+        path = Path(sync_file).resolve()
+        if not path.is_relative_to((root/'repair_sync').resolve()) or not path.is_file():
+            raise RunError('INVALID_REPAIR_SYNC', 'Store the completed synchronization report under this run\'s repair_sync/.')
+        try:
+            repair_sync.validate(root, packet, request, latest.get('review_id'), read(path))
+        except (ValueError, TypeError, KeyError, AttributeError) as exc:
+            raise RunError('INVALID_REPAIR_SYNC', str(exc)) from exc
+        sync_record = {'dependency_sync_ref': path.relative_to(root).as_posix(),
+                       'dependency_sync_sha256': digest(path)}
     state.setdefault("repair_progress",{})[repair_id] = {"status":"READY_FOR_REVIEW",
         "scope_revision":packet["scope_revision"],"review_id":latest.get('review_id'),
         "request_sha256":hashlib.sha256(json.dumps(request,sort_keys=True,ensure_ascii=False).encode('utf8')).hexdigest(),
-        "evidence_refs":[ref]}
+        "evidence_refs":[ref], **sync_record}
     return commit(root,packet,state,"Saved repair evidence for "+repair_id+"; reviewer reinspection is still required.")
 
 
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("command",choices=["init","merge","ingest-review","repair-ready","sync","next","snapshot","set-target","validate-handoff","handoff-template","review-template"])
+    parser.add_argument("command",choices=["init","merge","ingest-review","repair-scan","repair-ready","sync","next","snapshot","set-target","validate-handoff","handoff-template","review-template"])
     parser.add_argument("run_directory",type=Path)
     parser.add_argument("--source",type=Path)
     parser.add_argument("--target",type=Path, help="Explicit research-target JSON for init.")
@@ -551,6 +574,9 @@ def main():
     parser.add_argument("--file",type=Path)
     parser.add_argument("--id")
     parser.add_argument("--evidence")
+    parser.add_argument('--sync-file', type=Path)
+    parser.add_argument('--terms', nargs='+')
+    parser.add_argument('--obsolete', nargs='+')
     parser.add_argument('--writer')
     parser.add_argument('--units', nargs='+')
     args=parser.parse_args()
@@ -592,8 +618,15 @@ def main():
             result=merge_handoff(root,read(args.file))
         elif args.command=="ingest-review":
             result=ingest_review(root,read(args.file))
+        elif args.command=='repair-scan':
+            packet=read(root/'paper_packet.json')
+            latest=packet.get('reviews', [])[-1] if packet.get('reviews') else {}
+            request=next((r for r in requests(latest,packet['owner_id']) if r['repair_id']==args.id),None)
+            if request is None:
+                raise RunError('INVALID_REPAIR','Use an ID from the latest actual failed review.')
+            result=repair_sync.scan(root,packet,request,latest.get('review_id'),args.terms,args.obsolete)
         elif args.command=="repair-ready":
-            result=repair_ready(root,args.id,args.evidence)
+            result=repair_ready(root,args.id,args.evidence,args.sync_file)
         else:
             packet,state=read(root/"paper_packet.json"),read(root/"execution_state.json")
             sync_inventory(root,packet,state)
