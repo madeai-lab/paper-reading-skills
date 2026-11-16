@@ -18,6 +18,8 @@ If the tool returns filtered, unavailable or undisplayed image content, set dire
 
 Keep Pass A (source-first inventory) and Pass B (draft comparison) in the same actual reviewer session where supported. Resume that same agent rather than silently replacing its context under the same name. If a new session is necessary, disclose the change, establish source-first independence and directly recheck image capability there. Earlier session viewing does not become viewing in the new session. Record the actual host-exposed agent/session identifier; if none is exposed, use HOST_NOT_EXPOSED and explain the identity limitation rather than inventing an identifier.
 
+Capture an exposed stable host ID before the first decision where possible. If old decisions truthfully recorded HOST_NOT_EXPOSED and a stable ID becomes available later, do not rewrite history or infer continuity from a route name. For the existing strict continuation validator, conservatively retain no unprovable coverage and directly recheck the current required units and claims. Explain the changed identity assurance in continuation.replacement_reason, distinguishing identity uncertainty from an actual reviewer replacement; save a new actual decision and snapshot. This recovery requires real reinspection, not new labels on old observations.
+
 For new 2.4 runs, acceptance requires a reviewer-authored visual_inspection object:
 
 ```json

@@ -55,6 +55,8 @@
     "report_sha256": null,
     "checked_dimensions": [],
     "checked_experiment_ids": [],
+    "checked_section_roles": [],
+    "presentation_assessment": "",
     "assessment": ""
   }
 }

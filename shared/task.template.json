@@ -32,7 +32,7 @@
   },
   "completion_rule": "All in-scope information units covered and semantically checked; G3 required. Counts and files alone are insufficient.",
   "unresolved_source_issue_rule": "Preserve evidence for user review; restrict affected claims without treating a user preference as factual proof.",
-  "skill_revision": "2.8",
+  "skill_revision": "2.9",
   "research_target": null,
   "review_mode": "KEY_CLAIMS",
   "content_acquisition": {

@@ -1,4 +1,4 @@
-# Handoff data contract — current contract 2.8
+# Handoff data contract — current contract 2.9
 
 Use the same task, source, unit, experiment, claim and issue IDs across stages. Field names remain English; prose may use the selected language. The [shared template](../shared/packet.template.json) is empty scaffolding, not completed evidence.
 
@@ -81,6 +81,6 @@ Evidence paths resolve to existing local files, relative to the run or absolute.
 
 ## Compatibility and completion
 
-New 2.8 runs enable reader_explanation; new runs since 2.7 bind native acquisition; missing review_mode retains legacy full independent review. Never retrofit active/frozen runs or delete new-run fields to evade their contract. Only USER_DEFINED_SCOPE permits evidenced user-authorized OUT_OF_SCOPE exclusions; retain units and scope revision without claiming complete-paper coverage.
+New 2.9 runs enable report_presentation in addition to reader_explanation (2.8) and native acquisition (2.7). The existing readability schema_version 1 adds ordered sections {role, heading}; accepted reviewer readability adds checked_section_roles and presentation_assessment. These extensions apply only to enabled runs. Missing review_mode retains legacy full independent review. Never retrofit active/frozen runs or delete new-run fields to evade their contract. Only USER_DEFINED_SCOPE permits evidenced user-authorized OUT_OF_SCOPE exclusions; retain units and scope revision without claiming complete-paper coverage.
 
 Changes to sources, locators, explanations, reports or evidence reopen affected dependencies and review. Four snapshot fields bind the actual inspected version; never refresh an old approval token. See [EXECUTION.md](EXECUTION.md) for the control loop and evidenced interruption. Scripts cannot prove reading, understanding, viewing, independence or complete source inventory.

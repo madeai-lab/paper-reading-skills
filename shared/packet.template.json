@@ -42,7 +42,7 @@
     "independent_review": null,
     "report_readability": null
   },
-  "skill_revision": "2.8",
+  "skill_revision": "2.9",
   "owner_id": null,
   "writer_ids": [],
   "scope_exclusions": [],
@@ -51,7 +51,8 @@
     "direct_visual_inspection": true,
     "repair_dependency_sync": true,
     "key_unit_ids": [],
-    "reader_explanation": true
+    "reader_explanation": true,
+    "report_presentation": true
   },
   "review_mode": "KEY_CLAIMS",
   "content_acquisition": {

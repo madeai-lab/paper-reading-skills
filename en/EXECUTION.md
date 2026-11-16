@@ -1,4 +1,4 @@
-# Execution and terminal decisions — current contract 2.8
+# Execution and terminal decisions — current contract 2.9
 
 ## Initialize and inventory
 
@@ -27,6 +27,8 @@ Run next after each batch and perform next_action. CONTINUE means work now, not 
 Load 07, [Targets and visual reports](../references/targets-and-visual-reports.md) and [Reader explanations](../references/reader-explanations.md). Write report.md/user_review.md and answer every explicit target question in target_analysis.json. reading_report_assets.py generates galleries only from actually inspected images. Register derived data, transformations and limits. Explain mechanisms, terms, metrics and every experiment without requiring internal JSON.
 
 Use shared/report-readability.template.json for report_readability.json, bound to final report SHA256. Locate all six explanation dimensions and every experiment with exact report excerpts and assessments. Actually inspect final display at top, middle and end, images and links; save evidence. A demonstrated unavailable viewer uses UNAVAILABLE and failure evidence; this does not waive source viewing.
+
+New 2.9 runs also index exact localized headings in ordered `sections`, following Reader explanations. Link registered evidence outputs; only an explicitly bound target gets target comparison. The same reviewer judges explanation depth and records `checked_section_roles`/`presentation_assessment`. A missing reviewer summary can be linked at its agreed path before first review, but must exist for final acceptance.
 
 Stabilize all text, assets, G0–G2 and records before preflight and review-plan. Inspect ready_for_review, not only the exit code. The controller computes ordinary sampling; every current claim and dependency is mandatory. Reviewer also checks semantic claim-registry completeness.
 

@@ -18,7 +18,7 @@ from reading_element_contracts import element_errors, native_unit_errors, native
 
 from reading_report_quality import quality_errors
 
-REVISION = "2.8"
+REVISION = "2.9"
 VISUAL = {"FIGURE", "PANEL", "TABLE", "OTHER_VISUAL"}
 STATES = {"INVENTORIED", "READ", "UNDERSTOOD", "CHECKED", "BLOCKED", "NON_INFORMATIVE", "OUT_OF_SCOPE"}
 EXPERIMENT_FIELDS = set("experiment_id purpose unit_refs design data_and_sampling split ground_truth models_and_tools comparators budget metrics results uncertainty negative_results failure_cases limitations claim_refs".split())
@@ -338,7 +338,7 @@ def initialize(root, source, owner, language, target=None, mode='KEY_CLAIMS'):
     packet.update({"template_only":False,"skill_revision":REVISION,"task_id":root.name,"paper_id":root.name,
                    "owner_id":owner,"writer_ids":[owner],"paper_status":"IN_PROGRESS","sources":[src],
                    "review_mode":mode})
-    packet['review_requirements'] = {'direct_visual_inspection': True, 'repair_dependency_sync': True, 'reader_explanation': True}
+    packet['review_requirements'] = {'direct_visual_inspection': True, 'repair_dependency_sync': True, 'reader_explanation': True, 'report_presentation': True}
     packet['content_acquisition'] = {'method': 'PDFPLUMBER_NATIVE', 'manifest_ref': 'source_elements/manifest.json'}
     packet["deliverables"] = {k:k+".md" for k in ["full_notebook","report","material_index","user_review","independent_review"]}
     packet["deliverables"]["report_readability"] = "report_readability.json"

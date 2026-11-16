@@ -146,7 +146,22 @@ class RepairSyncTests(unittest.TestCase):
         self.assertEqual(inspect_run(self.root),[])
         (self.root/'notes.md').write_text('Stale claim reintroduced after review',encoding='utf8')
         codes={row['code'] for row in inspect_run(self.root)}
-        self.assertTrue({'REVIEW_CONTENT_STALE','REPAIR_SYNC_REQUIRED'} <= codes)
+        self.assertIn('REVIEW_CONTENT_STALE', codes)
+        self.assertNotIn('REPAIR_SYNC_REQUIRED', codes)
+
+    def test_accepted_review_closes_historical_sync_without_reopening_old_repairs(self):
+        control.merge_handoff(self.root, {'writer_id': 'owner', 'gate_results': {
+            'G2': {'decision': 'PASS', 'evidence_refs': ['notes.md'], 'open_items': []}}})
+        self.packet = control.read(self.root / 'paper_packet.json')
+        sync_path = self.save_report(self.complete(self.scan()))
+        control.repair_ready(self.root, 'R1-01', 'notes.md', sync_path)
+        packet = control.read(self.root / 'paper_packet.json')
+        accepted = copy.deepcopy(self.fixture.packet['reviews'][0])
+        accepted.update(review_id='R2', reviewed_content_sha256=control.content_fingerprint(self.root, packet))
+        control.ingest_review(self.root, accepted)
+        sync_path.write_text('{"error":"historical archive changed"}', encoding='utf-8')
+        self.assertEqual(inspect_run(self.root), [])
+        self.assertEqual(control.assess(self.root)['terminal_decision'], 'ACCEPTED')
 
     def test_deleted_file_and_changed_report_identity_are_rejected(self):
         report=self.complete(self.scan())

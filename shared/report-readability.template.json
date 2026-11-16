@@ -2,6 +2,7 @@
   "schema_version": 1,
   "template_only": true,
   "report_sha256": null,
+  "sections": [],
   "checks": [
     {
       "dimension": "problem",

@@ -97,3 +97,13 @@ These are behavioral acceptance scenarios, not claims of completed live trials.
 - Theory paper without experiments: empty experiment array allowed; explain actual derivation/evidence without inventing experiments.
 - Demonstrably unavailable viewer: retain failure evidence and layout limits; do not claim viewing or waive source-image requirements.
 - Frozen revision-2.7 run: new fields are not imposed; FULL_DOUBLE_READ retains complete independent coverage.
+
+## Revision 2.9 cases
+
+- General pattern catalogue: common report sections, actual mechanisms and trade-offs; omit an unbound target section and invented experiments.
+- Targeted review: a separate comparison addresses the supplied questions/dimensions and links every saved answer; a generic inspiration paragraph is insufficient.
+- Missing required supplement: explain accessible evidence and affected claims; a complete-looking report cannot grant complete-paper acceptance.
+- Notes/review files exist but are only bare filenames or code spans: navigation fails. Nested reviewer paths must match registered outputs.
+- Localized headings and paper-specific subsections: valid when common roles occur in order; heading presence alone does not prove explanation depth.
+- Accepted review closes an earlier failed round: do not reopen superseded repair seals; changes to current scientific content still require actual reinspection.
+- Frozen revision-2.8 run: new section/navigation checks are not imposed. Style-only repair needs affected-artifact review, not routine full rereading.

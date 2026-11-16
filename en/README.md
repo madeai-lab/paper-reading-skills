@@ -1,8 +1,8 @@
-# Execution entry — current contract 2.8
+# Execution entry — current contract 2.9
 
 Read [EXECUTION.md](EXECUTION.md), [DATA_CONTRACT.md](DATA_CONTRACT.md), [boundaries](00_governance/BOUNDARIES.md) and the coordinator prompt. At startup also read [Native elements](../references/native-elements.md), [Review modes](../references/review-modes.md) and [Reliable execution](../references/reliable-execution.md). [Architecture](../references/architecture.md) defines loading routes, module calls and ownership.
 
-One Owner normally performs 01–07 and a distinct actual reviewer performs 08; stages do not imply headcount. A paper uses 00–08; 09 is requested synthesis only. Owner always reads all source units. Default KEY_CLAIMS checks every claim/dependency and samples ordinary units; FULL_DOUBLE_READ retains complete independent rereading. Revision 2.8 requires readable mechanisms, metrics and every experiment, assessed by the same reviewer in the existing round. Active/frozen runs are not migrated.
+One Owner normally performs 01–07 and a distinct actual reviewer performs 08; stages do not imply headcount. A paper uses 00–08; 09 is requested synthesis only. Owner always reads all source units. Default KEY_CLAIMS checks every claim/dependency and samples ordinary units; FULL_DOUBLE_READ retains complete independent rereading. Revision 2.9 adds common report sections, paper-specific depth and usable evidence navigation to the 2.8 explanation checks, assessed by the same reviewer. Active/frozen runs are not migrated.
 
 | Stage | Prompt |
 |---|---|

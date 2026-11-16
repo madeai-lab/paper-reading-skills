@@ -6,7 +6,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from reading_report_quality import DIMENSIONS, quality_errors
+from reading_report_quality import DIMENSIONS, quality_errors, section_roles
 import reading_run_control as control
 import test_reading_run_control as fixtures
 
@@ -172,10 +172,41 @@ class ReportQualityIntegrationTests(unittest.TestCase):
             root = self.f.root / mode
             control.initialize(root, self.f.root / "source.pdf", "owner", "en", mode=mode)
             packet = control.read(root / "paper_packet.json")
-            self.assertEqual(packet["skill_revision"], "2.8")
+            self.assertEqual(packet["skill_revision"], "2.9")
             self.assertEqual(packet["review_mode"], mode)
             self.assertTrue(packet["review_requirements"]["reader_explanation"])
+            self.assertTrue(packet["review_requirements"]["report_presentation"])
             self.assertEqual(packet["deliverables"]["report_readability"], "report_readability.json")
+
+    def test_presentation_extension_can_reach_acceptance_with_registered_paths(self):
+        helper = ReportQualityTests()
+        helper.setUp()
+        self.addCleanup(helper.doCleanups)
+        helper.root = self.f.root
+        # Exercise presentation integration separately from native-acquisition
+        # fixtures, which already test the revision-gated 2.7+ source contract.
+        self.f.packet['review_requirements']['report_presentation'] = True
+        roles = section_roles(self.f.packet)
+        helper.data['sections'] = [{'role': role, 'heading': '## ' + role} for role in roles]
+        text = '\n\n'.join(row['heading'] + '\n\nevidence fixture' for row in helper.data['sections'])
+        text += '\n\n' + '\n'.join(f'[{key}]({ref})' for key, ref in self.f.packet['deliverables'].items()
+                                     if key in {'full_notebook', 'material_index', 'user_review', 'independent_review'})
+        (self.f.root / 'report.md').write_text(text, encoding='utf-8')
+        helper.data['report_sha256'] = hashlib.sha256((self.f.root / 'report.md').read_bytes()).hexdigest()
+        for row in helper.data['checks']:
+            row.update(report_excerpt='evidence fixture', unit_refs=['F1'])
+        helper.data['experiments'] = []
+        (self.f.root / 'display.md').write_text('Actual viewer failure fixture.', encoding='utf-8')
+        helper.save()
+        self.f.packet['deliverables']['report_readability'] = 'report_readability.json'
+        review = self.f.packet['reviews'][0]
+        review['report_readability'] = dict(helper.review['report_readability'],
+            report_sha256=helper.data['report_sha256'], checked_experiment_ids=[],
+            checked_section_roles=roles, presentation_assessment='Independent fixture assessment.')
+        review['reviewed_content_sha256'] = control.content_fingerprint(self.f.root, self.f.packet)
+        self.f.save()
+        result = control.assess(self.f.root)
+        self.assertEqual(result['terminal_decision'], 'ACCEPTED', result)
 
 
 if __name__ == "__main__":

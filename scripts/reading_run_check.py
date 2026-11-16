@@ -138,8 +138,11 @@ def inspect_run(root, require_review=True):
         from reading_run_control import requests
         from reading_repair_sync import progress_current
         state = read_json('execution_state.json') or {}
-        failed = next((r for r in reversed(reviews) if r.get('decision') in
-                       {'REVISION_REQUIRED', 'MATERIAL_BLOCKED'}), None)
+        # Ingestion validates every active repair seal before acceptance. A later
+        # actual acceptance closes that failed round; its archive is not a live
+        # repair task. Current-content changes still invalidate the review hash.
+        failed = reviews[-1] if reviews and reviews[-1].get('decision') in {
+            'REVISION_REQUIRED', 'MATERIAL_BLOCKED'} else None
         if failed:
             for request in requests(failed, packet.get('owner_id')):
                 if not progress_current(root, packet, state, request, failed.get('review_id')):

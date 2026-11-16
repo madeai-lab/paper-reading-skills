@@ -1,5 +1,11 @@
 # Version history
 
+## 2.9 — consistent report delivery
+
+New runs share ordered semantic report sections with localized headings and paper-specific depth. Explicit targets receive a separate coverage/difference/evidence-needed comparison; general reading has no invented target. The existing readability record indexes sections and the same reviewer assesses presentation alongside source accuracy. Local checks validate section locations, registered navigation, portable inline links/images and current reviewer coverage, without word-count or heading-based semantic approval. Active/frozen 2.8 runs retain their original contract.
+
+Compatibility correction: a later actual accepted review closes the previous failed round's repair-sync obligations. Current-content fingerprint changes still invalidate acceptance, and active failures still require valid synchronization before review ingestion. This avoids an unrecoverable request for historical repair IDs after acceptance; it does not rewrite or synthesize review decisions.
+
 ## 2.8 — reader-facing explanations
 
 Imported the reusable update from the local paper-agent skill identified by the referenced chat. Reports explain problem, mechanism, metrics, every experiment, visuals and limitations. report_readability.json binds Owner passage checks to report bytes; the existing independent reviewer supplies the semantic decision. No additional reviewer or automatic full rereading is introduced. Existing runs remain unchanged.

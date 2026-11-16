@@ -2,7 +2,7 @@
 name: paper-reading-verification-v2
 description: Use when a user requests comprehensive paper reading or revalidation beyond abstracts, highlights, or selected sections.
 metadata:
-  revision: "2.8"
+  revision: "2.9"
 ---
 
 # Paper Reading Verification
@@ -28,7 +28,7 @@ Bind an explicitly supplied research target with `init --target` or `set-target 
 
 Extract native elements once with an already provisioned pdfplumber interpreter. Read every page through bounded `read-elements` slices; actually inspect graphical/raster objects and parsing conflicts. Only complete validated native tables may use structured inspection without pixel viewing. Extraction, rendering and inventories prove no reading. Save source identity, required supplements and the complete unit inventory; sync and merge an evidenced G0 before dependent readers begin.
 
-Submit source-specific explanations and actual evidence with `handoff-template`, `validate-handoff`, then `merge`. The packet is the current scientific record; the controller generates the complete notebook/index. Never promote READ/UNDERSTOOD to CHECKED automatically or defer granular explanations. Complete all units and evidenced G1/G2, then finish readable report, user-review packet, target answers, visual assets and report_readability.json before review. Explain mechanisms, metrics and every experiment in the report itself; internal JSON is not a substitute.
+Submit source-specific explanations and actual evidence with `handoff-template`, `validate-handoff`, then `merge`. The packet is the current scientific record; the controller generates the complete notebook/index. Never promote READ/UNDERSTOOD to CHECKED automatically or defer granular explanations. Complete all units and evidenced G1/G2, then finish readable report, user-review packet, target answers, visual assets and report_readability.json before review. New 2.9 reports follow Reader explanations' common section order, paper-specific depth, conditional target comparison and clickable evidence navigation. Explain mechanisms, metrics and every experiment in the report itself; internal JSON is not a substitute.
 
 `next` returning CONTINUE means perform next_action now and reassess after the batch, handoff or repair. It is not permission to end with a plan. Send progress updates. The scripts neither launch models nor force the host to continue.
 

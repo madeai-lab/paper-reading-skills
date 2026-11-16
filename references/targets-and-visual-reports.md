@@ -55,6 +55,8 @@ Use the existing attribution vocabulary from B09 and support states from DATA_CO
 
 ## Reader-facing visual structure
 
+New 2.9 reports use the common section roles/order in [Reader explanations](reader-explanations.md). In their target section compare the actual questions/dimensions using target, existing coverage, candidate difference/use and evidence still needed; do not impose one project's contribution list on general reading. Keep all question answers in the linked analysis. Partial material access remains visible in source scope and affected results; no presentation choice grants complete-paper acceptance.
+
 Organize the report around the paper's question, mechanism, evidence and boundaries. Keep operational history and machine JSON in linked records. A short report still has complete evidence behind it. When useful, use:
 
 1. A mechanism figure or a compact analyst-created Mermaid diagram, labeled as a reconstruction with unit references. Preserve feedback loops, tools and human decisions; do not invent causal arrows.

@@ -6,6 +6,8 @@ The controller generates the complete notebook/material_index from packet. Confi
 
 Write a connected problem–mechanism–evidence–usable-conclusion narrative. Define terms; explain inputs/outputs, central components, symbols/objective terms and training versus runtime. Adapt theory/review papers to derivations or taxonomy relations. Explain metric meaning, units, denominators, direction and proxy limitations before results.
 
+For new 2.9 runs follow the common section roles/order in Reader explanations, with localized headings and paper-specific subsections. Populate its `sections` locator index. General reading omits target comparison; a bound target gets an explicit coverage/difference/evidence-needed comparison. Finish the argument, not merely a compressed summary. Link actual registered output paths in the navigation section, agreeing the reviewer summary destination before the first dispatch.
+
 Explain every experiment/case/ablation: variation, comparator, samples/budget, actual observations and inference limits. Preserve manual intervention, shared samples, missing configurations, negative results and absent statistics. Clear tables are allowed; opaque short cells and machine-ID lookups do not replace explanations. Important numbers retain source, conditions and baseline.
 
 Select useful actually inspected source panels with legible labels, reading guidance, source locations, full-resolution links and limits. Retain derived-chart data/transforms. Separate general findings from target inference; answer every target question, including unsupported/contrary evidence, in target_analysis.json. Register substantive new explanations as claims.

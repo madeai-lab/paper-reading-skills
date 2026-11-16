@@ -1,6 +1,6 @@
 # Paper Reading Verification
 
-An English-instruction skill for complete paper reading, source-linked explanations and independent review. Current runtime contract: **2.8**.
+An English-instruction skill for complete paper reading, source-linked explanations and independent review. Current runtime contract: **2.9**.
 
 1. Install this directory as `paper-reading-verification-v2` in your assistant's skill directory, or provide [SKILL.md](SKILL.md) and the paper path.
 2. Start with the [execution guide](en/README.md).
