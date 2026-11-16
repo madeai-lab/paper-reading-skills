@@ -20,6 +20,8 @@ Keep Pass A (source-first inventory) and Pass B (draft comparison) in the same a
 
 Capture an exposed stable host ID before the first decision where possible. If old decisions truthfully recorded HOST_NOT_EXPOSED and a stable ID becomes available later, do not rewrite history or infer continuity from a route name. For the existing strict continuation validator, conservatively retain no unprovable coverage and directly recheck the current required units and claims. Explain the changed identity assurance in continuation.replacement_reason, distinguishing identity uncertainty from an actual reviewer replacement; save a new actual decision and snapshot. This recovery requires real reinspection, not new labels on old observations.
 
+Check the host's child-task lifetime before dispatch. If ending the parent turn/process stops its reviewer, use a supported foreground continuation or keep the parent active with bounded result/status waits until the actual decision is saved and ingested. A final "waiting for reviewer" message is not a handoff to a durable worker. If the host reports a stopped task, inspect partial outputs and resume it; never count queued dispatch or stale activity as completed review.
+
 For new 2.4 runs, acceptance requires a reviewer-authored visual_inspection object:
 
 ```json
