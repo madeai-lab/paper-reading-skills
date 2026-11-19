@@ -3,10 +3,11 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+from reading_data_sources import extensions_enabled
 from reading_review_contracts import structure_errors, visual_review_errors
 from reading_review_modes import coverage_errors
 from reading_report_quality import quality_errors
-from reading_element_contracts import element_errors, native_unit_errors, native_table_ready
+from reading_element_contracts import element_errors, native_unit_errors, structured_ready
 
 VERIFIED = {"VERIFIED_FOR_SCOPE", "VERIFIED_WITH_USER_REVIEW"}
 
@@ -66,7 +67,11 @@ def inspect_run(root, require_review=True):
         else:
             excluded.add(uid)
         evidence(entry.get("user_authorization_ref"), uid)
+    inventoried_sources = {u.get('source_id') for u in inventory}
     for source in packet.get("sources", []):
+        if (extensions_enabled(packet) and source.get('required_for_scope') and source.get('access_state') == 'AVAILABLE'
+                and source.get('source_id') not in inventoried_sources):
+            error('SOURCE_NOT_INVENTORIED', source.get('source_id'), 'Inventory and read this required source; a hash alone is not coverage.')
         if source.get("required_for_scope") and source.get("access_state") != "AVAILABLE":
             error("SOURCE_UNAVAILABLE", source.get("source_id"), "Acquire the required material lawfully or retain a material block.")
         if source.get("local_path"):
@@ -97,7 +102,7 @@ def inspect_run(root, require_review=True):
         for ref in unit.get("evidence_refs", []):
             evidence(ref, uid)
         visual = unit.get("visual_review", {})
-        if (visual.get("required") or unit.get("kind") in {"FIGURE", "PANEL", "TABLE", "OTHER_VISUAL"}) and not native_table_ready(root, packet, unit):
+        if (visual.get("required") or unit.get("kind") in {"FIGURE", "PANEL", "TABLE", "OTHER_VISUAL"}) and not structured_ready(root, packet, unit):
             if visual.get("actually_viewed") is not True:
                 error("VISUAL_NOT_VIEWED", uid, "Actually open and inspect the original visual.")
             if not visual.get("artifact_refs"):

@@ -15,11 +15,11 @@ from reading_review_contracts import visual_review_errors, structure_errors, vis
 import reading_repair_sync as repair_sync
 from reading_review_modes import (review_mode, review_plan, coverage_errors, continuation_errors,
                                   review_baseline, review_delta)
-from reading_element_contracts import element_errors, native_unit_errors, native_table_ready, enabled as elements_enabled
+from reading_element_contracts import element_errors, native_unit_errors, structured_ready, enabled as elements_enabled
 
 from reading_report_quality import quality_errors
 
-REVISION = "2.9"
+REVISION = "2.10"
 VISUAL = {"FIGURE", "PANEL", "TABLE", "OTHER_VISUAL"}
 STATES = {"INVENTORIED", "READ", "UNDERSTOOD", "CHECKED", "BLOCKED", "NON_INFORMATIVE", "OUT_OF_SCOPE"}
 EXPERIMENT_FIELDS = set("experiment_id purpose unit_refs design data_and_sampling split ground_truth models_and_tools comparators budget metrics results uncertainty negative_results failure_cases limitations claim_refs".split())
@@ -145,8 +145,14 @@ def assess(root):
                 "notice":"The agent must verify the actual user/platform/material constraint; a record alone cannot authenticate it."}
     acquisition_errors = element_errors(root, packet)
     if acquisition_errors:
+        if acquisition_errors[0]['code'] == 'ELEMENTS_APPEND_REQUIRED':
+            return continue_with('EXTRACT_ELEMENTS', errors=acquisition_errors, append=True,
+                                 instruction='Run extract-elements --append for the newly registered sources. '
+                                             'Earlier pages are immutable. A data-file-only append needs no pdfplumber.')
         return continue_with('EXTRACT_ELEMENTS', errors=acquisition_errors,
-                             instruction='Use extract-elements in an explicitly provisioned pdfplumber interpreter for this new run. Do not install, OCR, overwrite evidence or migrate legacy runs.')
+                             instruction='For the first extraction use a provisioned pdfplumber interpreter. '
+                                         'If extraction exists, inspect the reported source or manifest error instead; '
+                                         'do not overwrite evidence, install software, use OCR or migrate a frozen run.')
     if latest and latest.get("decision") in {"REVISION_REQUIRED","MATERIAL_BLOCKED"}:
         if accessible_repairs:
             batch = accessible_repairs[:3]
@@ -338,7 +344,7 @@ def initialize(root, source, owner, language, target=None, mode='KEY_CLAIMS'):
     templates = Path(__file__).resolve().parent.parent/"shared"
     packet,state,task = [read(templates/name) for name in ["packet.template.json","execution-state.template.json","task.template.json"]]
     src = {"source_id":"SRC-01","title":None,"version":None,"publication_status":None,
-           "local_path":"source.pdf","sha256":digest(source),"page_count":None,"access_state":"AVAILABLE",
+           "source_kind":"PDF","local_path":"source.pdf","sha256":digest(source),"page_count":None,"access_state":"AVAILABLE",
            "required_for_scope":True,"supplement_of":None,"missing_reason":None}
     root.mkdir(parents=True)
     shutil.copyfile(source,root/"source.pdf")
@@ -404,7 +410,7 @@ def merge_handoff(root, payload, dry_run=False):
             if not unit.get("locators") or not evidence(root,unit.get("evidence_refs")):
                 raise RunError("INVALID_HANDOFF","Missing source locators/evidence for "+uid)
             if (unit.get("kind") in VISUAL and unit.get("visual_review",{}).get("actually_viewed") is not True
-                    and not native_table_ready(root, packet, unit)):
+                    and not structured_ready(root, packet, unit)):
                 raise RunError("INVALID_HANDOFF","Actually view this informative visual before claiming understanding: "+uid)
         units[uid] = unit
     packet["units"] = list(units.values())
@@ -537,7 +543,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command",choices=["init","merge","ingest-review","repair-scan","repair-ready","sync","next","snapshot","set-target","validate-handoff","handoff-template","review-template",
                                           "review-plan","preflight","review-delta","escalate-review","workflow-failure","workflow-repaired",
-                                          "extract-elements","outline","read-elements","read-section","section-coverage","render-crop"])
+                                          "extract-elements","outline","read-elements","read-section","section-coverage","render-crop","read-data"])
     parser.add_argument("run_directory",type=Path)
     parser.add_argument("--source",type=Path)
     parser.add_argument("--target",type=Path, help="Explicit research-target JSON for init.")
@@ -564,7 +570,22 @@ def main():
     parser.add_argument('--scale', type=float, help='Crop pixels per PDF point (default: 2).')
     parser.add_argument('--view', choices=('detail', 'locator', 'text'),
                         help='read-elements only: native detail (default), object locators, or plain text for spot checks.')
+    parser.add_argument('--append', action='store_true',
+                        help='extract-elements only: bind newly registered sources into an existing 2.10+ extraction.')
+    parser.add_argument('--sheet', help='read-data only: XLSX worksheet name.')
+    parser.add_argument('--rows', nargs=2, type=int, help='read-data only: first and last table row (1-based, inclusive).')
+    parser.add_argument('--header-row', type=int, help='read-data only: header row (default 1; 0 means no header).')
+    parser.add_argument('--fields', nargs='+', help='read-data only: exact header names to select.')
+    parser.add_argument('--json-pointer', help='read-data only: RFC 6901 pointer into a JSON file.')
+    parser.add_argument('--lines', nargs=2, type=int, help='read-data only: first and last Markdown/text line.')
     args=parser.parse_args()
+    if args.append and args.command != 'extract-elements':
+        parser.error('--append applies only to extract-elements')
+    data_options = [args.sheet, args.rows, args.header_row, args.fields, args.json_pointer, args.lines]
+    if args.command != 'read-data' and any(x is not None for x in data_options):
+        parser.error('--sheet/--rows/--header-row/--fields/--json-pointer/--lines apply only to read-data')
+    if args.command == 'read-data' and (args.pages or args.bbox or not args.source_id):
+        parser.error('read-data needs --source-id and file locators, not PDF pages or a bbox')
     if args.view and args.command != 'read-elements':
         parser.error('--view applies only to read-elements')
     if args.cursor is not None and args.command != 'read-section':
@@ -595,7 +616,7 @@ def main():
             result=review_plan(read(root/'paper_packet.json'))
         elif args.command=='extract-elements':
             from reading_pdf_elements import extract_elements
-            result=extract_elements(root)
+            result=extract_elements(root, append=args.append)
         elif args.command=='outline':
             from reading_outline import run_outline, outline_text, outline_json
             outline, units, warnings = run_outline(root,args.source_id,args.out)
@@ -613,6 +634,13 @@ def main():
         elif args.command=='read-elements':
             from reading_pdf_elements import read_elements
             result=read_elements(root,args.pages,args.bbox,args.max_chars,args.source_id,view=args.view or 'detail')
+        elif args.command=='read-data':
+            from reading_data_sources import read_data
+            locator={k:v for k,v in [('sheet',args.sheet),('rows',args.rows),('fields',args.fields),
+                                     ('json_pointer',args.json_pointer),('lines',args.lines)] if v is not None}
+            if args.header_row is not None:
+                locator['header_row']=args.header_row or None
+            result=read_data(root,args.source_id,locator or None,args.max_chars)
         elif args.command=='read-section':
             from reading_sections import read_section
             result=read_section(root,args.id,args.cursor,args.max_chars,output_format=args.format or 'json')
@@ -708,7 +736,7 @@ def main():
                 sys.stdout.buffer.write((result+'\n').encode('utf-8'))
             else:
                 print(result)
-        elif args.command in ('read-elements','read-section','section-coverage','outline'):
+        elif args.command in ('read-elements','read-section','section-coverage','outline','read-data'):
             print(json.dumps(result,ensure_ascii=True,separators=(',', ':')))
         else:
             print(json.dumps(result,ensure_ascii=True,indent=2))

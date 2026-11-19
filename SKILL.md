@@ -2,7 +2,7 @@
 name: paper-reading-verification-v2
 description: Use when a user requests comprehensive paper reading or revalidation beyond abstracts, highlights, or selected sections.
 metadata:
-  revision: "2.9"
+  revision: "2.10"
 ---
 
 # Paper Reading Verification
@@ -25,7 +25,7 @@ Act on the current controller result: on `CONTINUE`, perform `next_action` now, 
 
 ## What cannot be shortened
 
-- Read the full body in [verified section/subsection order](references/section-reading.md). Use pages to check for omissions, locate evidence and inspect original objects, not as the reading sequence. Inventory and read every in-scope unit, including taxonomy leaves, formalism, informative figures/panels/tables/notes, negative results, appendices and required supplements. Use [figure/table locators](references/native-elements.md#locate-figures-and-tables-before-detailed-inspection) to find relevant regions, not as reading evidence. Inspect actual graphics, bitmaps and parsing conflicts; only validated complete native tables qualify for structured inspection instead of pixels. Extraction is not reading.
+- Read the full body in [verified section/subsection order](references/section-reading.md). Use pages to check for omissions, locate evidence and inspect original objects, not as the reading sequence. Inventory and read every in-scope unit, including taxonomy leaves, formalism, informative figures/panels/tables/notes, negative results, appendices and required supplements. Use [figure/table locators](references/native-elements.md#locate-figures-and-tables-before-detailed-inspection) to find relevant regions, not as reading evidence. Inspect actual graphics, bitmaps and parsing conflicts; PDF tables need complete validated native evidence to use structured inspection instead of pixels. For a [data-file table](references/native-elements.md#data-file-supplements-210), read its original rows and fields directly. Extraction is not reading.
 - Save source-specific explanations and locators. Distinguish author claims, observations and analyst inference. Preserve anomalies, checks, alternatives and affected claim restrictions; a user need not decide the truth before reading continues. Explain mechanisms, metrics and every experiment in the report itself.
 - Gate G3 requires actual independent semantic acceptance of the current version. `KEY_CLAIMS` checks every claim and its dependencies, Owner coverage and a stratified ordinary sample; it is not full double reading. A writer cannot approve their own work. Repair and recheck changed dependencies; never refresh an old approval token.
 - Before full delivery, run `next` and `reading_run_check.py`; require `ACCEPTED`, complete Owner reading and real review. Only a genuine, evidenced [interruption](en/EXECUTION.md#deliver-or-preserve-genuine-interruption) permits unfinished delivery. Without Python maintain equivalent records manually and disclose the missing check. Without a reviewer finish accessible work and retain G3 PENDING.

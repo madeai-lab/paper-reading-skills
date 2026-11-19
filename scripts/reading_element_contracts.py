@@ -3,6 +3,21 @@ import hashlib
 import json
 import math
 from pathlib import Path
+import re
+
+from reading_data_sources import (DATA_KIND, DATA_UNIT_KINDS, check_record, check_registry, extensions_enabled,
+                                  is_data_source, parse, resolve, sha256_file)
+
+CODES = {'ELEMENT_SOURCE_CHANGED', 'ELEMENTS_APPEND_REQUIRED', 'DATA_SOURCE_INVALID', 'DATA_SOURCE_UNSUPPORTED',
+         'DATA_LIMIT', 'DATA_LOCATOR_INVALID', 'DATA_PARSE_CONFLICT'}
+
+
+def error_code(exc, default='ELEMENTS_INVALID'):
+    code = getattr(exc, 'code', None)
+    if code:
+        return code
+    match = re.match(r'([A-Z_]+):', str(exc))
+    return match[1] if match and match[1] in CODES else default
 
 
 def enabled(packet):
@@ -42,21 +57,123 @@ def _box(values):
         raise ValueError('Invalid native element coordinates.')
 
 
-def validated_pages(root, packet):
-    """Return verified native page records keyed by manifest reference."""
+def _parser_ok(parser):
+    return isinstance(parser, dict) and parser.get('name') == 'pdfplumber' and bool(parser.get('version'))
+
+
+def _history(root, manifest):
+    """Prove every append kept earlier manifest entries, and so their page files, unchanged."""
+    history = manifest.get('history')
+    if not isinstance(history, list) or not history:
+        raise ValueError('Schema-2 manifests record their extraction history.')
+    directory = root/'source_elements/history'
+    if directory.exists():
+        expected = {f'manifest-{i:04}.json' for i in range(1, len(history))}
+        for snapshot in directory.glob('manifest-*.json'):
+            if snapshot.name in expected:
+                continue
+            # A failed atomic swap can leave an exact copy of the still-current manifest.
+            if (snapshot.name == f'manifest-{len(history):04}.json'
+                    and _sha(snapshot) == _sha(root/'source_elements/manifest.json')):
+                continue
+            raise ValueError('Unexpected manifest history snapshot; do not truncate a committed chain.')
+    seen_pdf, seen_data = [], []
+    for i, row in enumerate(history):
+        new_pdf = row.get('source_ids') if isinstance(row, dict) else None
+        new_data = row.get('data_source_ids') if isinstance(row, dict) else None
+        if (not isinstance(row, dict) or row.get('sequence') != i + 1
+                or row.get('operation') != ('INITIAL' if i == 0 else 'APPEND')
+                or not isinstance(new_pdf, list) or not isinstance(new_data, list) or not new_pdf + new_data
+                or any(not isinstance(x, str) for x in new_pdf + new_data) or (i == 0 and not new_pdf)
+                or not (_parser_ok(row.get('parser')) if new_pdf else row.get('parser') is None)):
+            raise ValueError('Manifest history entries must be sequential INITIAL/APPEND steps with their own sources and parser.')
+        if i == 0:
+            if row.get('parser') != manifest['parser'] or row.get('previous_manifest_ref') is not None \
+                    or row.get('previous_manifest_sha256') is not None:
+                raise ValueError('The initial history entry must match the manifest parser and have no predecessor.')
+        else:
+            ref = f'source_elements/history/manifest-{i:04}.json'
+            path = _file(root, row.get('previous_manifest_ref'))
+            if row['previous_manifest_ref'] != ref or _sha(path) != row.get('previous_manifest_sha256'):
+                raise ValueError('ELEMENTS_INVALID: preserved manifest history changed or is missing: ' + ref)
+            old = _load(path)
+            if (old.get('schema_version') != 2 or old.get('ocr_used') is not False
+                    or old.get('parser') != manifest['parser'] or old.get('history') != history[:i]
+                    or old.get('sources') != manifest['sources'][:len(seen_pdf)]
+                    or old.get('data_sources') != manifest['data_sources'][:len(seen_data)]):
+                raise ValueError('An append changed earlier manifest evidence; existing pages are never rewritten. Use a fresh run.')
+        seen_pdf += new_pdf
+        seen_data += new_data
+    if (seen_pdf != [s['source_id'] for s in manifest['sources']]
+            or seen_data != [s['source_id'] for s in manifest['data_sources']]):
+        raise ValueError('Manifest history must account for every bound source in extraction order.')
+
+
+def _data_entries(root, manifest, current):
+    rows = manifest.get('data_sources')
+    if (not isinstance(rows, list) or any(not isinstance(r, dict) for r in rows)
+            or len({r.get('source_id') for r in rows}) != len(rows)):
+        raise ValueError('Schema-2 manifests list data_sources once each.')
+    ids = {r['source_id'] for r in rows}
+    if not ids <= set(current):
+        raise ValueError('ELEMENT_SOURCE_CHANGED: a bound data source is no longer an available DATA_FILE; use a fresh run.')
+    result = {}
+    archive_hashes = {}
+    for row in rows:
+        source = current[row['source_id']]
+        container = (source.get('provenance') or {}).get('container')
+        if (row.get('local_path') != source.get('local_path') or row.get('sha256') != source.get('sha256')
+                or row.get('format') != source.get('format') or row.get('encoding') != source.get('encoding')
+                or row.get('container') != container or row.get('supplement_of') != source.get('supplement_of')
+                or row.get('origin') != source['provenance']['origin']
+                or row.get('acquisition_ref') != source['provenance']['acquisition_ref']
+                or row.get('acquisition_sha256') != sha256_file(root/source['provenance']['acquisition_ref'])):
+            raise ValueError('ELEMENT_SOURCE_CHANGED: data source identity changed after binding: ' + row['source_id'])
+        if sha256_file(root/source['local_path']) != source['sha256']:
+            raise ValueError('ELEMENT_SOURCE_CHANGED: data file bytes changed: ' + row['source_id'])
+        if container:
+            path = root/container['local_path']
+            if path not in archive_hashes:
+                archive_hashes[path] = sha256_file(path)
+            if archive_hashes[path] != container['sha256']:
+                raise ValueError('ELEMENT_SOURCE_CHANGED: container archive changed: ' + row['source_id'])
+        structure = row.get('structure')
+        if not isinstance(structure, dict) or structure.get('parse_state') not in {'PARSED', 'CONFLICT'}:
+            raise ValueError('Data manifest entries record a parsed structure or an explicit conflict.')
+        result[row['source_id']] = (source, row)
+    return result
+
+
+def validate_acquisition(root, packet, allow_pending=False):
+    """Verify the frozen acquisition record and return pages, data bindings and unbound sources.
+
+    allow_pending is used only by append extraction: newly registered AVAILABLE sources may
+    still be unbound, but every bound source and page must remain exactly as recorded.
+    """
+    root = Path(root).resolve()
     acquisition = packet.get('content_acquisition')
     if acquisition != {'method': 'PDFPLUMBER_NATIVE', 'manifest_ref': 'source_elements/manifest.json'}:
         raise ValueError('New runs require the canonical PDFPLUMBER_NATIVE manifest contract.')
+    extended = extensions_enabled(packet)
+    if extended:
+        check_registry(packet.get('sources', []))
+    elif any(is_data_source(s) for s in packet.get('sources', [])):
+        raise ValueError('DATA_SOURCE_UNSUPPORTED: data-file sources need a run initialized at 2.10 or later.')
     manifest = _load(_file(root, acquisition['manifest_ref']))
-    if (manifest.get('schema_version') != 1 or manifest.get('ocr_used') is not False
-            or manifest.get('parser', {}).get('name') != 'pdfplumber'
-            or not manifest.get('parser', {}).get('version')):
-        raise ValueError('Use a native-only, versioned pdfplumber manifest.')
-    current = {s['source_id']: s for s in packet.get('sources', []) if s.get('access_state') == 'AVAILABLE'}
+    if (manifest.get('schema_version') != (2 if extended else 1) or manifest.get('ocr_used') is not False
+            or not _parser_ok(manifest.get('parser'))):
+        raise ValueError('Use a native-only, versioned pdfplumber manifest' + (' (schema 2 for 2.10+ runs).' if extended else '.'))
+    available = [s for s in packet.get('sources', []) if s.get('access_state') == 'AVAILABLE']
+    current = {s['source_id']: s for s in available if not (extended and is_data_source(s))}
+    data_current = {s['source_id']: s for s in available if extended and is_data_source(s)}
+    for source in data_current.values():
+        check_record(root, packet, source)
     sources = manifest.get('sources', [])
-    if (not isinstance(sources, list) or len({s['source_id'] for s in sources}) != len(sources)
-            or {s['source_id'] for s in sources} != set(current)):
+    bound = [s['source_id'] for s in sources] if isinstance(sources, list) else None
+    if bound is None or len(set(bound)) != len(bound) or (not extended and set(bound) != set(current)):
         raise ValueError('Manifest must cover every current available source exactly once.')
+    if not set(bound) <= set(current):
+        raise ValueError('ELEMENT_SOURCE_CHANGED: a bound PDF source is no longer available or became a data file; use a fresh run.')
     result = {}
     for source in sources:
         original = current[source['source_id']]
@@ -74,36 +191,51 @@ def validated_pages(root, packet):
             path = _file(root, row['ref'])
             if _sha(path) != row.get('sha256'):
                 raise ValueError('Native page evidence changed: '+row['ref'])
-            data = _load(path)
-            if (data.get('source_id') != source['source_id'] or data.get('page') != row['page']
-                    or data.get('ocr_used') is not False or not isinstance(data.get('text'), str)
-                    or not isinstance(data.get('flags'), list)
-                    or any(type(data.get(k)) not in {int, float} or data[k] <= 0 for k in ['width', 'height'])):
+            page = _load(path)
+            if (page.get('source_id') != source['source_id'] or page.get('page') != row['page']
+                    or page.get('ocr_used') is not False or not isinstance(page.get('text'), str)
+                    or not isinstance(page.get('flags'), list)
+                    or any(type(page.get(k)) not in {int, float} or page[k] <= 0 for k in ['width', 'height'])):
                 raise ValueError('Native page identity, dimensions or text contract is invalid.')
-            ids = [data.get('text_id')]
+            ids = [page.get('text_id')]
             for key in ['chars', 'words', 'tables', 'images', 'lines', 'rects', 'curves']:
-                if not isinstance(data.get(key), list):
+                if not isinstance(page.get(key), list):
                     raise ValueError('Native page collection must be an array: '+key)
-                for item in data[key]:
+                for item in page[key]:
                     ids.append(item.get('id'))
                     _box(item.get('bbox'))
             if any(not isinstance(uid, str) or not uid for uid in ids) or len(set(ids)) != len(ids):
                 raise ValueError('Native element IDs must be present and unique on their page.')
             if row['ref'] in result:
                 raise ValueError('Sources must not alias the same page artifact.')
-            result[row['ref']] = data
-    return result
+            result[row['ref']] = page
+    data = {}
+    if extended:
+        data = _data_entries(root, manifest, data_current)
+        _history(root, manifest)
+    pending_pdf = [s for s in available if s['source_id'] in current and s['source_id'] not in bound]
+    pending_data = [s for s in available if s['source_id'] in data_current and s['source_id'] not in data]
+    if (pending_pdf or pending_data) and not allow_pending:
+        raise ValueError('ELEMENTS_APPEND_REQUIRED: newly available sources are not yet bound ('
+                         + ', '.join(s['source_id'] for s in pending_pdf + pending_data)
+                         + '). Run extract-elements --append; existing evidence stays unchanged.')
+    return {'manifest': manifest, 'pages': result, 'data': data,
+            'pending_pdf': pending_pdf, 'pending_data': pending_data}
+
+
+def validated_pages(root, packet):
+    """Verify the whole acquisition, including any container bindings, before exposing a page."""
+    return validate_acquisition(root, packet)['pages']
 
 
 def element_errors(root, packet):
     if not enabled(packet):
         return []
     try:
-        validated_pages(Path(root).resolve(), packet)
+        validate_acquisition(Path(root).resolve(), packet)
         return []
     except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
-        code = 'ELEMENT_SOURCE_CHANGED' if 'ELEMENT_SOURCE_CHANGED' in str(exc) else 'ELEMENTS_INVALID'
-        return [{'code': code, 'item': 'content_acquisition', 'next_action': str(exc)}]
+        return [{'code': error_code(exc), 'item': 'content_acquisition', 'next_action': str(exc)}]
 
 
 def _reading(root, packet, unit, pages):
@@ -141,22 +273,76 @@ def _reading(root, packet, unit, pages):
     return record, selected
 
 
+def _data_reading(root, unit, data):
+    """Check a data-file unit's own reading record and file + row/field locators."""
+    source, entry = data[unit['source_id']]
+    if unit.get('kind') not in DATA_UNIT_KINDS:
+        raise ValueError('Data-file sources hold TABLE, SECTION, APPENDIX or BIBLIOGRAPHY units; register image or PDF '
+                         'material as its own source instead of describing pixels from a data file.')
+    record = unit.get('content_reading', {})
+    if (not isinstance(record, dict) or record.get('mode') != DATA_KIND or record.get('unresolved_conflicts')
+            or record.get('page_refs') or record.get('element_ids')):
+        raise ValueError('Record content_reading.mode=DATA_FILE with resolved conflicts; pages and native element IDs do not apply.')
+    refs = record.get('conflict_resolution_refs', [])
+    if not isinstance(refs, list) or any(not isinstance(ref, str) or not (root/ref.split('#', 1)[0]).is_file() for ref in refs):
+        raise ValueError('Conflict resolutions require existing local evidence.')
+    locators = unit.get('locators')
+    if not isinstance(locators, list) or not locators:
+        raise ValueError('Data units need file + sheet/row/field, JSON-pointer or line locators.')
+    doc = parse(root/source['local_path'], source, entry['sha256'])
+    for locator in locators:
+        selected = resolve(doc, locator)
+        if selected.get('flags') and not refs:
+            raise ValueError('Inspect flagged structure or cached values and link a resolution note: ' + ', '.join(selected['flags']))
+    return record
+
+
 def native_unit_errors(root, packet):
     if not enabled(packet):
         return []
     root = Path(root).resolve()
-    if element_errors(root, packet):
-        return []
-    pages = validated_pages(root, packet)
+    try:
+        state = validate_acquisition(root, packet)
+    except (OSError, ValueError, TypeError, KeyError, AttributeError):
+        return []  # element_errors reports the acquisition failure itself.
     errors = []
     for unit in packet.get('units', []):
         if unit.get('read_state') not in {'CHECKED', 'NON_INFORMATIVE'}:
             continue
+        on_data = unit.get('source_id') in state['data']
         try:
-            _reading(root, packet, unit, pages)
+            if on_data:
+                _data_reading(root, unit, state['data'])
+            else:
+                _reading(root, packet, unit, state['pages'])
         except (ValueError, KeyError, TypeError, AttributeError) as exc:
-            errors.append({'code': 'UNIT_NATIVE_EVIDENCE_MISSING', 'item': unit.get('unit_id'), 'next_action': str(exc)})
+            errors.append({'code': 'UNIT_DATA_EVIDENCE_MISSING' if on_data else 'UNIT_NATIVE_EVIDENCE_MISSING',
+                           'item': unit.get('unit_id'), 'next_action': str(exc)})
     return errors
+
+
+def data_table_ready(root, packet, unit):
+    """A TABLE held in a registered data file has no pixels; its cells are the original."""
+    if not enabled(packet) or not extensions_enabled(packet) or unit.get('kind') != 'TABLE':
+        return False
+    root = Path(root).resolve()
+    try:
+        data = validate_acquisition(root, packet)['data']
+        if unit.get('source_id') not in data:
+            return False
+        _data_reading(root, unit, data)
+        return True
+    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+        return False
+
+
+def structured_ready(root, packet, unit):
+    """Non-pixel structured evidence that may replace viewing: complete native PDF or data-file tables."""
+    if unit.get('kind') != 'TABLE':
+        return False
+    if any(is_data_source(s) and s.get('source_id') == unit.get('source_id') for s in packet.get('sources', [])):
+        return data_table_ready(root, packet, unit)
+    return native_table_ready(root, packet, unit)
 
 
 def native_table_ready(root, packet, unit):
@@ -205,7 +391,7 @@ def structured_review_errors(root, packet, review):
     root = Path(root).resolve()
     required = set(review_plan(packet)['required_unit_ids']) | set(review.get('checked_unit_ids', []))
     tables = {u['unit_id'] for u in packet.get('units', [])
-              if u['unit_id'] in required and native_table_ready(root, packet, u)}
+              if u['unit_id'] in required and structured_ready(root, packet, u)}
     if not tables:
         return []
     record = review.get('structured_inspection', {})
@@ -215,5 +401,5 @@ def structured_review_errors(root, packet, review):
             or not isinstance(refs, list) or not refs
             or any(not isinstance(ref, str) or not (root/ref.split('#', 1)[0]).is_file() for ref in refs)):
         return [{'code': 'REVIEW_NATIVE_INCOMPLETE', 'item': 'G3',
-                 'next_action': 'Independently inspect every required native table and save reviewer-owned structured_inspection evidence.'}]
+                 'next_action': 'Independently inspect every required native or data-file table and save reviewer-owned structured_inspection evidence.'}]
     return []

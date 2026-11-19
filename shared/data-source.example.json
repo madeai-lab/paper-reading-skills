@@ -1,0 +1,24 @@
+{
+  "source_id": "SUP-S4",
+  "source_kind": "DATA_FILE",
+  "format": "CSV",
+  "title": "Table S4 study extraction matrix",
+  "version": "Published supplementary material s001",
+  "publication_status": "PUBLISHED",
+  "local_path": "supplements/study_extraction_matrix.csv",
+  "sha256": "REPLACE_WITH_ACTUAL_LOWERCASE_SHA256_OF_THE_LOCAL_FILE",
+  "page_count": null,
+  "access_state": "AVAILABLE",
+  "required_for_scope": true,
+  "supplement_of": "SRC-01",
+  "missing_reason": null,
+  "provenance": {
+    "origin": "https://publisher.example/article/s001.zip",
+    "acquisition_ref": "supplements/acquisition.json",
+    "container": {
+      "local_path": "supplements/s001.zip",
+      "sha256": "REPLACE_WITH_ACTUAL_LOWERCASE_SHA256_OF_THE_ARCHIVE",
+      "member": "study_extraction_matrix.csv"
+    }
+  }
+}

@@ -111,3 +111,11 @@ These are behavioral acceptance scenarios, not claims of completed live trials.
 - Localized headings and paper-specific subsections: valid when common roles occur in order; heading presence alone does not prove explanation depth.
 - Accepted review closes an earlier failed round: do not reopen superseded repair seals; changes to current scientific content still require actual reinspection.
 - Frozen revision-2.8 run: new section/navigation checks are not imposed. Style-only repair needs affected-artifact review, not routine full rereading.
+
+## Revision 2.10 cases
+
+- Required supplement PDF obtained after extraction: register, sync and `extract-elements --append` in the same run. Earlier pages and checked units stay valid; the previous manifest is preserved, and dependent claims, report and review absorb the new material. No continuation run, no re-adoption and no hand-edited manifest.
+- Required CSV/XLSX coding table or corpus ledger: register a DATA_FILE with origin, acquisition record, hash and archive member. Read and cite it by file + rows/fields; it is AVAILABLE and satisfies scope. Never convert it to a PDF, invent pages or mark it unavailable.
+- Replication package with scripts, notebooks, macros or build files: list them as present and never run them. Register only in-scope data files, and check which package version matches the published counts.
+- Data file the standard reader cannot represent (undeclared encoding, duplicate JSON keys, XML declarations): the conflict is recorded, units cannot bind and the gap stays visible as an issue. Do not transcode or edit the source.
+- Active or frozen 2.7–2.9 run with a late supplement: append and DATA_FILE are refused; keep the continuation-run route that contract defines.

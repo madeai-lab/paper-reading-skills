@@ -172,7 +172,7 @@ class ReportQualityIntegrationTests(unittest.TestCase):
             root = self.f.root / mode
             control.initialize(root, self.f.root / "source.pdf", "owner", "en", mode=mode)
             packet = control.read(root / "paper_packet.json")
-            self.assertEqual(packet["skill_revision"], "2.9")
+            self.assertEqual(packet["skill_revision"], "2.10")
             self.assertEqual(packet["review_mode"], mode)
             self.assertTrue(packet["review_requirements"]["reader_explanation"])
             self.assertTrue(packet["review_requirements"]["report_presentation"])
