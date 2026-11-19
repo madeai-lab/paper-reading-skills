@@ -1,0 +1,206 @@
+{
+  "writer_id": "reader-demo",
+  "paper_id": "P0001",
+  "depth": "L2",
+  "paper_type": "SYSTEM",
+  "identity_check": {
+    "state": "VERIFIED_AGAINST_SOURCE",
+    "basis": "Same attached file as the skim."
+  },
+  "examined": [
+    {
+      "item_id": "S-COORD",
+      "kind": "SECTION",
+      "label": "3.2 Coordination protocol",
+      "read_level": "READ_IN_FULL",
+      "locator": {
+        "physical_page": 1,
+        "section": "3.2 Coordination protocol"
+      },
+      "note": "Fictional illustration of the pass format. Replace every value with what was actually examined; never copy ratings or statements."
+    },
+    {
+      "item_id": "S-SETUP",
+      "kind": "SECTION",
+      "label": "4.1 Setup",
+      "read_level": "READ_IN_FULL",
+      "locator": {
+        "physical_page": 1,
+        "section": "4.1 Setup"
+      }
+    },
+    {
+      "item_id": "T-ABL",
+      "kind": "TABLE",
+      "label": "Table 3 ablations",
+      "read_level": "READ_IN_FULL",
+      "locator": {
+        "physical_page": 1,
+        "object_label": "Table 3"
+      }
+    }
+  ],
+  "not_examined": [
+    {
+      "label": "Sections 2, 5, 6 and appendices",
+      "reason": "Outside the coordination focus."
+    }
+  ],
+  "uncertainty_flags": [
+    {
+      "code": "SINGLE_LAYOUT",
+      "detail": "All examined results come from one warehouse layout."
+    }
+  ],
+  "conflicts": [],
+  "targeted": {
+    "focus": [
+      {
+        "focus_id": "F1",
+        "description": "Failure reporting and replanning between planner and executors",
+        "question_ids": [
+          "Q1"
+        ],
+        "items": [
+          "S-COORD",
+          "S-SETUP",
+          "T-ABL"
+        ]
+      }
+    ],
+    "local_claims": [
+      {
+        "claim_id": "LC1",
+        "text": "Executors report each failed step to the planner, which replans only the remaining steps.",
+        "attribution": "REPORTED_OBSERVATION",
+        "focus_id": "F1",
+        "evidence_state": "SUPPORTED",
+        "supporting_items": [
+          "S-COORD"
+        ],
+        "conditions": [
+          "Describes the design, not a measured effect."
+        ],
+        "limits": "Section 3.2 only."
+      },
+      {
+        "claim_id": "LC2",
+        "text": "Removing replanning lowers completed missions from 82% to 70% in Table 3.",
+        "attribution": "REPORTED_OBSERVATION",
+        "focus_id": "F1",
+        "evidence_state": "LIMITED",
+        "supporting_items": [
+          "T-ABL",
+          "S-SETUP"
+        ],
+        "conditions": [
+          "One layout",
+          "No variance reported"
+        ],
+        "limits": "Single configuration; budgets of the two variants were not compared."
+      },
+      {
+        "claim_id": "LC3",
+        "text": "The protocol transfers to software agents without change.",
+        "attribution": "ANALYST_INFERENCE",
+        "focus_id": "F1",
+        "evidence_state": "UNDETERMINED",
+        "missing_evidence": [
+          "Any evaluation outside robotics",
+          "The message format, which is deferred to an appendix that was not read"
+        ]
+      }
+    ],
+    "scope_statement": "Sections 3.2 and 4.1 and Table 3 were read in full. Related work, discussion and appendices were not read, so claims about generality and cost are not covered."
+  },
+  "assessment": {
+    "dimensions": {
+      "topic_relevance": {
+        "rating": "LOW",
+        "basis": "Warehouse robotics, not software agents; the overlap is the coordination problem.",
+        "evidence_level": "EXAMINED_SOURCE",
+        "refs": [
+          "S-COORD"
+        ]
+      },
+      "methodological_relevance": {
+        "rating": "MEDIUM",
+        "basis": "A planner/executor split with explicit failure reports matches the organizational mechanisms in Q1.",
+        "evidence_level": "EXAMINED_SOURCE",
+        "refs": [
+          "S-COORD"
+        ]
+      },
+      "transferability": {
+        "rating": "HIGH",
+        "basis": "The replanning protocol is stated without robot-specific assumptions.",
+        "evidence_level": "EXAMINED_SOURCE",
+        "refs": [
+          "S-COORD"
+        ]
+      },
+      "evidence_adequacy": {
+        "rating": "LOW",
+        "basis": "Judged only from the experiments that were examined in this pass.",
+        "evidence_level": "EXAMINED_SOURCE",
+        "refs": [
+          "S-COORD"
+        ]
+      },
+      "novelty_potential": {
+        "rating": "LOW",
+        "basis": "Presented as an application of known hierarchical planning.",
+        "evidence_level": "EXAMINED_SOURCE",
+        "refs": [
+          "S-COORD"
+        ]
+      },
+      "practical_applicability": {
+        "rating": "MEDIUM",
+        "basis": "Reports deployment constraints such as latency budgets.",
+        "evidence_level": "EXAMINED_SOURCE",
+        "refs": [
+          "S-COORD"
+        ]
+      },
+      "research_utility": {
+        "rating": "MEDIUM",
+        "basis": "Useful as one cross-domain example of coordination, not as a core reference.",
+        "evidence_level": "EXAMINED_SOURCE",
+        "refs": [
+          "S-COORD"
+        ]
+      }
+    },
+    "uncertainty": {
+      "level": "MEDIUM",
+      "missing_information": [
+        "Appendix with the message format"
+      ]
+    },
+    "target_links": [
+      {
+        "question_id": "Q1",
+        "relation": "Gives a concrete replanning protocol and one ablation of it."
+      }
+    ],
+    "mechanisms_worth_study": [
+      "Message format in the appendix"
+    ],
+    "evidenced_points": [
+      {
+        "text": "The ablation in Table 3 isolates replanning in one layout.",
+        "refs": [
+          "T-ABL"
+        ]
+      }
+    ],
+    "author_stated_only": [
+      "Generality across domains."
+    ],
+    "depth_rationale": "The target question is answered within the focus; the remaining sections concern robotics.",
+    "decision_changers": [
+      "The target later needs the cost analysis in section 5"
+    ]
+  }
+}

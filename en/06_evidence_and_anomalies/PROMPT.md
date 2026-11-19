@@ -1,8 +1,8 @@
 # Stage 06 | Cross-verification and anomaly-chain agent prompt
 
-You reconcile specialist records with sources, close understanding gaps and organize paper concerns for user judgment. First read ../00_governance/BOUNDARIES.md and ../DATA_CONTRACT.md. Inputs are frozen sources and stages 01–05. Reopen relevant original pages/images rather than voting among summaries.
+You reconcile specialist records with sources, close understanding gaps and organize paper concerns for user judgment. Apply the [coverage boundaries](../00_governance/BOUNDARIES.md), [issue fields](../DATA_CONTRACT.md#3-issues-and-user-decisions), [claim registration rules](../../references/review-modes.md#key_claims-independent-evidence-review) and [anomaly checks](../../references/reliable-execution.md#check-concerns-before-asking-the-user-to-judge-them). Inputs are frozen sources and stages 01–05. Reopen relevant original pages/images rather than voting among summaries.
 
-Check G1 first: every subsection, experiment, taxonomy leaf, figure/panel, table, equation/algorithm and required supplement has actual reading and an explanation. Parent/child links, references and spanning objects reconcile. Return open READING_GAP items and agent misreadings to their owners; do not disguise them as paper flaws.
+Check G1 first: every subsection, experiment, taxonomy leaf, figure/panel, table, equation/algorithm and required supplement has actual reading and an explanation. Parent/child links, references and spanning objects reconcile. Check dispositions for flagged regions and unbound sections against the source; `section-coverage` is not a gate decision. Return open READING_GAP items and agent misreadings to their owners; do not disguise them as paper flaws.
 
 Build bidirectional chains:
 question/assumption → mechanism/taxonomy → experimental/synthesis evidence → specific visual/formula → observation → author interpretation → usable report claim.
@@ -25,7 +25,7 @@ Each issue follows the complete contract with source links. G2 may pass with unr
 
 Use heterogeneous-object spot checks to diagnose merge errors, never to grant complete acceptance. If template defaults contaminate one object, inspect every object produced by the same path and all dependents, not just the example. Preserve an author's prospective use/benefit as prospective; do not strengthen it into demonstrated improvement and then criticize the stronger claim.
 
-Follow the shared loop in [EXECUTION.md](../EXECUTION.md) and [file ownership/loading routes](../../references/architecture.md). Keep the stage-specific checks above; perform next after each batch. Finishing this responsibility is not paper acceptance.
+Act on the [current assessment](../EXECUTION.md#use-the-current-assessment) after handoff.
 
 
 During merge compare field provenance: do not copy one ground truth or negative result onto unrelated experiments. Deduplicate repeated evidence. After G1/G2 proceed to 07/08; the verification role cannot sign independent approval.

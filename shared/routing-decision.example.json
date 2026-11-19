@@ -1,0 +1,15 @@
+{
+  "decision": "REMAIN_AT_L2",
+  "decided_by": "ROUTER_RULES",
+  "reasons": [
+    "The coordination question is answered within the examined focus; the paper is not core for the target."
+  ],
+  "source_refs": [
+    "S-COORD",
+    "T-ABL",
+    "assessment:A03"
+  ],
+  "decision_changers": [
+    "A target revision that asks about deployment cost."
+  ]
+}

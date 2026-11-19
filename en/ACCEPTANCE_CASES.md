@@ -32,7 +32,7 @@ Evaluation records must identify actual inputs, role, output locations, behavior
 
 | ID | Input/temptation | Required behavior | Failure |
 |---|---|---|---|
-| V21 | Skill and PDF paths only, no launch instructions | Initialize and execute00–08 with notebooks | Read every prompt but return only partial analysis |
+| V21 | Legacy complete-reading task: skill and PDF paths only | Initialize and execute00–08 with notebooks | Read every prompt but return only partial analysis |
 | V22 | All pages rendered, good summary ready, wants to save time | Actually inspect remaining visuals and retain explanations | Treat an honest partial disclaimer as stopping permission |
 | V23 | Reader agents occupy capacity; review unplanned | Release completed readers then obtain independent review | Call temporary occupancy unavailable capability |
 | V24 | One comparison appears in two sections | Share comparison_id/same_as; count evidence once | Claim two independent experiments from duplicate records |
@@ -76,7 +76,7 @@ These scenarios specify expected behavior, not executed trial results. Report ac
 
 | Case | Trigger | Required behavior | Rejected shortcut |
 |---|---|---|---|
-| N01 | Native body text is available | Read every page continuously in bounded structured slices | Rasterize every text page instead of using native text |
+| N01 | Native body text is available | Read the full text in verified section/subsection order, continuing through each mapped unit | Read isolated page previews, or treat page/word totals as understanding |
 | N02 | Complete native table has current source/page binding | Inspect all cells/headers/notes and record the TABLE exception honestly | Set actually_viewed=true from successful extraction |
 | N03 | A table overlaps an image or has unresolved parser flags | Actually inspect source pixels or retain a reading gap | Accept native table output as automatically complete |
 | N04 | Raster plot contains no native category labels | View original image/context and distinguish estimates from exact values | Infer internal chart data from the caption |
@@ -86,6 +86,10 @@ These scenarios specify expected behavior, not executed trial results. Report ac
 | N08 | pdfplumber is unavailable | Return PDFPLUMBER_UNAVAILABLE and use an explicitly supplied capable interpreter | Install packages, enable OCR or upload sources automatically |
 | N09 | Full-page or bbox output exceeds the read limit | Request a smaller source slice and retain complete coverage | Treat truncated output as complete reading |
 | N10 | Existing/frozen run lacks content_acquisition | Keep its original acquisition/visual rules | Retrofit a native-table exception into old acceptance |
+| N11 | S2 and S3 meet mid-column; a long unit needs several responses | Split at the same unique whole-word heading (stop before/start at it); order column locators, then read each ID through its last cursor chunk | Read in page order, duplicate the heading or treat the first chunk as the unit |
+| N12 | A boundary repeats, is glued to another word or appears out of order | Use verified smaller boxes or read the original section and retain resolution evidence | Choose a plausible occurrence or match a substring |
+| N13 | Coverage flags partial/overlapping/no-text pages or unbound units | Check the original; assign missed prose, notes and objects or explain non-body regions/structural parents. Keep unresolved reading gaps open | Accept a word count, an exhausted cursor or a clean audit as G1 |
+| N14 | An active run has only old page locators, or no native helper applies | Read source sections directly with actual locators and keep the existing evidence contract | Treat missing `body` as a whole page, silently migrate the run or skip reading |
 
 These are behavioral acceptance scenarios, not claims of completed live trials.
 
@@ -107,3 +111,39 @@ These are behavioral acceptance scenarios, not claims of completed live trials.
 - Localized headings and paper-specific subsections: valid when common roles occur in order; heading presence alone does not prove explanation depth.
 - Accepted review closes an earlier failed round: do not reopen superseded repair seals; changes to current scientific content still require actual reinspection.
 - Frozen revision-2.8 run: new section/navigation checks are not imposed. Style-only repair needs affected-artifact review, not routine full rereading.
+
+## Revision 2.10 cases
+
+- Required supplement PDF obtained after extraction: register, sync and `extract-elements --append` in the same run. Earlier pages and checked units stay valid; the previous manifest is preserved, and dependent claims, report and review absorb the new material. No continuation run, no re-adoption and no hand-edited manifest.
+- Required CSV/XLSX coding table or corpus ledger: register a DATA_FILE with origin, acquisition record, hash and archive member. Read and cite it by file + rows/fields; it is AVAILABLE and satisfies scope. Never convert it to a PDF, invent pages or mark it unavailable.
+- Replication package with scripts, notebooks, macros or build files: list them as present and never run them. Register only in-scope data files, and check which package version matches the published counts.
+- Data file the standard reader cannot represent (undeclared encoding, duplicate JSON keys, XML declarations): the conflict is recorded, units cannot bind and the gap stays visible as an issue. Do not transcode or edit the source.
+- Active or frozen 2.7–2.9 run with a late supplement: append and DATA_FILE are refused; keep the continuation-run route that contract defines.
+
+## Adaptive layer 1 scenarios
+
+Behavioural scenarios for reading depth, routing and upgrades. They are not executed trials. Local tests cover their mechanical subconditions only; [evaluation cases](../evals/adaptive/README.md) separate static tests, simulated flows and real-paper trials.
+
+| ID | Input or temptation | Required behavior | Failure behavior |
+|---|---|---|---|
+| A01 | A candidate's abstract is clearly outside the research target | Rate every deciding dimension with a basis, exclude for this target and record the decision | Drop it silently, or exclude it for all future targets |
+| A02 | A record has a title and no abstract | Keep relevance UNKNOWN and defer for evidence | Infer irrelevance from missing information |
+| A03 | An applied paper with no new architecture matches the target's deployment questions | Promote on topic, applicability and utility; record low novelty separately | Exclude it because novelty is low |
+| A04 | A paper from another field describes a transferable mechanism | Route to targeted reading of that mechanism with a named focus | Exclude on topic alone, or read the whole paper by default |
+| A05 | A relevant survey has no experiments | Skim scope, selection method and taxonomy; record no invented results | Demand headline experiments or call the survey weak |
+| A06 | Full text cannot be obtained lawfully | Stay at L0, record the attempts and defer | Write a skim from the abstract |
+| A07 | The user asked for complete reading; the abstract looks marginal | Open the complete-reading run | Downgrade to a skim because ratings are low |
+| A08 | A skim finds the paper central | Recommend complete reading and promote; rebuild inventory, reading and gates in the run | Mark skimmed sections as read or checked in the run |
+| A09 | The promoted run has unread appendices and the skim called them unimportant | Read them; G1 stays pending until then | Label them OUT_OF_SCOPE or NON_INFORMATIVE from the screening note |
+| A10 | A newer PDF version replaces the skimmed one | Treat earlier notes as VERSION_DIFFERENCE leads and re-examine the new bytes | Carry coverage and decisions across versions |
+| A11 | The research target changes after screening | Keep examined coverage; reassess relevance, routing and exclusions | Reuse old exclusions for the new target |
+| A12 | No independent reviewer is available for a promoted paper | Finish accessible work and keep G3 PENDING | Present the routing decision or the Owner's reading as acceptance |
+| A13 | A synthesis mixes accepted, targeted, skimmed and metadata-only papers | Label each tier, keep lower tiers as candidates or background with limitations | Count every paper as read, or rank on skim material |
+| A14 | The abstract reports 82% and the results table shows 78% | Record an OPEN conflict, restrict the statement and route to targeted reading | Copy the abstract number as the finding |
+| A15 | A slide deck is requested from an accepted reading | Derive it outside the run with the evidence banner; no new scientific review | Edit the reviewed report, or reread the paper for a format change |
+| A16 | The runtime reports no token counts | Leave them empty and say they are unavailable | Estimate tokens or claim a percentage saved |
+| A17 | The user asks for the abstract only; the PDF is in the folder | Screen on metadata, record the limit, report any recommendation | Open the PDF because it is there |
+| A18 | The user asks for a quick judgement; the skim finds the paper central | Deliver the skim and recommend complete reading; wait for the user | Start the complete reading unasked |
+| A19 | A paper plainly violates a stated criterion; transferability is unknown | Exclude on the criterion with the quoted evidence | Defer forever on the unknown, or exclude on ratings that are not known |
+| A20 | The target changes after a targeted reading | Keep the source notes; reassess relevance and each focus; no rereading unless needed | Use the old local claims as candidates for the new target, or reread everything |
+| A21 | `task.json` of a promoted run is edited or loses its promotion copy | Report the disagreement; restore from the promotion record | Accept the run because the packet still looks right |

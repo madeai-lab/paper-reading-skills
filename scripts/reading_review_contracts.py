@@ -36,13 +36,15 @@ def enabled(packet):
     return revision >= (2, 4) or packet.get('review_requirements', {}).get('direct_visual_inspection') is True
 
 
-def visual_review_errors(root, packet, review):
+def visual_review_errors(root, packet, review, acquisition=None):
     if not enabled(packet):
         return []
-    root = Path(root)
+    root = Path(root).resolve()
+    from reading_data_sources import registered_data
+    from reading_element_contracts import has_rendered_artifact
     from reading_review_modes import required_visual_ids
     try:
-        required = required_visual_ids(packet, review, root)
+        required = required_visual_ids(packet, review, root, acquisition)
     except (ValueError, TypeError, KeyError) as exc:
         return [{'code': 'REVIEW_PLAN_INVALID', 'item': 'G3', 'next_action': str(exc)}]
     record = review.get('visual_inspection', {})
@@ -70,8 +72,12 @@ def visual_review_errors(root, packet, review):
     ids = [x.get('unit_id') for x in rows]
     if any(not isinstance(x, str) for x in ids) or len(set(ids)) != len(ids) or set(ids) != required:
         return fail('Inspect every current visual unit exactly once in the reviewer visual record.')
+    data_sources = {s.get('source_id') for s in registered_data(packet)}
+    data_visuals = {u['unit_id'] for u in packet.get('units', []) if u.get('source_id') in data_sources}
     for row in rows:
         refs = row.get('artifact_refs', [])
+        if row['unit_id'] in data_visuals and not has_rendered_artifact(root, refs):
+            return fail('Link the actual rendering inspected for this data-file visual: '+row['unit_id'])
         if (row.get('actually_viewed') is not True or not isinstance(row.get('observations'), str)
                 or not row['observations'].strip() or not isinstance(refs, list) or not refs
                 or any(not isinstance(x, str) or not (root/x.split('#', 1)[0]).is_file() for x in refs)):

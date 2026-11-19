@@ -3,8 +3,9 @@ import hashlib
 import json
 import math
 from pathlib import Path
-import re
-from urllib.parse import unquote
+
+from reading_data_sources import data_paths, registered_data
+from reading_run_records import digest, inline_image_refs
 
 MODES = {'KEY_CLAIMS', 'FULL_DOUBLE_READ'}
 LABELS = {'KEY_CLAIMS': 'COMPLETE_READING_KEY_CLAIMS_CHECKED',
@@ -99,7 +100,7 @@ def _error(code, message):
     return {'code': code, 'item': 'G3', 'next_action': message}
 
 
-def coverage_errors(root, packet, review):
+def coverage_errors(root, packet, review, acquisition=None):
     try:
         plan = review_plan(packet)
         checked = _ids(review.get('checked_unit_ids', []), 'checked_unit_ids')
@@ -108,7 +109,7 @@ def coverage_errors(root, packet, review):
         return [_error('REVIEW_PLAN_INVALID', str(exc))]
     errors = []
     from reading_element_contracts import structured_review_errors
-    errors.extend(structured_review_errors(root, packet, review))
+    errors.extend(structured_review_errors(root, packet, review, acquisition))
     if (set(plan['required_unit_ids']) - checked or set(plan['key_claim_ids']) - claims):
         errors.append(_error('REVIEW_COVERAGE_MISSING', 'Inspect required units and every current claim from review-plan.'))
     if checked - {u['unit_id'] for u in packet.get('units', [])} or claims - set(plan['key_claim_ids']):
@@ -127,20 +128,22 @@ def coverage_errors(root, packet, review):
     return errors
 
 
-def required_visual_ids(packet, review=None, root=None):
+def required_visual_ids(packet, review=None, root=None, acquisition=None):
     from reading_review_contracts import VISUAL
-    visuals = {u['unit_id'] for u in packet.get('units', [])
-               if u.get('kind') in VISUAL or u.get('visual_review', {}).get('required')}
-    if root is not None:
-        from reading_element_contracts import native_table_ready
-        visuals -= {u['unit_id'] for u in packet.get('units', []) if native_table_ready(root, packet, u)}
-    if review_mode(packet) == 'FULL_DOUBLE_READ':
-        return visuals
-    selected = set(review_plan(packet)['required_unit_ids'])
-    # Extra checked visuals also require truthful direct observations.
-    if review:
-        selected.update(review.get('checked_unit_ids', []))
-    return visuals & selected
+    units = packet.get('units', [])
+    visuals = {u['unit_id'] for u in units if u.get('kind') in VISUAL or u.get('visual_review', {}).get('required')}
+    if review_mode(packet) != 'FULL_DOUBLE_READ':
+        selected = set(review_plan(packet)['required_unit_ids'])
+        if review:  # Extra checked visuals also require truthful direct observations.
+            selected.update(review.get('checked_unit_ids', []))
+        visuals &= selected
+    tables = [u for u in units if u.get('kind') == 'TABLE' and u['unit_id'] in visuals]
+    if root is not None and tables:
+        from reading_element_contracts import checked_acquisition, structured_ready
+        if acquisition is None:
+            acquisition = checked_acquisition(root, packet)
+        visuals -= {u['unit_id'] for u in tables if structured_ready(root, packet, u, acquisition)}
+    return visuals
 
 
 def artifact_manifest(root, packet):
@@ -165,17 +168,15 @@ def artifact_manifest(root, packet):
         if source.get('local_path'):
             path = root/source['local_path']
             files[source['local_path']] = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else 'MISSING'
-    # Match the report fingerprint's implicit inline-image registration.
-    for name in list(files):
-        document = root/name
-        if document.suffix.lower() == '.md' and document.is_file():
-            for match in re.finditer(r'!\[[^\]]*\]\((<[^>]+>|[^\s)]+)(?:\s+"[^\"]*")?\)', document.read_text(encoding='utf-8-sig')):
-                destination = unquote(match[1].strip('<>').split('#', 1)[0])
-                if not destination or re.match(r'^[a-zA-Z][a-zA-Z0-9+.-]*://', destination) or destination.startswith('data:'):
-                    continue
-                path = (document.parent/destination).resolve()
-                ref = path.relative_to(root.resolve()).as_posix() if path.is_relative_to(root.resolve()) else str(path)
-                files[ref] = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else 'MISSING'
+    for source in registered_data(packet):
+        provenance = source.get('provenance')
+        acquisition = provenance.get('acquisition_ref') if isinstance(provenance, dict) else None
+        if isinstance(acquisition, str):
+            path = root/acquisition
+            files[acquisition] = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else 'MISSING'
+    for ref in set(inline_image_refs(root, files, data_paths(root, packet))):
+        path = root/ref
+        files[ref] = digest(path) if path.is_file() else 'MISSING'
     return files
 
 

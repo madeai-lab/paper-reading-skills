@@ -1,0 +1,106 @@
+{
+  "writer_id": "screener-demo",
+  "paper_id": "P0001",
+  "assessment": {
+    "dimensions": {
+      "topic_relevance": {
+        "rating": "MEDIUM",
+        "basis": "Under the revised target the paper is one example of failure handling.",
+        "evidence_level": "EXAMINED_SOURCE",
+        "refs": [
+          "S-COORD"
+        ]
+      },
+      "methodological_relevance": {
+        "rating": "MEDIUM",
+        "basis": "The replanning protocol in section 3.2 is a failure-handling mechanism.",
+        "evidence_level": "EXAMINED_SOURCE",
+        "refs": [
+          "S-COORD"
+        ]
+      },
+      "transferability": {
+        "rating": "MEDIUM",
+        "basis": "Stated without robot-specific assumptions in the passages read.",
+        "evidence_level": "EXAMINED_SOURCE",
+        "refs": [
+          "S-COORD"
+        ]
+      },
+      "evidence_adequacy": {
+        "rating": "LOW",
+        "basis": "One ablation in one layout, as read in Table 3.",
+        "evidence_level": "EXAMINED_SOURCE",
+        "refs": [
+          "S-COORD"
+        ]
+      },
+      "novelty_potential": {
+        "rating": "LOW",
+        "basis": "Presented as an application of known hierarchical planning.",
+        "evidence_level": "EXAMINED_SOURCE",
+        "refs": [
+          "S-COORD"
+        ]
+      },
+      "practical_applicability": {
+        "rating": "MEDIUM",
+        "basis": "Latency budgets are reported in the setup section.",
+        "evidence_level": "EXAMINED_SOURCE",
+        "refs": [
+          "S-COORD"
+        ]
+      },
+      "research_utility": {
+        "rating": "MEDIUM",
+        "basis": "Useful as a worked example, not as a core reference.",
+        "evidence_level": "EXAMINED_SOURCE",
+        "refs": [
+          "S-COORD"
+        ]
+      }
+    },
+    "uncertainty": {
+      "level": "MEDIUM",
+      "missing_information": [
+        "Sections outside the earlier focus were not read."
+      ]
+    },
+    "target_links": [
+      {
+        "question_id": "Q1",
+        "relation": "Fictional illustration: replace with the relation to a current target question."
+      }
+    ],
+    "mechanisms_worth_study": [],
+    "evidenced_points": [],
+    "author_stated_only": [],
+    "depth_rationale": "The passages already read answer the revised question; no new reading is claimed.",
+    "decision_changers": [
+      "The revised target needs the cost analysis that was not read."
+    ]
+  },
+  "focus_applicability": [
+    {
+      "focus_id": "F1",
+      "applies": true,
+      "question_ids": [
+        "Q1"
+      ],
+      "note": "The focus was failure reporting and replanning, which the revised question asks about."
+    }
+  ],
+  "decision": {
+    "decision": "REMAIN_AT_L2",
+    "decided_by": "ROUTER_RULES",
+    "reasons": [
+      "The revised question is answered within the examined focus."
+    ],
+    "source_refs": [
+      "S-COORD"
+    ],
+    "decision_changers": [
+      "A need for the unread sections."
+    ]
+  }
+}

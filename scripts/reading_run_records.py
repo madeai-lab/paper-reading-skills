@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 from urllib.parse import unquote
 
+from reading_data_sources import data_paths, registered_data
 import reading_repair_sync as repair_sync
 
 MARKER = "<!-- generated-reading-records -->"
@@ -42,8 +43,31 @@ def evidence(root, refs):
     return bool(refs) and all(isinstance(x, str) and (root / x.split("#", 1)[0]).is_file() for x in refs)
 
 
+def inline_image_refs(root, documents, raw_sources):
+    root = root.resolve()
+    for ref in documents:
+        document = root/ref
+        if document.suffix.lower() != '.md' or not document.is_file() or document.resolve() in raw_sources:
+            continue
+        for match in re.finditer(r'!\[[^\]]*\]\((<[^>]+>|[^\s)]+)(?:\s+"[^"]*")?\)', document.read_text(encoding='utf-8-sig')):
+            destination = unquote(match[1].strip('<>').split('#', 1)[0])
+            if destination and not re.match(r'^[a-zA-Z][a-zA-Z0-9+.-]*://', destination) and not destination.startswith('data:'):
+                yield (document.parent/destination).resolve().relative_to(root).as_posix()
+
+
 def content_fingerprint(root, packet):
-    """Bind review to the inspected records and local evidence, excluding decisions."""
+    """Bind new snapshots to the inspected records and local evidence, excluding decisions."""
+    return next(_content_fingerprints(root, packet))
+
+
+def review_content_matches(root, packet, review):
+    expected = review.get('reviewed_content_sha256')
+    candidates = _content_fingerprints(root, packet)
+    return expected == next(candidates) or (review in packet.get('reviews', []) and expected in candidates)
+
+
+def _content_fingerprints(root, packet):
+    root = Path(root).resolve()
     keys = ['scope_mode','scope_revision','scope_exclusions','sources','units',
             'methods_taxonomy','experiments','claims','issues','owner_id','writer_ids']
     data = {key:packet.get(key) for key in keys}
@@ -79,18 +103,14 @@ def content_fingerprint(root, packet):
         if quality_path.is_file():
             # Display screenshots are evidence bytes, even when not text documents.
             collect(read(quality_path))
-    # Inline images belong to the exact report being reviewed, even without a manifest.
-    for ref in list(refs):
-        if not isinstance(ref, str):
-            continue
-        document = root/ref
-        if document.suffix.lower() == '.md' and document.is_file():
-            for match in re.finditer(r'!\[[^\]]*\]\((<[^>]+>|[^\s)]+)(?:\s+"[^"]*")?\)', document.read_text(encoding='utf-8-sig')):
-                destination = unquote(match[1].strip('<>').split('#', 1)[0])
-                if destination and not re.match(r'^[a-zA-Z][a-zA-Z0-9+.-]*://', destination) and not destination.startswith('data:'):
-                    refs.add(str((document.parent/destination).resolve()))
+    for source in registered_data(packet):
+        provenance = source.get('provenance')
+        if isinstance(provenance, dict) and isinstance(provenance.get('acquisition_ref'), str):
+            refs.add(provenance['acquisition_ref'])
+    refs = {ref for ref in refs if isinstance(ref, str)}
+    images = set(inline_image_refs(root, refs, data_paths(root, packet)))
     files = {}
-    for ref in sorted(x for x in refs if isinstance(x,str)):
+    for ref in sorted(refs | images):
         path = (root/ref).resolve()
         # The canonical JSON is represented above; review/state files are outputs.
         if path in {root/name for name in ['paper_packet.json','execution_state.json','01_inventory.json','01_sources.json']}:
@@ -100,7 +120,16 @@ def content_fingerprint(root, packet):
     if packet.get('review_requirements', {}).get('repair_dependency_sync'):
         data['current_documents'] = {name: repair_sync.sha(text.encode('utf8'))
                                      for name, text in repair_sync.current_documents(root, packet).items()}
-    return hashlib.sha256(json.dumps(data,sort_keys=True,ensure_ascii=False).encode('utf8')).hexdigest()
+    def snapshot():
+        return hashlib.sha256(json.dumps(data,sort_keys=True,ensure_ascii=False).encode('utf8')).hexdigest()
+
+    yield snapshot()
+    if images:
+        # Stored pre-fix approvals used absolute image keys in addition to explicit evidence refs.
+        legacy = {key: value for key, value in files.items() if key in refs}
+        legacy.update({str(root/key): files[key] for key in images if key in files})
+        data['files'] = legacy
+        yield snapshot()
 
 
 def generated_target(root, requested, fallback):

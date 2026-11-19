@@ -1,0 +1,243 @@
+{
+  "writer_id": "skimmer-demo",
+  "paper_id": "P0001",
+  "depth": "L1",
+  "paper_type": "SYSTEM",
+  "identity_check": {
+    "state": "VERIFIED_AGAINST_SOURCE",
+    "basis": "Title, authors and arXiv identifier on page 1 match record REC-01."
+  },
+  "examined": [
+    {
+      "item_id": "S-ABS",
+      "kind": "ABSTRACT",
+      "label": "Abstract",
+      "read_level": "READ_IN_FULL",
+      "locator": {
+        "physical_page": 1,
+        "section": "Abstract"
+      }
+    },
+    {
+      "item_id": "S-INTRO",
+      "kind": "SECTION",
+      "label": "1 Introduction",
+      "read_level": "SKIMMED",
+      "locator": {
+        "physical_page": 1,
+        "section": "1 Introduction"
+      },
+      "note": "Fictional illustration of the pass format. Replace every value with what was actually examined; never copy ratings or statements."
+    },
+    {
+      "item_id": "S-METHOD",
+      "kind": "SECTION",
+      "label": "3 System overview",
+      "read_level": "SKIMMED",
+      "locator": {
+        "physical_page": 1,
+        "section": "3 System overview"
+      }
+    },
+    {
+      "item_id": "F-ARCH",
+      "kind": "FIGURE",
+      "label": "Figure 1 architecture",
+      "read_level": "SKIMMED",
+      "locator": {
+        "physical_page": 1,
+        "object_label": "Figure 1"
+      },
+      "caption_only": true
+    },
+    {
+      "item_id": "T-MAIN",
+      "kind": "TABLE",
+      "label": "Table 2 mission results",
+      "read_level": "READ_IN_FULL",
+      "locator": {
+        "physical_page": 1,
+        "object_label": "Table 2"
+      }
+    }
+  ],
+  "not_examined": [
+    {
+      "label": "3.2 Coordination protocol",
+      "reason": "Only its first paragraph was seen in the overview."
+    },
+    {
+      "label": "4.2 Ablations",
+      "reason": "Outside the skim."
+    },
+    {
+      "label": "Appendices",
+      "reason": "Not opened."
+    }
+  ],
+  "uncertainty_flags": [
+    {
+      "code": "ABLATIONS_NOT_READ",
+      "detail": "The contribution of replanning alone is unknown."
+    },
+    {
+      "code": "FIGURE_NOT_VIEWED",
+      "detail": "Figure 1 is known from its caption only."
+    }
+  ],
+  "conflicts": [],
+  "card": {
+    "research_problem": {
+      "text": "The authors ask how to keep a robot fleet productive when individual steps fail.",
+      "attribution": "AUTHOR_CLAIM",
+      "from_items": [
+        "S-INTRO"
+      ]
+    },
+    "claimed_contributions": [
+      {
+        "text": "A planner/executor protocol with explicit failure reports and replanning.",
+        "attribution": "AUTHOR_CLAIM",
+        "from_items": [
+          "S-ABS",
+          "S-INTRO"
+        ]
+      }
+    ],
+    "core_method": {
+      "text": "According to the overview, a planner assigns steps and executors report outcomes after each step.",
+      "attribution": "AUTHOR_CLAIM",
+      "from_items": [
+        "S-METHOD"
+      ]
+    },
+    "headline_evidence": [
+      {
+        "text": "Table 2 lists 82% completed missions for the full system and 61% for the fixed-plan baseline.",
+        "attribution": "REPORTED_OBSERVATION",
+        "from_items": [
+          "T-MAIN"
+        ]
+      }
+    ],
+    "potential_limitations": [
+      {
+        "text": "One warehouse layout appears in Table 2; the ablations were not read.",
+        "attribution": "ANALYST_INFERENCE",
+        "from_items": [
+          "T-MAIN"
+        ]
+      }
+    ]
+  },
+  "assessment": {
+    "dimensions": {
+      "topic_relevance": {
+        "rating": "LOW",
+        "basis": "Warehouse robotics, not software agents; the overlap is the coordination problem.",
+        "evidence_level": "AUTHOR_STATEMENT",
+        "refs": [
+          "S-METHOD"
+        ]
+      },
+      "methodological_relevance": {
+        "rating": "MEDIUM",
+        "basis": "A planner/executor split with explicit failure reports matches the organizational mechanisms in Q1.",
+        "evidence_level": "AUTHOR_STATEMENT",
+        "refs": [
+          "S-METHOD"
+        ]
+      },
+      "transferability": {
+        "rating": "HIGH",
+        "basis": "The replanning protocol is stated without robot-specific assumptions.",
+        "evidence_level": "AUTHOR_STATEMENT",
+        "refs": [
+          "S-METHOD"
+        ]
+      },
+      "evidence_adequacy": {
+        "rating": "UNKNOWN",
+        "basis": "Not judged: the experiments were not examined.",
+        "evidence_level": "NOT_ASSESSED",
+        "refs": [
+          "S-METHOD"
+        ]
+      },
+      "novelty_potential": {
+        "rating": "LOW",
+        "basis": "Presented as an application of known hierarchical planning.",
+        "evidence_level": "AUTHOR_STATEMENT",
+        "refs": [
+          "S-METHOD"
+        ]
+      },
+      "practical_applicability": {
+        "rating": "MEDIUM",
+        "basis": "Reports deployment constraints such as latency budgets.",
+        "evidence_level": "AUTHOR_STATEMENT",
+        "refs": [
+          "S-METHOD"
+        ]
+      },
+      "research_utility": {
+        "rating": "MEDIUM",
+        "basis": "Useful as one cross-domain example of coordination, not as a core reference.",
+        "evidence_level": "AUTHOR_STATEMENT",
+        "refs": [
+          "S-METHOD"
+        ]
+      }
+    },
+    "uncertainty": {
+      "level": "MEDIUM",
+      "missing_information": [
+        "Section 3.2 in full",
+        "Ablation results"
+      ]
+    },
+    "target_links": [
+      {
+        "question_id": "Q1",
+        "relation": "Failure reporting and replanning as an organizational mechanism."
+      }
+    ],
+    "mechanisms_worth_study": [
+      "3.2 Coordination protocol"
+    ],
+    "evidenced_points": [
+      {
+        "text": "Table 2 shows a difference between the full system and a fixed-plan baseline.",
+        "refs": [
+          "T-MAIN"
+        ]
+      }
+    ],
+    "author_stated_only": [
+      "The difference is attributed to replanning."
+    ],
+    "depth_rationale": "One mechanism is worth reading closely; the paper as a whole is outside the target topic.",
+    "decision_changers": [
+      "An ablation showing replanning has no effect",
+      "A protocol that depends on robot hardware"
+    ]
+  },
+  "decision": {
+    "decision": "PROMOTE_TO_L2",
+    "decided_by": "ROUTER_RULES",
+    "focus": [
+      "3.2 Coordination protocol",
+      "4.2 Ablation of replanning"
+    ],
+    "reasons": [
+      "A transferable mechanism is described; topic relevance stays low, so complete reading is not warranted yet."
+    ],
+    "source_refs": [
+      "S-METHOD",
+      "T-MAIN"
+    ],
+    "decision_changers": [
+      "The ablation contradicts the headline claim."
+    ]
+  }
+}

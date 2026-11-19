@@ -1,0 +1,30 @@
+{
+  "evaluation_tier": "SIMULATED_FLOW",
+  "purpose": "Format illustration for eval_adaptive_reading.py records. Use REAL_PAPER_E2E only with real papers and their source hashes.",
+  "papers": [
+    {
+      "paper_id": "P0001",
+      "is_core": false,
+      "acceptable_decisions": [
+        "REMAIN_AT_L2",
+        "PROMOTE_TO_L2"
+      ],
+      "source_sha256": null,
+      "statements": [
+        {
+          "path": "card.headline_evidence[0]",
+          "expected_attribution": "REPORTED_OBSERVATION"
+        },
+        {
+          "path": "card.core_method",
+          "expected_attribution": "AUTHOR_CLAIM"
+        },
+        {
+          "path": "targeted.local_claims.LC3",
+          "expected_attribution": "ANALYST_INFERENCE"
+        }
+      ],
+      "unsupported_statements": []
+    }
+  ]
+}

@@ -1,5 +1,6 @@
 """Exercise target binding and source-image report delivery with local fixtures."""
 import copy
+from pathlib import Path
 import unittest
 
 import reading_run_control as control
@@ -7,6 +8,8 @@ import test_reading_run_control as fixtures
 
 
 class ReadingReportSupportTests(unittest.TestCase):
+    root: Path
+    packet: dict
     setUp = fixtures.ReadingRunControlTests.setUp
     save = fixtures.ReadingRunControlTests.save
     cli = fixtures.ReadingRunControlTests.cli
@@ -128,6 +131,72 @@ class ReadingReportSupportTests(unittest.TestCase):
         original = control.content_fingerprint(self.root, self.packet)
         (self.root/'inline panel.png').write_bytes(b'changed')
         self.assertNotEqual(control.content_fingerprint(self.root, self.packet), original)
+
+    def test_inline_snapshot_survives_reviewer_copy_but_not_asset_change(self):
+        import shutil
+        import tempfile
+        from reading_run_check import inspect_run
+
+        self.packet['deliverables']['report'] = 'chapters/report.md'
+        (self.root/'chapters').mkdir()
+        (self.root/'evidence').mkdir()
+        asset = 'evidence/内嵌 panel.png'
+        (self.root/asset).write_bytes(b'original')
+        (self.root/'chapters/report.md').write_text('![Panel](../evidence/内嵌%20panel.png#view)', encoding='utf8')
+        self.save()
+        with tempfile.TemporaryDirectory() as temp:
+            reviewer = Path(temp)/'reviewer copy'
+            shutil.copytree(self.root, reviewer)
+            review = copy.deepcopy(self.packet['reviews'][0])
+            review.update(review_id='R-copy', reviewed_content_sha256=control.content_fingerprint(reviewer, self.packet))
+            result = control.ingest_review(self.root, review)
+            self.assertEqual(result['terminal_decision'], 'ACCEPTED', result)
+            self.assertEqual(inspect_run(self.root), [])
+            self.assertEqual(control.review_baseline(reviewer, self.packet)['files'][asset], control.digest(reviewer/asset))
+            for changed in (b'replaced', None):
+                with self.subTest(changed=changed):
+                    if changed is None:
+                        (self.root/asset).unlink()
+                    else:
+                        (self.root/asset).write_bytes(changed)
+                    self.assertIn('REVIEW_CONTENT_STALE', {e['code'] for e in inspect_run(self.root)})
+                    self.assertFalse(control.assess(self.root)['paper_accepted'])
+
+    def test_stored_legacy_image_signature_is_valid_only_at_its_original_path(self):
+        import hashlib
+        import json
+        import shutil
+
+        root = self.root/'historical'
+        root.mkdir()
+        (root/'report.md').write_text('![Panel](panel.png)', encoding='utf8')
+        (root/'panel.png').write_bytes(b'approved bytes')
+        visuals = [{'artifact_refs': ['panel.png']}]
+        packet = {'deliverables': {'report': 'report.md'}, 'report_visuals': visuals, 'reviews': []}
+        historical: dict = dict.fromkeys(('scope_mode', 'scope_revision', 'scope_exclusions', 'sources', 'units',
+                                    'methods_taxonomy', 'experiments', 'claims', 'issues', 'owner_id', 'writer_ids'))
+        files = {ref: control.digest(root/ref) for ref in ('report.md', 'panel.png')}
+        files[str(root/'panel.png')] = files['panel.png']
+        historical.update(inventory=[], source_inventory=[], report_visuals=visuals, files=files)
+        encoded = json.dumps(historical, sort_keys=True, ensure_ascii=False).encode('utf8')
+        review = {'reviewed_content_sha256': hashlib.sha256(encoded).hexdigest()}
+        self.assertFalse(control.review_content_matches(root, packet, review))
+        packet['reviews'].append(review)
+        self.assertTrue(control.review_content_matches(root, packet, review))
+        self.assertNotEqual(control.content_fingerprint(root, packet), review['reviewed_content_sha256'])
+        relocated = shutil.copytree(root, self.root/'relocated')
+        self.assertFalse(control.review_content_matches(relocated, packet, review))
+        (root/'panel.png').write_bytes(b'changed bytes')
+        self.assertFalse(control.review_content_matches(root, packet, review))
+
+    def test_out_of_run_inline_image_is_rejected_by_snapshot_and_review_baseline(self):
+        root = self.root/'nested-run'
+        root.mkdir()
+        (root/'report.md').write_text('![Panel](../page.png)', encoding='utf8')
+        packet = {'deliverables': {'report': 'report.md'}}
+        for build in (control.content_fingerprint, control.review_baseline):
+            with self.subTest(build=build.__name__), self.assertRaises(ValueError):
+                build(root, packet)
 
     def test_init_target_and_missing_analysis_return_action(self):
         source = self.root/'new-source.pdf'

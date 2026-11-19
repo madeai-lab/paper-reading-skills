@@ -92,17 +92,19 @@ class ReadingRunControlTests(unittest.TestCase):
 
     def test_repair_evidence_cannot_self_approve_the_paper(self):
         f=self.write_payload("incoming-review.json",self.failed_review())
-        self.assertEqual(self.cli("ingest-review","--file",f)[0],0)
-        code,body=self.cli("repair-ready","--id","R1-01","--evidence","notes.md")
-        self.assertEqual(code,0,body)
-        _,body=self.cli("next")
-        self.assertEqual(body["next_action"]["kind"],"VERIFY_LOCAL_GATE")
+        code, assessment = self.cli("ingest-review", "--file", f)
+        self.assertEqual(code, 0, assessment)
+        self.assertEqual(assessment["next_action"]["kind"], "REPAIR")
+        code, assessment = self.cli("repair-ready", "--id", "R1-01", "--evidence", "notes.md")
+        self.assertEqual(code, 0, assessment)
+        self.assertEqual(assessment["next_action"]["kind"], "VERIFY_LOCAL_GATE")
         f=self.write_payload("rechecked-g2.json",{"writer_id":"owner","gate_results":{
             "G2":{"decision":"PASS","evidence_refs":["notes.md"],"open_items":[]}}})
-        self.assertEqual(self.cli("merge","--file",f)[0],0)
-        _,body=self.cli("next")
-        self.assertEqual(body["next_action"]["kind"],"REQUEST_REVIEW")
-        self.assertFalse(body["may_send_final"])
+        code, assessment = self.cli("merge", "--file", f)
+        self.assertEqual(code, 0, assessment)
+        self.assertEqual(assessment["next_action"]["kind"], "REQUEST_REVIEW")
+        self.assertFalse(assessment["may_send_final"])
+        self.assertEqual((code, assessment), self.cli("next"))
         packet=json.loads((self.root/"paper_packet.json").read_text(encoding="utf8"))
         self.assertEqual(packet["reviews"][-1]["decision"],"REVISION_REQUIRED")
 

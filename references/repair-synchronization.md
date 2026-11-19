@@ -25,10 +25,9 @@ An exception is an Owner assertion for reviewer reinspection, never automatic pe
 
 ```text
 python "<skill>/scripts/reading_run_control.py" repair-ready "<run>" --id "REP-01" --evidence "evidence/repair_notes.md" --sync-file "<run>/repair_sync/REP-01.json"
-python "<skill>/scripts/reading_run_control.py" next "<run>"
 ```
 
-Repeat readiness for each latest-review request using its own scan report. Any later current-file or scientific-record change invalidates readiness; rescan/recheck affected reports as a batch before reviewer dispatch. File additions/deletions, report tampering and changed scope are checked as well. `repair-ready` cannot approve G3; obtain a new actual independent decision.
+Use the assessment returned by `repair-ready`. Repeat readiness for each latest-review request using its own scan report. Any later current-file or scientific-record change invalidates readiness; rescan/recheck affected reports as a batch before reviewer dispatch. File additions/deletions, report tampering and changed scope are checked as well. `repair-ready` cannot approve G3; obtain a new actual independent decision.
 
 ## Current artifacts and immutable history
 

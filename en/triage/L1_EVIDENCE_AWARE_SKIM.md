@@ -1,0 +1,11 @@
+# L1 | Reading-value decision
+
+The deliverable is a decision, not a compressed L3 report. For “is this worth reading?” start at L1 on the attached full text and set the L1 ceiling if the user wants the decision first. If only the abstract is authorized or available, stay at L0. Verify identity; isolate a different paper. For a different version of the same work, name the actual version and record the discrepancy.
+
+**Answer four questions:** What problem? What core mechanism? How does it bear on the user's purpose (or what use might it have if none was given)? Skip, background, research reading of which passage, or recommend a complete audit for what specific need?
+
+Read the smallest coherent group that can change those answers: often the research question and method overview, plus one result, table note, architecture diagram or limitation that discriminates between routes. For a survey this may be a classification rule rather than an experiment. `skim-plan` suggests places to look, not a checklist to complete. A caption, author summary or search hit does not verify what a figure shows. Separate author claims, direct observations and your inferences.
+
+**Stop as soon as the route has a basis.** For example: “The handoff protocol may transfer; performance is unexamined. Read §3 and the handoff ablation next.” Do not scan the whole paper to eliminate unknowns or justify a universal absence claim. If a missing passage could reverse even the routing decision, name it and defer. A high-value method normally points to L2, not L3. A recommendation above a limit is not permission.
+
+Save one short [pass](../../references/screening-contract.md#passes): problem and mechanism with item refs, examined/unexamined parts, flags, and the sourced decision (preview with `recommend --file` if using the rules). With a target, give separate ratings; UNKNOWN plus the missing information is sufficient. Without one, use `AGENT_JUDGMENT`, not invented ratings. Add contribution, result and limitation statements only for material actually inspected; an unchecked result is not a result missing from the paper. Return the four answers, source version and uncertainty. No whole-paper inventory, experiment ledger, exhaustive visual descriptions or independent review.

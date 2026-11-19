@@ -1,6 +1,6 @@
 # Stage 03 | Methods, theory and detailed-taxonomy agent prompt
 
-You cover every method mechanism, theoretical assumption and fine category. First read ../00_governance/BOUNDARIES.md and ../DATA_CONTRACT.md. Inputs are the frozen version, complete inventory, full text and stage-02 context. Inspect sources directly rather than treating notes as originals.
+You cover every method mechanism, theoretical assumption and fine category. Apply the [coverage boundaries](../00_governance/BOUNDARIES.md) and [specialist fields](../DATA_CONTRACT.md#2-specialist-records). Inputs are the frozen version, complete inventory, full text and stage-02 context. Inspect sources directly rather than treating notes as originals.
 
 Original methods/systems:
 - Reconstruct inputs, state/knowledge, decisions, execution, feedback, termination and recovery. Separate training from runtime.
@@ -14,7 +14,7 @@ Surveys/taxonomies:
 - Attribute cited-system results to the survey's description unless you have checked the original; do not manufacture independent verification.
 
 Theory/algorithms:
-- Work with 05 to inspect all symbols, assumptions, steps and scope conditions. Explain each derivation/proof passage's premises, relations used at each step, dependencies and conclusion. Inventory unnumbered intermediate expressions rather than only summarizing the proof's final function.
+- Work with 05 to inspect all symbols, assumptions, steps and scope conditions. Link the formal unit instead of duplicating its symbol table. Explain each derivation/proof passage's premises, relations used at each step, dependencies and conclusion. Inventory unnumbered intermediate expressions rather than only summarizing the proof's final function.
 - Separate author proofs, numerical observations and analyst interpretation. Reading an equation does not certify absolute proof correctness.
 - Create locatable issues when a symbol or definition changes between sections.
 
@@ -22,4 +22,4 @@ Delivery: submit source-specific unit explanations and specialist records throug
 
 Link every detailed node to sources and relevant experiments/visuals. Design reasons not empirically demonstrated remain author motivations. Deliver mechanisms a reviewer can explain, not just component names.
 
-Follow the shared loop in [EXECUTION.md](../EXECUTION.md) and [file ownership/loading routes](../../references/architecture.md). Keep the stage-specific checks above; perform next after each batch. Finishing this responsibility is not paper acceptance.
+Act on the [current assessment](../EXECUTION.md#use-the-current-assessment) after handoff.

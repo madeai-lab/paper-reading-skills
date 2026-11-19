@@ -2,6 +2,10 @@
 
 This contract applies to every role. New native-acquisition runs also follow [Native PDF elements](../../references/native-elements.md); earlier runs retain their existing acquisition requirements. The revision-2.6 review-mode distinction below defines independent scope; complete Owner reading never changes. Role prompts cannot weaken it. If the user explicitly narrows the task, record the new scope name and stop using a full-paper completion label.
 
+## B00: Depth does not weaken this contract
+
+B01–B16 define complete reading (L3), not the default depth for a new explanation request. Reading below that depth is governed by [adaptive depth](../../references/adaptive-depth.md): it produces screening records that state the depth reached and the content not examined, and it never uses a completion label, a gate or a VERIFIED state from this contract. Choosing a lower depth is an explicit, recorded decision about a paper. It is not a way to finish a complete-reading run early, and an automatic relevance rating never lowers a depth the user asked for. B01, B03, B04, B09 and B11 hold at every depth: freeze the source version, keep missing material visible, keep access, extraction, reading and verification apart, separate author claims from observations, and never present a reading gap as irrelevance.
+
 ## B01: Freeze the object before interpreting it
 
 Record title, authors, DOI/identifier, file version, publication status, page count and available supplements. Distinguish PDF physical pages from printed pages. Locate web evidence by headings, paragraphs and visual identifiers. Different versions receive different source_id values; do not combine their experiments, figures or limitations. Record discrepancies between abstract pages and PDFs.
@@ -31,7 +35,7 @@ UNDERSTOOD requires a concise, source-grounded explanation of content, relations
 
 ## B05: Continuous reading and inventory cross-check each other
 
-Build a source-first inventory, then read continuously. Search locates or revisits material; snippets cannot replace unread context. Every textual figure/table/equation/appendix reference must link back to an inventoried object. Check duplicated/missing numbering, composite figures and unnumbered illustrations.
+Verify the source outline, then read the entire body continuously in section/subsection order. Use physical pages to find omissions, cite evidence and inspect original objects, not as a second reading sequence. Account for gaps and overlaps against the source; mapping alone cannot close a reading gap. Search locates or revisits material; snippets cannot replace unread context. Every textual figure/table/equation/appendix reference must link back to an inventoried object. Check duplicated/missing numbering, composite figures and unnumbered illustrations.
 
 Chunk long sources without changing total scope. Preserve boundaries, neighboring context, unresolved references and handoffs. The Owner merges and checks for holes and duplicates. If an actual imposed time, page or token limit prevents continuation, checkpoint under EXECUTION.md and report actual coverage rather than forcing completion. A subjective desire to save time is not such a limit.
 
@@ -86,7 +90,7 @@ Do not constrain the notebook to 2,500–4,500 characters or a fixed section cou
 
 ## B14: Four gates
 
-- G0: freeze source versions and scope; inventory all pages, sections, visuals/panels and appendices; list missing materials.
+- G0: freeze source versions and scope; inventory the verified section hierarchy, visuals/panels and appendices, reconcile scope against physical pages or web structure, and list missing materials.
 - G1: actually read every in-scope unit; inspect required graphical/raster/conflict pixels and validate any complete native-table exception; close every reading gap.
 - G2: bidirectionally link methods, taxonomy, experiments, visuals and claims; check definitions/samples/conditions and complete anomaly chains.
 - G3: a distinct reviewer checks sources first, then performs mode-specific independent evidence review, verifies complete Owner coverage and issue treatment, and closes reading/scientific workflow errors. KEY_CLAIMS is not full double reading.
@@ -109,4 +113,4 @@ Execution closure: actually execute and close B14 gates. B15 PARTIAL_SCOPE descr
 
 ## Complete reading versus independent scope
 
-Apply [Review modes](../../references/review-modes.md). B02–B08 require full Owner coverage in every mode. KEY_CLAIMS independently verifies all current claims, their evidence dependencies and a stratified ordinary sample, checking source/Owner coverage and expanding on errors. FULL_DOUBLE_READ independently checks every unit through the source-appropriate route, including the narrow native-table exception only when explicitly enabled; absent acquisition/mode fields retain legacy requirements. Record actual mode/coverage and never call sampled ordinary verification complete independent double reading. NON_INFORMATIVE and scope exclusions still require independent justification. Do not modify active/frozen runs to adopt the new default.
+Before independent verification, apply [Review modes](../../references/review-modes.md). B02–B08 require full Owner coverage in every mode. KEY_CLAIMS independently verifies all current claims, their evidence dependencies and a stratified ordinary sample, checking source/Owner coverage and expanding on errors. FULL_DOUBLE_READ independently checks every unit through the source-appropriate route, including the narrow native-table exception only when explicitly enabled; absent acquisition/mode fields retain legacy requirements. Record actual mode/coverage and never call sampled ordinary verification complete independent double reading. NON_INFORMATIVE and scope exclusions still require independent justification. Do not modify active/frozen runs to adopt the new default.

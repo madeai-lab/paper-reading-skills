@@ -1,17 +1,41 @@
-# Handoff data contract — current contract 2.9
+# Handoff data contract — current contract 2.10
 
 Use the same task, source, unit, experiment, claim and issue IDs across stages. Field names remain English; prose may use the selected language. The [shared template](../shared/packet.template.json) is empty scaffolding, not completed evidence.
 
 ## 1. Locators and units
 
-source: source_id, title, version, publication_status, local_path or url, sha256 actually computed for local files, page_count, access_state, supplement_of, required_for_scope, missing_reason.
+source: source_id, source_kind, title, version, publication_status, local_path or url, sha256 actually computed for local files, page_count, access_state, supplement_of, required_for_scope, missing_reason.
+
+In 2.10+ runs `source_kind` is `PDF` (the default when absent) or `DATA_FILE`. A DATA_FILE source is a non-PDF supplement kept in its real format, for example a per-study coding table, a corpus ledger or a replication-package index. It adds:
+
+- `format`: CSV, TSV, XLSX, JSON, MD or TXT, matching the file extension.
+- `local_path`: run-relative, using `/` separators; copy the acquired bytes into the run unchanged.
+- `page_count`: null. `supplement_of`: the source it supplements.
+- `encoding` (text formats only): utf-8 by default; declare utf-16, cp1252 or latin-1 only after observing that encoding.
+- `provenance`: `{origin, acquisition_ref, container}`. `origin` is the published URL, DOI or citation. `acquisition_ref` is the separate run-local retrieval record (URL, method, outcome, size, hash). Binding freezes its exact bytes and the declared origin; use a new receipt for a later retrieval rather than editing a bound receipt. `container` is null, or `{local_path, sha256, member}` when the file came out of a ZIP archive; extraction then proves the member is byte-identical.
+
+See the [example record](../shared/data-source.example.json). Scripts, notebooks, macro workbooks (.xlsm), build scripts and executable binaries are not DATA_FILE inputs. List them in scope evidence as present and not executed. An AVAILABLE DATA_FILE satisfies `required_for_scope`; never mark a file you hold as unavailable to pass a check.
 
 unit: unit_id, kind, label, parent_id, children, source_id, locators, assigned_owner, read_state, information_role, understanding_note, evidence_refs, visual_review, dependencies.
 Use SECTION, FIGURE, PANEL, TABLE, EQUATION, ALGORITHM, APPENDIX, OTHER_VISUAL or BIBLIOGRAPHY for kind. Give a parent figure and each panel separate IDs, such as P20-F04 and P20-F04-d. Do the same for nested sections, composite tables and unnumbered visuals.
 
 locator: physical_page, printed_page, section, object_label, panel, paragraph_or_cell, image_path. Inapplicable fields may be null; never guess a page. An object spanning pages may have several locators.
 
-read_state is INVENTORIED, READ, UNDERSTOOD, CHECKED, BLOCKED or NON_INFORMATIVE. Attach stage evidence when advancing a state and preserve other roles' findings. visual_review contains required, actually_viewed, artifact_refs, checks and limitations. Rendering alone cannot set actually_viewed.
+Data-file units use file + location locators instead of pages; the unit's source_id names the file.
+
+| Format | Locator | Rules |
+|---|---|---|
+| CSV, TSV, XLSX | `{sheet, rows: [first, last], header_row, fields}` | `sheet` is required for XLSX and absent for CSV/TSV. `rows` are 1-based inclusive row numbers as a spreadsheet shows them (CSV header = row 1; a quoted line break stays inside one row). `header_row` defaults to 1, or is null for no header. `fields` lists exact, unique header names; omit it to cover all columns. |
+| JSON | `{json_pointer}` | RFC 6901; `""` is the whole document. |
+| MD, TXT | `{lines: [first, last]}` | 1-based inclusive lines. |
+
+`--chars FIRST LAST` is a read window, not an inventory locator: it selects 1-based inclusive Unicode characters in a single text line, selected table field or JSON string. Retain the file and original row/field, line or JSON pointer and check all relevant windows before claiming full coverage.
+
+`object_label` and `section` may carry the paper's own label (for example "Table S4"). Data units are TABLE, SECTION, APPENDIX or BIBLIOGRAPHY. They record `content_reading: {mode: DATA_FILE, conflict_resolution_refs, unresolved_conflicts: []}`, with no page_refs or element IDs. Every locator must resolve in the bound file. Cite file + rows/fields in notes, claims and reports, for example `ESM1 (supplements/MOESM1_ESM.csv) rows 2–240, fields doi and inclusion_rationale`.
+
+On native SECTION (including subsection), APPENDIX and BIBLIOGRAPHY units, inventory `locators` in logical reading order. A locator with `body: {}` selects all native words on its `physical_page`; optional `bbox`, `start_at` and `stop_before` inside `body` narrow the selection. Absence of `body` binds no text, even on an old page locator. See [section reading](../references/section-reading.md#01-map-the-source-outline) for exact boundaries, shared pages and columns. Other object locators and visual evidence retain their own rules.
+
+read_state is INVENTORIED, READ, UNDERSTOOD, CHECKED, BLOCKED or NON_INFORMATIVE. Attach stage evidence when advancing a state and preserve other roles' findings. visual_review contains required, actually_viewed, artifact_refs, checks and limitations. Rendering alone cannot set actually_viewed. On native runs, each CHECKED or NON_INFORMATIVE unit also needs `content_reading` with its actual mode, manifest-bound `page_refs`, real `element_ids` and any `conflict_resolution_refs`; a visual handoff does not replace these with an image path.
 
 understanding_note states content, relationships/mechanism, conditions/units, supported and unsupported interpretations. “Understood,” “see figure” or “correct” alone is insufficient. evidence_refs must identify actual sources and existing notes/images, not only an old report.
 
@@ -68,9 +92,64 @@ Handoff top-level keys are limited to writer_id, units, methods_taxonomy, experi
 
 Former stage filenames such as 02_units.json, 04_experiments.json and 06_claims.json are not additional mandatory canonical files. Keep useful specialist evidence notes and reference them through evidence_refs; avoid parallel current numerical, claim or experiment accounts. Existing manual notebooks are preserved; the generator may select an alternative output path. Existing current notes participate in applicable repair scans/snapshots even if unlinked.
 
+## Worked example: one-page design note
+
+These are three **separate** JSON values for a fictional native run, not files to copy into a real one. Assume `owner-demo` initialized the run, `SRC-01` is the verified one-page note *Return routing*, and `extract-elements` bound `source_elements/page-0001.json`. Its only units are a short section and one undivided diagram with a native caption beginning “Figure 1.”; there is no experiment. The native text has no unresolved conflicts. Use your own IDs, paths, observed content and limits; never batch-copy judgments or `CHECKED`/viewed flags.
+
+**1. `01_inventory.json` (array).** Only after comparing the source with any outline draft, record identity, hierarchy and locators here. S1 owns the prose before the caption; F1's selector accounts for the caption's native words. It does not select the diagram's pixels. Sync this inventory. Neither unit has been declared read.
+
+```json
+[
+  {"unit_id":"S1","kind":"SECTION","label":"Return routing","source_id":"SRC-01",
+   "assigned_owner":"owner-demo","parent_id":null,"children":["F1"],
+   "locators":[{"physical_page":1,"section":"Return routing","body":{"stop_before":"Figure 1."}}]},
+  {"unit_id":"F1","kind":"FIGURE","label":"Figure 1. Proposed desk routing","source_id":"SRC-01",
+   "assigned_owner":"owner-demo","parent_id":"S1","children":[],
+   "locators":[{"physical_page":1,"object_label":"Figure 1","body":{"start_at":"Figure 1."}}]}
+]
+```
+
+**2. G0 handoff (object).** Assume `01_sources.json` identifies the actual version/hash and `01_scope_gaps.md` records how the Owner reconciled the original with the inventory and coverage audit. A gate-only handoff does not need template unit rows. `PASS` requires existing evidence and no open gate items, not a count of draft rows.
+
+```json
+{"writer_id":"owner-demo","gate_results":{"G0":{
+  "decision":"PASS",
+  "reasons":["The one-page note ends with Figure 1; its caption and diagram belong to F1, and the preceding desk rule to S1."],
+  "evidence_refs":["01_sources.json","01_inventory.json","01_scope_gaps.md"],"open_items":[]
+}}}
+```
+
+**3. Section + figure handoff with its claim (object).** After G0, assume the Owner actually read S1 to the end, checked its last sentence against the diagram, read F1's caption and **opened the legible crop** `evidence/f1.png` from page 1. The IDs below must exist on that bound page: words 1–24 span S1, words 25–29 span the caption, and `p0001-i001` is the diagram. Use the page refs/IDs from your own reads, not a guessed filename or an ID range encoded as one ID. Identity and locators remain in inventory. S1 retains its synced `visual_review` (no pixels required here); for F1 supply the complete `visual_review` object, not just its boolean.
+
+```json
+{
+  "writer_id":"owner-demo",
+  "units":[
+    {"unit_id":"S1","read_state":"CHECKED","information_role":"Defines the proposed return rule",
+     "understanding_note":"At this desk the due date decides the destination: late slips are held and on-time slips filed. The last sentence says the rule has not been timed, so Figure 1 cannot establish a speed gain.",
+     "evidence_refs":["source_elements/page-0001.json"],"claim_links":["C1"],
+     "content_reading":{"mode":"NATIVE_ELEMENTS","page_refs":["source_elements/page-0001.json"],"element_ids":["p0001-text","p0001-w00001","p0001-w00024"],"conflict_resolution_refs":[]}},
+    {"unit_id":"F1","read_state":"CHECKED","information_role":"Depicts the two destinations",
+     "understanding_note":"From CHECK DATE the late branch points down to HOLD, whereas the on-time branch points right to FILE. HOLD is an endpoint in the drawing; no release step is shown.",
+     "observed_content":"One decision box, two labeled arrows and two endpoints.","encoding":"Arrowheads indicate direction; the branch labels give the date condition.",
+     "relationships":"CHECK DATE sends each slip to one destination.","conditions":"Proposed desk procedure only.","text_links":["S1"],"experiment_links":[],"claim_links":["C1"],
+     "exact_vs_estimated":"Labels and arrow endpoints read directly; no quantities plotted.","limitations":"No times or frequencies shown.",
+     "evidence_refs":["source_elements/page-0001.json","evidence/f1.png"],
+     "content_reading":{"mode":"MIXED","page_refs":["source_elements/page-0001.json"],"element_ids":["p0001-i001","p0001-w00025","p0001-w00029"],"conflict_resolution_refs":[]},
+     "visual_review":{"required":true,"actually_viewed":true,"artifact_refs":["evidence/f1.png"],"checks":["Traced the downward arrowhead into HOLD and the rightward one into FILE."],"limitations":["No path out of HOLD is drawn."]}}
+  ],
+  "claims":[{"claim_id":"C1","text":"The proposed desk rule routes late slips to HOLD rather than FILE.",
+    "attribution":"AUTHOR_CLAIM","source_refs":["SRC-01"],"supporting_units":["S1","F1"],"experiment_refs":[],
+    "conditions":["Design of the return desk; not a measured throughput result."],
+    "support_state":"SUPPORTED","allowed_use":"CONDITIONAL","issue_refs":[]}]
+}
+```
+
+Save the two handoffs separately as UTF-8 JSON. For **each**, in order, use `validate-handoff RUN --file FILE` then `merge RUN --file FILE` with the controller prefix from the [quickstart](../references/section-reading.md#native-reading-quickstart); `FILE` is the actual input path. Validation does not write the packet. On `INVALID_HANDOFF`, check the writer, JSON shapes, synced unit IDs and existing evidence files; on `UNIT_NATIVE_EVIDENCE_MISSING`, check source/page binding and actual element IDs or conflict evidence. Fix the underlying records, not the flags. Neither submission grants G1–G3.
+
 ## Detailed field authorities
 
-- [Native elements](../references/native-elements.md): content_acquisition, content_reading, structured_inspection, source/page/element binding and conflict evidence. Only complete validated native TABLE records qualify for the structured alternative.
+- [Native elements](../references/native-elements.md): content_acquisition, the append-only manifest history, data-file bindings, content_reading, structured_inspection, source/page/element binding and conflict evidence. Only complete validated native PDF tables or DATA_FILE tables with inspectable tabular cells and no omitted workbook graphics qualify for the structured alternative; resolving a scalar is not a table inspection.
 - [Review modes](../references/review-modes.md): review_mode, coverage_label, coverage_check, mandatory IDs, sampling and continuation. Every current claim is mandatory; comparison_id/same_as prevent duplicate evidence counting.
 - [Reliable execution](../references/reliable-execution.md): reviewer_session_id, visual_inspection and the four reviewed_* snapshot fields. The actual reviewer supplies these; review.gate_decisions uses plain gate strings.
 - [Targets and visuals](../references/targets-and-visual-reports.md): explicit research_target, target_analysis, report_visuals and derived data provenance. Target purpose is distinct from paper identity and does not reduce coverage.
@@ -81,6 +160,8 @@ Evidence paths resolve to existing local files, relative to the run or absolute.
 
 ## Compatibility and completion
 
-New 2.9 runs enable report_presentation in addition to reader_explanation (2.8) and native acquisition (2.7). The existing readability schema_version 1 adds ordered sections {role, heading}; accepted reviewer readability adds checked_section_roles and presentation_assessment. These extensions apply only to enabled runs. Missing review_mode retains legacy full independent review. Never retrofit active/frozen runs or delete new-run fields to evade their contract. Only USER_DEFINED_SCOPE permits evidenced user-authorized OUT_OF_SCOPE exclusions; retain units and scope revision without claiming complete-paper coverage.
+Screening records for reading below complete depth have their own versioned contract, the [screening contract](../references/screening-contract.md), and are never part of a packet. A run opened by `promote` carries one optional field in the packet and task: `promotion {schema_version, corpus_id, paper_id, from_depth, trigger, promotion_ref, promotion_sha256, source_sha256, extraction_reused}`. The promotion record `handoffs/screening/promotion.json` is the authority; the packet field binds the run to it and `task.json` copies the packet field. Only such runs are checked: the three must agree, the record and the screening snapshot it names must be unchanged, the upgrade must rest on the decision or user request and the source version it cites, the run must have carried the promoted target revision, a unit or gate cannot rest on `handoffs/screening/` notes alone, and those notes are never user authorization for a scope exclusion ([codes](../references/screening-contract.md#promotion-record)). A run with no promotion in its packet, task file or history directory behaves exactly as before.
+
+New 2.10 runs add append-only source acquisition (schema-2 manifest with history) and DATA_FILE sources. Runs initialized at 2.7–2.9 keep schema-1 manifests, a single extraction and continuation runs for late supplements; do not raise their skill_revision, edit manifests or relabel sources to obtain the new behavior. New 2.9 runs enable report_presentation in addition to reader_explanation (2.8) and native acquisition (2.7). The existing readability schema_version 1 adds ordered sections {role, heading}; accepted reviewer readability adds checked_section_roles and presentation_assessment. These extensions apply only to enabled runs. Missing review_mode retains legacy full independent review. Never retrofit active/frozen runs or delete new-run fields to evade their contract. Only USER_DEFINED_SCOPE permits evidenced user-authorized OUT_OF_SCOPE exclusions; retain units and scope revision without claiming complete-paper coverage.
 
 Changes to sources, locators, explanations, reports or evidence reopen affected dependencies and review. Four snapshot fields bind the actual inspected version; never refresh an old approval token. See [EXECUTION.md](EXECUTION.md) for the control loop and evidenced interruption. Scripts cannot prove reading, understanding, viewing, independence or complete source inventory.
