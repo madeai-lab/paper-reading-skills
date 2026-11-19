@@ -2,6 +2,8 @@
 import hashlib
 import json
 
+from reading_data_sources import data_paths
+
 
 TEXT = {'.md', '.txt', '.json', '.csv', '.tsv', '.html', '.svg'}
 HISTORY = {'reviews', 'handoffs', 'repair_sync'}
@@ -15,12 +17,14 @@ def sha(value):
 def current_documents(root, packet):
     """Include unlinked notes and old manual notebooks, not just deliverables."""
     excluded = {packet.get('deliverables', {}).get('independent_review')}
+    # Raw supplements have their own hashes and may use a declared non-UTF-8 encoding.
+    raw_sources = data_paths(root, packet)
     documents = {}
     for path in sorted(root.rglob('*')):
         relative = path.relative_to(root).as_posix()
         if (not path.is_file() or path.suffix.lower() not in TEXT
                 or path.relative_to(root).parts[0] in HISTORY
-                or relative in CONTROL or relative in excluded):
+                or relative in CONTROL or relative in excluded or (raw_sources and path.resolve() in raw_sources)):
             continue
         if not path.resolve().is_relative_to(root.resolve()):
             raise ValueError('Current artifacts must stay inside the run: ' + relative)

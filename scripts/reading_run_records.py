@@ -6,6 +6,7 @@ from pathlib import Path
 import re
 from urllib.parse import unquote
 
+from reading_data_sources import data_paths, registered_data
 import reading_repair_sync as repair_sync
 
 MARKER = "<!-- generated-reading-records -->"
@@ -79,12 +80,17 @@ def content_fingerprint(root, packet):
         if quality_path.is_file():
             # Display screenshots are evidence bytes, even when not text documents.
             collect(read(quality_path))
+    for source in registered_data(packet):
+        provenance = source.get('provenance')
+        if isinstance(provenance, dict) and isinstance(provenance.get('acquisition_ref'), str):
+            refs.add(provenance['acquisition_ref'])
+    raw_sources = data_paths(root, packet)
     # Inline images belong to the exact report being reviewed, even without a manifest.
     for ref in list(refs):
         if not isinstance(ref, str):
             continue
         document = root/ref
-        if document.suffix.lower() == '.md' and document.is_file():
+        if document.suffix.lower() == '.md' and document.is_file() and document.resolve() not in raw_sources:
             for match in re.finditer(r'!\[[^\]]*\]\((<[^>]+>|[^\s)]+)(?:\s+"[^"]*")?\)', document.read_text(encoding='utf-8-sig')):
                 destination = unquote(match[1].strip('<>').split('#', 1)[0])
                 if destination and not re.match(r'^[a-zA-Z][a-zA-Z0-9+.-]*://', destination) and not destination.startswith('data:'):

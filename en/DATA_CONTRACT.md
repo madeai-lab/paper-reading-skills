@@ -1,15 +1,35 @@
-# Handoff data contract — current contract 2.9
+# Handoff data contract — current contract 2.10
 
 Use the same task, source, unit, experiment, claim and issue IDs across stages. Field names remain English; prose may use the selected language. The [shared template](../shared/packet.template.json) is empty scaffolding, not completed evidence.
 
 ## 1. Locators and units
 
-source: source_id, title, version, publication_status, local_path or url, sha256 actually computed for local files, page_count, access_state, supplement_of, required_for_scope, missing_reason.
+source: source_id, source_kind, title, version, publication_status, local_path or url, sha256 actually computed for local files, page_count, access_state, supplement_of, required_for_scope, missing_reason.
+
+In 2.10+ runs `source_kind` is `PDF` (the default when absent) or `DATA_FILE`. A DATA_FILE source is a non-PDF supplement kept in its real format, for example a per-study coding table, a corpus ledger or a replication-package index. It adds:
+
+- `format`: CSV, TSV, XLSX, JSON, MD or TXT, matching the file extension.
+- `local_path`: run-relative, using `/` separators; copy the acquired bytes into the run unchanged.
+- `page_count`: null. `supplement_of`: the source it supplements.
+- `encoding` (text formats only): utf-8 by default; declare utf-16, cp1252 or latin-1 only after observing that encoding.
+- `provenance`: `{origin, acquisition_ref, container}`. `origin` is the published URL, DOI or citation. `acquisition_ref` is the separate run-local retrieval record (URL, method, outcome, size, hash). Binding freezes its exact bytes and the declared origin; use a new receipt for a later retrieval rather than editing a bound receipt. `container` is null, or `{local_path, sha256, member}` when the file came out of a ZIP archive; extraction then proves the member is byte-identical.
+
+See the [example record](../shared/data-source.example.json). Scripts, notebooks, macro workbooks (.xlsm), build scripts and executable binaries are not DATA_FILE inputs. List them in scope evidence as present and not executed. An AVAILABLE DATA_FILE satisfies `required_for_scope`; never mark a file you hold as unavailable to pass a check.
 
 unit: unit_id, kind, label, parent_id, children, source_id, locators, assigned_owner, read_state, information_role, understanding_note, evidence_refs, visual_review, dependencies.
 Use SECTION, FIGURE, PANEL, TABLE, EQUATION, ALGORITHM, APPENDIX, OTHER_VISUAL or BIBLIOGRAPHY for kind. Give a parent figure and each panel separate IDs, such as P20-F04 and P20-F04-d. Do the same for nested sections, composite tables and unnumbered visuals.
 
 locator: physical_page, printed_page, section, object_label, panel, paragraph_or_cell, image_path. Inapplicable fields may be null; never guess a page. An object spanning pages may have several locators.
+
+Data-file units use file + location locators instead of pages; the unit's source_id names the file.
+
+| Format | Locator | Rules |
+|---|---|---|
+| CSV, TSV, XLSX | `{sheet, rows: [first, last], header_row, fields}` | `sheet` is required for XLSX and absent for CSV/TSV. `rows` are 1-based inclusive row numbers as a spreadsheet shows them (CSV header = row 1; a quoted line break stays inside one row). `header_row` defaults to 1, or is null for no header. `fields` lists exact, unique header names; omit it to cover all columns. |
+| JSON | `{json_pointer}` | RFC 6901; `""` is the whole document. |
+| MD, TXT | `{lines: [first, last]}` | 1-based inclusive lines. |
+
+`object_label` and `section` may carry the paper's own label (for example "Table S4"). Data units are TABLE, SECTION, APPENDIX or BIBLIOGRAPHY. They record `content_reading: {mode: DATA_FILE, conflict_resolution_refs, unresolved_conflicts: []}`, with no page_refs or element IDs. Every locator must resolve in the bound file. Cite file + rows/fields in notes, claims and reports, for example `ESM1 (supplements/MOESM1_ESM.csv) rows 2–240, fields doi and inclusion_rationale`.
 
 On native SECTION (including subsection), APPENDIX and BIBLIOGRAPHY units, inventory `locators` in logical reading order. A locator with `body: {}` selects all native words on its `physical_page`; optional `bbox`, `start_at` and `stop_before` inside `body` narrow the selection. Absence of `body` binds no text, even on an old page locator. See [section reading](../references/section-reading.md#01-map-the-source-outline) for exact boundaries, shared pages and columns. Other object locators and visual evidence retain their own rules.
 
@@ -72,7 +92,7 @@ Former stage filenames such as 02_units.json, 04_experiments.json and 06_claims.
 
 ## Detailed field authorities
 
-- [Native elements](../references/native-elements.md): content_acquisition, content_reading, structured_inspection, source/page/element binding and conflict evidence. Only complete validated native TABLE records qualify for the structured alternative.
+- [Native elements](../references/native-elements.md): content_acquisition, the append-only manifest history, data-file bindings, content_reading, structured_inspection, source/page/element binding and conflict evidence. Only complete validated native TABLE records and resolving DATA_FILE TABLE units qualify for the structured alternative.
 - [Review modes](../references/review-modes.md): review_mode, coverage_label, coverage_check, mandatory IDs, sampling and continuation. Every current claim is mandatory; comparison_id/same_as prevent duplicate evidence counting.
 - [Reliable execution](../references/reliable-execution.md): reviewer_session_id, visual_inspection and the four reviewed_* snapshot fields. The actual reviewer supplies these; review.gate_decisions uses plain gate strings.
 - [Targets and visuals](../references/targets-and-visual-reports.md): explicit research_target, target_analysis, report_visuals and derived data provenance. Target purpose is distinct from paper identity and does not reduce coverage.
@@ -83,6 +103,6 @@ Evidence paths resolve to existing local files, relative to the run or absolute.
 
 ## Compatibility and completion
 
-New 2.9 runs enable report_presentation in addition to reader_explanation (2.8) and native acquisition (2.7). The existing readability schema_version 1 adds ordered sections {role, heading}; accepted reviewer readability adds checked_section_roles and presentation_assessment. These extensions apply only to enabled runs. Missing review_mode retains legacy full independent review. Never retrofit active/frozen runs or delete new-run fields to evade their contract. Only USER_DEFINED_SCOPE permits evidenced user-authorized OUT_OF_SCOPE exclusions; retain units and scope revision without claiming complete-paper coverage.
+New 2.10 runs add append-only source acquisition (schema-2 manifest with history) and DATA_FILE sources. Runs initialized at 2.7–2.9 keep schema-1 manifests, a single extraction and continuation runs for late supplements; do not raise their skill_revision, edit manifests or relabel sources to obtain the new behavior. New 2.9 runs enable report_presentation in addition to reader_explanation (2.8) and native acquisition (2.7). The existing readability schema_version 1 adds ordered sections {role, heading}; accepted reviewer readability adds checked_section_roles and presentation_assessment. These extensions apply only to enabled runs. Missing review_mode retains legacy full independent review. Never retrofit active/frozen runs or delete new-run fields to evade their contract. Only USER_DEFINED_SCOPE permits evidenced user-authorized OUT_OF_SCOPE exclusions; retain units and scope revision without claiming complete-paper coverage.
 
 Changes to sources, locators, explanations, reports or evidence reopen affected dependencies and review. Four snapshot fields bind the actual inspected version; never refresh an old approval token. See [EXECUTION.md](EXECUTION.md) for the control loop and evidenced interruption. Scripts cannot prove reading, understanding, viewing, independence or complete source inventory.

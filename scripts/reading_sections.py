@@ -6,7 +6,7 @@ import json
 from math import isfinite
 from pathlib import Path
 
-from reading_element_contracts import validated_pages
+from reading_element_contracts import error_code, validated_pages
 from reading_pdf_elements import MAX_READ_CHARS, ElementError
 from reading_run_records import read
 
@@ -19,9 +19,10 @@ def _native(root, packet, source_id):
     try:
         pages = validated_pages(root, packet)
     except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
-        code = 'ELEMENT_SOURCE_CHANGED' if 'ELEMENT_SOURCE_CHANGED' in str(exc) else 'ELEMENTS_INVALID'
-        raise ElementError(code, str(exc)) from exc
+        raise ElementError(error_code(exc), str(exc)) from exc
     selected = {p['page']: (ref, p) for ref, p in pages.items() if p['source_id'] == source_id}
+    if any(s.get('source_id') == source_id and s.get('source_kind') == 'DATA_FILE' for s in packet.get('sources', [])):
+        raise ElementError('INVALID_ARGUMENT', 'This is a DATA_FILE source; read it with read-data and file + row/field locators.')
     if not selected:
         raise ElementError('INVALID_ARGUMENT', 'Select a source_id in the frozen native manifest.')
     return selected

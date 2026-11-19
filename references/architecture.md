@@ -23,7 +23,7 @@ The [stage guide](../en/README.md) owns the loading routes. This architecture re
 
 ## Runtime, validation and synthesis
 
-Current contract: 2.9. One skill entrypoint routes to stage responsibilities. One Owner normally performs 01–07 and one distinct reviewer performs 08. Python manages records; the host performs reading, delegation and continuation.
+Current contract: 2.10. One skill entrypoint routes to stage responsibilities. One Owner normally performs 01–07 and one distinct reviewer performs 08. Python manages records; the host performs reading, delegation and continuation.
 
 
 User instructions govern scope. Role prompts cannot weaken shared boundaries. Detailed shared references are maintained in English. Resolve discrepancies against the shared contract and implementation instead of choosing a weaker rule. Changelog entries are history, not extra instructions; old runs retain their enabled contracts.

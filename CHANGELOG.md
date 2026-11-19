@@ -1,5 +1,13 @@
 # Version history
 
+## 2.10 — late supplements and data files
+
+Runs initialized at 2.10 can bind sources acquired after the first extraction. `extract-elements --append` extracts only newly registered AVAILABLE sources into a new `source_elements/append-NNNN/` directory and preserves the previous manifest byte for byte under `source_elements/history/`. It then atomically replaces the schema-2 manifest, whose `history` chains each step by path and SHA-256. Validation rejects any rewritten earlier entry, page or snapshot. Unbound registered sources report ELEMENTS_APPEND_REQUIRED instead of a broken run, so required supplements no longer force a continuation run or re-adoption of earlier reading.
+
+Non-PDF supplements (CSV, TSV, XLSX, JSON, Markdown, text) are `source_kind: DATA_FILE` sources with format, actual hash, `supplement_of` and provenance (published origin, run-local acquisition record, optional ZIP member verified byte for byte). Extraction never opens them as PDFs; it records a navigation-only structure, or an explicit parse conflict. `read-data` returns bounded content by sheet/rows/fields, JSON pointer or lines using the standard library only: no formula evaluation, macros, scripts, external links or conversion. Data units record `content_reading.mode: DATA_FILE`, and every locator must resolve. A resolving data TABLE uses the structured route instead of a fabricated pixel view, and needs the reviewer's own structured inspection. An AVAILABLE required data file now satisfies source checks truthfully. Executable package content is never a source.
+
+Runs initialized at 2.7–2.9 keep schema-1 manifests, single extraction and their continuation-run route; append and DATA_FILE are refused there. Existing active or frozen runs are not migrated.
+
 ## 2.9 — consistent report delivery
 
 New runs share ordered semantic report sections with localized headings and paper-specific depth. Explicit targets receive a separate coverage/difference/evidence-needed comparison; general reading has no invented target. The existing readability record indexes sections and the same reviewer assesses presentation alongside source accuracy. Local checks validate section locations, registered navigation, portable inline links/images and current reviewer coverage, without word-count or heading-based semantic approval. Active/frozen 2.8 runs retain their original contract.

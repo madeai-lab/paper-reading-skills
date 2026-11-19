@@ -2,6 +2,7 @@
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import re
 import tempfile
@@ -103,25 +104,100 @@ def page_elements(page, number, source_id):
             'ocr_used': False}
 
 
-def extract_elements(root, parser=None):
+def _import_parser(parser):
+    if parser is not None:
+        return parser
+    try:
+        import pdfplumber
+    except ImportError as exc:
+        raise ElementError('PDFPLUMBER_UNAVAILABLE', 'Use an explicitly provisioned extraction Python with pdfplumber; no automatic install or fallback.') from exc
+    return pdfplumber
+
+
+def _parser_record(parser):
+    return {'name': 'pdfplumber', 'version': str(getattr(parser, '__version__', 'UNKNOWN'))}
+
+
+def _extract_pdf(root, parser, source, staging, name_prefix, ref_prefix, total_chars):
+    """Write one source's page records into staging; return its manifest entry and running character total."""
+    sid = source.get('source_id', '')
+    if not re.fullmatch(r'[A-Za-z0-9_.-]+', sid):
+        raise ElementError('ELEMENTS_INVALID', 'Use a safe source ID.')
+    path = root/source.get('local_path', '')
+    if not path.is_file() or sha(path) != source.get('sha256'):
+        raise ElementError('ELEMENT_SOURCE_CHANGED', 'Source bytes do not match the frozen identity: '+sid)
+    if path.stat().st_size > MAX_SOURCE_BYTES:
+        raise ElementError('PDF_ELEMENTS_LIMIT', 'Source exceeds the native extraction byte limit.')
+    entry = {'source_id': sid, 'local_path': source['local_path'], 'sha256': source['sha256'], 'pages': []}
+    try:
+        opened = parser.open(path)
+    except Exception as exc:
+        code = 'PDF_ELEMENTS_ENCRYPTED' if any(s in type(exc).__name__.lower() for s in ['password', 'encrypt']) else 'ELEMENTS_INVALID'
+        raise ElementError(code, 'Native PDF parser could not open this source: '+type(exc).__name__) from exc
+    with opened as document:
+        underlying = getattr(document, 'doc', None)
+        if (getattr(document, 'is_encrypted', False) or getattr(underlying, 'encryption', None)
+                or getattr(underlying, 'is_extractable', True) is False):
+            raise ElementError('PDF_ELEMENTS_ENCRYPTED', 'Encrypted/restricted PDFs are not extracted.')
+        entry['page_count'] = len(document.pages)
+        if not 0 < entry['page_count'] <= MAX_PAGES:
+            raise ElementError('PDF_ELEMENTS_LIMIT', 'Source exceeds page limits or has no pages.')
+        if source.get('page_count') is not None and source['page_count'] != entry['page_count']:
+            raise ElementError('ELEMENTS_INVALID', 'Registered PDF page count does not match source: ' + sid)
+        for number, page in enumerate(document.pages, 1):
+            data = page_elements(page, number, sid)
+            total_chars += max(len(data['text']), len(data['chars']))
+            if total_chars > MAX_CHARACTERS:
+                raise ElementError('PDF_ELEMENTS_LIMIT', 'Native text exceeds the extraction character limit.')
+            name = name_prefix + f'page-{number:04}.json'
+            save(staging/name, data)
+            entry['pages'].append({'page': number, 'ref': ref_prefix+name, 'sha256': sha(staging/name)})
+    return entry, total_chars
+
+
+def _data_entry(root, packet, source):
+    from reading_data_sources import DataError, manifest_entry
+    try:
+        return manifest_entry(root, packet, source)
+    except DataError as exc:
+        raise ElementError(exc.code, str(exc)) from exc
+
+
+def extract_elements(root, parser=None, append=False):
     root = Path(root).resolve()
     packet = load(root/'paper_packet.json')
     acquisition = packet.get('content_acquisition', {})
     if acquisition != {'method': 'PDFPLUMBER_NATIVE', 'manifest_ref': 'source_elements/manifest.json'}:
         raise ElementError('ELEMENTS_INVALID', 'Initialize a new native-elements run; existing runs are not migrated.')
+    from reading_data_sources import check_registry, extensions_enabled, is_data_source
+    extended = extensions_enabled(packet)
+    if append:
+        if not extended:
+            raise ElementError('ELEMENTS_APPEND_UNSUPPORTED', 'Runs before 2.10 are not migrated; use a continuation run.')
+        # Serialise publishers. A crash leaves a visible lock, never permission to replace evidence.
+        lock = root/'.source-append.lock'
+        try:
+            lock.mkdir()
+        except FileExistsError as exc:
+            raise ElementError('ELEMENTS_APPEND_BUSY', 'Another append is running or was interrupted. Confirm the writer stopped before removing the empty lock.') from exc
+        try:
+            return _append(root, packet, parser)
+        finally:
+            lock.rmdir()
     destination = root/'source_elements'
     if destination.exists():
-        raise ElementError('ELEMENTS_EXIST', 'Use a fresh run; never overwrite extraction evidence.')
-    if parser is None:
-        try:
-            import pdfplumber as parser
-        except ImportError as exc:
-            raise ElementError('PDFPLUMBER_UNAVAILABLE', 'Use an explicitly provisioned extraction Python with pdfplumber; no automatic install or fallback.') from exc
+        raise ElementError('ELEMENTS_EXIST', 'Never overwrite extraction evidence. ' + (
+            'Register and sync newly available sources, then use extract-elements --append.' if extended
+            else 'Runs before 2.10 are not migrated; use a fresh run.'))
     sources = packet.get('sources', [])
+    if extended:
+        check_registry(sources)
+    parser = _import_parser(parser)
     if not sources:
         raise ElementError('ELEMENTS_INVALID', 'Register source PDFs before extraction.')
-    manifest = {'schema_version': 1, 'parser': {'name': 'pdfplumber', 'version': str(getattr(parser, '__version__', 'UNKNOWN'))},
+    manifest = {'schema_version': 2 if extended else 1, 'parser': _parser_record(parser),
                 'ocr_used': False, 'sources': []}
+    data_sources = []
     total_chars = 0
     # A same-filesystem temporary directory becomes visible only after all sources succeed.
     with tempfile.TemporaryDirectory(prefix='.native-elements-', dir=root) as temporary:
@@ -130,48 +206,102 @@ def extract_elements(root, parser=None):
             raise ElementError('ELEMENTS_INVALID', 'Extraction staging must remain inside this run.')
         for si, source in enumerate(sources):
             if source.get('access_state') != 'AVAILABLE':
-                if source.get('required_for_scope'):
+                if not extended and source.get('required_for_scope'):
                     raise ElementError('ELEMENT_SOURCE_UNAVAILABLE', 'A required source is unavailable.')
                 continue
-            sid = source.get('source_id', '')
-            if not re.fullmatch(r'[A-Za-z0-9_.-]+', sid):
-                raise ElementError('ELEMENTS_INVALID', 'Use a safe source ID.')
-            path = root/source.get('local_path', '')
-            if not path.is_file() or sha(path) != source.get('sha256'):
-                raise ElementError('ELEMENT_SOURCE_CHANGED', 'Source bytes do not match the frozen identity: '+sid)
-            if path.stat().st_size > MAX_SOURCE_BYTES:
-                raise ElementError('PDF_ELEMENTS_LIMIT', 'Source exceeds the native extraction byte limit.')
-            entry = {'source_id': sid, 'local_path': source['local_path'], 'sha256': source['sha256'], 'pages': []}
-            try:
-                opened = parser.open(path)
-            except Exception as exc:
-                code = 'PDF_ELEMENTS_ENCRYPTED' if any(s in type(exc).__name__.lower() for s in ['password', 'encrypt']) else 'ELEMENTS_INVALID'
-                raise ElementError(code, 'Native PDF parser could not open this source: '+type(exc).__name__) from exc
-            with opened as document:
-                underlying = getattr(document, 'doc', None)
-                if (getattr(document, 'is_encrypted', False) or getattr(underlying, 'encryption', None)
-                        or getattr(underlying, 'is_extractable', True) is False):
-                    raise ElementError('PDF_ELEMENTS_ENCRYPTED', 'Encrypted/restricted PDFs are not extracted.')
-                entry['page_count'] = len(document.pages)
-                if not 0 < entry['page_count'] <= MAX_PAGES:
-                    raise ElementError('PDF_ELEMENTS_LIMIT', 'Source exceeds page limits or has no pages.')
-                for number, page in enumerate(document.pages, 1):
-                    data = page_elements(page, number, sid)
-                    total_chars += max(len(data['text']), len(data['chars']))
-                    if total_chars > MAX_CHARACTERS:
-                        raise ElementError('PDF_ELEMENTS_LIMIT', 'Native text exceeds the extraction character limit.')
-                    name = ('' if si == 0 else sid+'-') + f'page-{number:04}.json'
-                    save(staging/name, data)
-                    entry['pages'].append({'page': number, 'ref': 'source_elements/'+name,
-                                           'sha256': sha(staging/name)})
+            if is_data_source(source):
+                if not extended:
+                    raise ElementError('ELEMENTS_INVALID', 'Data-file sources need a run initialized at 2.10 or later; existing runs are not migrated.')
+                data_sources.append(_data_entry(root, packet, source))
+                continue
+            prefix = '' if si == 0 else source.get('source_id', '')+'-'
+            entry, total_chars = _extract_pdf(root, parser, source, staging, prefix, 'source_elements/', total_chars)
             manifest['sources'].append(entry)
         if not manifest['sources']:
             raise ElementError('ELEMENTS_INVALID', 'No readable source PDF was registered.')
+        if extended:
+            manifest['data_sources'] = data_sources
+            manifest['history'] = [{'sequence': 1, 'operation': 'INITIAL', 'parser': manifest['parser'],
+                                    'source_ids': [s['source_id'] for s in manifest['sources']],
+                                    'data_source_ids': [d['source_id'] for d in data_sources],
+                                    'previous_manifest_ref': None, 'previous_manifest_sha256': None}]
         save(staging/'manifest.json', manifest)
         staging.rename(destination)
-    return {'manifest_ref': acquisition['manifest_ref'], 'source_count': len(manifest['sources']),
-            'page_count': sum(s['page_count'] for s in manifest['sources']), 'ocr_used': False,
-            'reading_state_changed': False, 'notice': 'Extraction records PDF elements, not understanding or acceptance.'}
+    result = {'manifest_ref': acquisition['manifest_ref'], 'source_count': len(manifest['sources']),
+              'page_count': sum(s['page_count'] for s in manifest['sources']), 'ocr_used': False,
+              'reading_state_changed': False, 'notice': 'Extraction records PDF elements, not understanding or acceptance.'}
+    if extended:
+        result.update(data_source_count=len(data_sources), code_executed=False)
+    return result
+
+
+def _append(root, packet, parser):
+    """Bind newly registered sources into an existing 2.10+ extraction without touching earlier evidence."""
+    from reading_element_contracts import error_code, validate_acquisition
+    destination = root/'source_elements'
+    manifest_path = destination/'manifest.json'
+    if not manifest_path.is_file():
+        raise ElementError('ELEMENTS_INVALID', 'No extraction exists yet; run extract-elements without --append first.')
+    try:
+        state = validate_acquisition(root, packet, allow_pending=True)
+    except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        raise ElementError(error_code(exc), str(exc)) from exc
+    new_pdf, new_data = state['pending_pdf'], state['pending_data']
+    if not new_pdf and not new_data:
+        raise ElementError('ELEMENTS_NOTHING_TO_APPEND', 'Every AVAILABLE source is already bound. Register lawfully acquired sources in 01_sources.json and sync first.')
+    previous_bytes = manifest_path.read_bytes()
+    manifest = json.loads(previous_bytes.decode('utf-8-sig'))
+    sequence = len(manifest['history']) + 1
+    snapshot_ref = f'source_elements/history/manifest-{sequence-1:04}.json'
+    snapshot = root/snapshot_ref
+    if snapshot.resolve() != snapshot or manifest_path.resolve() != manifest_path:
+        raise ElementError('ELEMENTS_INVALID', 'Do not follow redirected manifest or history paths when appending.')
+    if snapshot.exists() and snapshot.read_bytes() != previous_bytes:
+        raise ElementError('ELEMENTS_INVALID', 'A different preserved manifest already occupies '+snapshot_ref+'; inspect it, do not overwrite it.')
+    name = f'append-{sequence:04}'
+    suffix = 1
+    while (destination/name).exists():
+        # An unreferenced directory from an interrupted attempt is never reused or removed.
+        suffix += 1
+        name = f'append-{sequence:04}-{suffix}'
+    ref_prefix = f'source_elements/{name}/'
+    total_chars = sum(max(len(page['text']), len(page['chars'])) for page in state['pages'].values())
+    entries = []
+    history = {'sequence': sequence, 'operation': 'APPEND', 'parser': None,
+               'source_ids': [s['source_id'] for s in new_pdf], 'data_source_ids': [s['source_id'] for s in new_data],
+               'previous_manifest_ref': snapshot_ref, 'previous_manifest_sha256': hashlib.sha256(previous_bytes).hexdigest()}
+    if new_pdf:
+        parser = _import_parser(parser)
+        history['parser'] = _parser_record(parser)
+    with tempfile.TemporaryDirectory(prefix='.native-elements-', dir=root) as temporary:
+        staging = Path(temporary).resolve()/'pages'
+        staging.mkdir()
+        if not staging.is_relative_to(root):
+            raise ElementError('ELEMENTS_INVALID', 'Extraction staging must remain inside this run.')
+        for source in new_pdf:
+            entry, total_chars = _extract_pdf(root, parser, source, staging, source['source_id']+'-', ref_prefix, total_chars)
+            entries.append(entry)
+        data_entries = [_data_entry(root, packet, source) for source in new_data]
+        manifest['sources'] += entries
+        manifest['data_sources'] += data_entries
+        manifest['history'].append(history)
+        # Commit order: new pages, preserved previous manifest, then the atomic manifest swap.
+        if manifest_path.read_bytes() != previous_bytes or load(root/'paper_packet.json')['sources'] != packet['sources']:
+            raise ElementError('ELEMENT_SOURCE_CHANGED', 'Sources or manifest changed during append; retry on a stable inventory.')
+        if entries:
+            staging.rename(destination/name)
+        snapshot.parent.mkdir(exist_ok=True)
+        if not snapshot.exists():
+            with snapshot.open('xb') as stream:
+                stream.write(previous_bytes)
+        pending = Path(temporary)/'manifest.json'
+        save(pending, manifest)
+        os.replace(pending, manifest_path)
+    return {'manifest_ref': 'source_elements/manifest.json', 'operation': 'APPEND', 'sequence': sequence,
+            'appended_source_ids': history['source_ids'], 'appended_data_source_ids': history['data_source_ids'],
+            'page_count': sum(e['page_count'] for e in entries), 'previous_manifest_ref': snapshot_ref,
+            'ocr_used': False, 'code_executed': False, 'reading_state_changed': False,
+            'notice': 'Appended evidence binds new sources only; earlier pages are unchanged. Prior review snapshots are stale.'}
 
 
 def read_elements(root, pages, bbox=None, max_chars=MAX_READ_CHARS, source_id=None, *, view='detail'):
@@ -187,6 +317,8 @@ def read_elements(root, pages, bbox=None, max_chars=MAX_READ_CHARS, source_id=No
         raise ElementError('ELEMENTS_INVALID', 'This legacy run has no native extraction contract.')
     manifest = load(root/packet['content_acquisition']['manifest_ref'])
     sources = manifest['sources']
+    if source_id in {d['source_id'] for d in manifest.get('data_sources', [])}:
+        raise ElementError('INVALID_ARGUMENT', 'This is a DATA_FILE source; read it with read-data, not PDF pages.')
     source = next((s for s in sources if s['source_id'] == (source_id or sources[0]['source_id'])), None)
     if (source is None or not isinstance(pages, list) or not pages or len(pages) > 4
             or len(set(pages)) != len(pages) or any(type(p) is not int or not 1 <= p <= source['page_count'] for p in pages)

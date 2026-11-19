@@ -6,6 +6,8 @@ from pathlib import Path
 import re
 from urllib.parse import unquote
 
+from reading_data_sources import data_paths, registered_data
+
 MODES = {'KEY_CLAIMS', 'FULL_DOUBLE_READ'}
 LABELS = {'KEY_CLAIMS': 'COMPLETE_READING_KEY_CLAIMS_CHECKED',
           'FULL_DOUBLE_READ': 'COMPLETE_INDEPENDENT_DOUBLE_READ'}
@@ -132,8 +134,8 @@ def required_visual_ids(packet, review=None, root=None):
     visuals = {u['unit_id'] for u in packet.get('units', [])
                if u.get('kind') in VISUAL or u.get('visual_review', {}).get('required')}
     if root is not None:
-        from reading_element_contracts import native_table_ready
-        visuals -= {u['unit_id'] for u in packet.get('units', []) if native_table_ready(root, packet, u)}
+        from reading_element_contracts import structured_ready
+        visuals -= {u['unit_id'] for u in packet.get('units', []) if structured_ready(root, packet, u)}
     if review_mode(packet) == 'FULL_DOUBLE_READ':
         return visuals
     selected = set(review_plan(packet)['required_unit_ids'])
@@ -165,10 +167,17 @@ def artifact_manifest(root, packet):
         if source.get('local_path'):
             path = root/source['local_path']
             files[source['local_path']] = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else 'MISSING'
+    for source in registered_data(packet):
+        provenance = source.get('provenance')
+        acquisition = provenance.get('acquisition_ref') if isinstance(provenance, dict) else None
+        if isinstance(acquisition, str):
+            path = root/acquisition
+            files[acquisition] = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else 'MISSING'
+    raw_sources = data_paths(root, packet)
     # Match the report fingerprint's implicit inline-image registration.
     for name in list(files):
         document = root/name
-        if document.suffix.lower() == '.md' and document.is_file():
+        if document.suffix.lower() == '.md' and document.is_file() and document.resolve() not in raw_sources:
             for match in re.finditer(r'!\[[^\]]*\]\((<[^>]+>|[^\s)]+)(?:\s+"[^\"]*")?\)', document.read_text(encoding='utf-8-sig')):
                 destination = unquote(match[1].strip('<>').split('#', 1)[0])
                 if not destination or re.match(r'^[a-zA-Z][a-zA-Z0-9+.-]*://', destination) or destination.startswith('data:'):

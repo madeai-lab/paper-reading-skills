@@ -1,4 +1,4 @@
-# Execution and terminal decisions — current contract 2.9
+# Execution and terminal decisions — current contract 2.10
 
 ## Initialize and inventory
 
@@ -13,9 +13,17 @@ The directory must not exist. init copies/hashes the source and creates unfinish
 
 For native PDFs, follow [Native elements](../references/native-elements.md) to extract once with an already provisioned pdfplumber interpreter. Verify source identity, section/subsection headings and their boundaries, all objects, appendices and supplements. Save 01_sources.json, 01_inventory.json and scope evidence; sync the inventory and use `section-coverage "<run>" --source-id SRC-01` to locate mapping gaps or overlaps. A flagged page calls for targeted inspection, not another full-text pass. Merge an evidenced G0 before dependent readers start. Preserve missing material and new discoveries instead of removing difficult units.
 
+Register supplements you already hold before the first extraction: PDFs as `PDF` sources and CSV/TSV/XLSX/JSON/MD/TXT files as [DATA_FILE sources](DATA_CONTRACT.md#1-locators-and-units) with provenance and actual hashes. In a 2.10+ run, a supplement acquired later stays in this run. Register it, inventory its units and sync, then run:
+
+```text
+python "<skill>/scripts/reading_run_control.py" extract-elements "<run>" --append
+```
+
+The assessment reports ELEMENTS_APPEND_REQUIRED until you do. The append binds only the new sources and preserves all earlier pages and the previous manifest ([details](../references/native-elements.md#add-sources-acquired-after-extraction-210)). Checked units on earlier sources keep their evidence; dependent claims, the report and review snapshots must still absorb the new material. Runs initialized before 2.10 keep their original continuation-run route.
+
 ## Read, hand off and verify locally
 
-Load the prompt for the current responsibility. Follow [section reading](../references/section-reading.md#02-read-and-reconcile): use `read-section "<run>" --id S2` and its continuation for mapped prose, or read sections directly from the source when no mapping/helper applies. Read every unit; save content, relationships, conditions, limits and actual evidence. For a figure/table, use `read-elements --view locator` on its page to navigate, then inspect the original object or detailed native table as required. Locator previews and coverage diagnostics never advance read state. Missing dependencies do not authorize installation, OCR or uploads.
+Load the prompt for the current responsibility. Follow [section reading](../references/section-reading.md#02-read-and-reconcile): use `read-section "<run>" --id S2` and its continuation for mapped prose, or read sections directly from the source when no mapping/helper applies. Read every unit; save content, relationships, conditions, limits and actual evidence. For a figure/table, use `read-elements --view locator` on its page to navigate, then inspect the original object or detailed native table as required. For a DATA_FILE unit use `read-data "<run>" --source-id <id>` with `--sheet/--rows/--fields`, `--json-pointer` or `--lines`, and record `content_reading.mode: DATA_FILE` with the same locators ([data files](../references/native-elements.md#data-file-supplements-210)). Locator previews, structure views and coverage diagnostics never advance read state. Missing dependencies do not authorize installation, OCR or uploads.
 
 Identity/locator edits belong in inventory. Use `handoff-template --writer ... --units ...`, fill actual content, `validate-handoff --file ...`, then `merge --file ...`. Validation is read-only; its success is not a merge. Merge preserves raw history and generates notebook/index. Use the canonical records rather than maintaining parallel transcripts.
 
