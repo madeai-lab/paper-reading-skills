@@ -3,10 +3,9 @@ import hashlib
 import json
 import math
 from pathlib import Path
-import re
-from urllib.parse import unquote
 
 from reading_data_sources import data_paths, registered_data
+from reading_run_records import digest, inline_image_refs
 
 MODES = {'KEY_CLAIMS', 'FULL_DOUBLE_READ'}
 LABELS = {'KEY_CLAIMS': 'COMPLETE_READING_KEY_CLAIMS_CHECKED',
@@ -175,18 +174,9 @@ def artifact_manifest(root, packet):
         if isinstance(acquisition, str):
             path = root/acquisition
             files[acquisition] = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else 'MISSING'
-    raw_sources = data_paths(root, packet)
-    # Match the report fingerprint's implicit inline-image registration.
-    for name in list(files):
-        document = root/name
-        if document.suffix.lower() == '.md' and document.is_file() and document.resolve() not in raw_sources:
-            for match in re.finditer(r'!\[[^\]]*\]\((<[^>]+>|[^\s)]+)(?:\s+"[^\"]*")?\)', document.read_text(encoding='utf-8-sig')):
-                destination = unquote(match[1].strip('<>').split('#', 1)[0])
-                if not destination or re.match(r'^[a-zA-Z][a-zA-Z0-9+.-]*://', destination) or destination.startswith('data:'):
-                    continue
-                path = (document.parent/destination).resolve()
-                ref = path.relative_to(root.resolve()).as_posix() if path.is_relative_to(root.resolve()) else str(path)
-                files[ref] = hashlib.sha256(path.read_bytes()).hexdigest() if path.is_file() else 'MISSING'
+    for ref in set(inline_image_refs(root, files, data_paths(root, packet))):
+        path = root/ref
+        files[ref] = digest(path) if path.is_file() else 'MISSING'
     return files
 
 

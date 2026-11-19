@@ -82,6 +82,8 @@ If local tools permit a rendered preview, inspect the top, middle and bottom thr
 
 Finish text, assets, target answers, metadata and G0–G2 before the reviewer snapshots. Use neutral report wording pointing to the packet/latest review so approval need not rewrite the inspected report. Reviewer reinspection checks exact repairs and their dependencies, preserves failed decisions, then takes its own new snapshot. The writer ingests the actual decision and follows the returned assessment; run `next` plus the read-only checker before final delivery. Do not rewrite scientific files after approval or refresh an old token.
 
+An unchanged run copied for independent review has the same new content fingerprint: use run-local image links and preserve their bytes and directory layout. An already recorded pre-fix approval containing inline images remains verifiable in its original directory; do not convert its hash to authorize a relocated copy.
+
 ## Unassisted trial boundary
 
 When the user requests a minimally supervised trial, provide only the updated skill, source, explicit target, new output directory and execution permissions. Keep prior reports, specific known paper anomalies and expected verdicts out of the test prompt. Observe status without editing the run, injecting repairs, supplying a replacement reviewer from the supervising host, or modifying the frozen skill. The executing agent may perform the skill's own repair/review loop within authorization. Preserve its actual completion or capability-blocked outcome; report failure as failure rather than silently rescuing the trial.

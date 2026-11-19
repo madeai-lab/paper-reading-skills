@@ -9,7 +9,7 @@ import shutil
 import sys
 
 from reading_run_records import (RunError, read, write, digest, evidence, content_fingerprint,
-                                 generated_target, render, MARKER)
+                                 review_content_matches, generated_target, render, MARKER)
 from reading_run_check import inspect_run, VERIFIED
 from reading_review_contracts import visual_review_errors, structure_errors, visual_fingerprint
 import reading_repair_sync as repair_sync
@@ -51,7 +51,7 @@ def current_review(root, packet, review, acquisition=None):
     hashes = {s["source_id"]:s.get("sha256") for s in packet.get("sources", [])}
     return (review.get("reviewed_scope_revision") == packet.get("scope_revision")
             and review.get("reviewed_source_hashes") == hashes
-            and review.get('reviewed_content_sha256') == content_fingerprint(root,packet)
+            and review_content_matches(root, packet, review)
             and not visual_review_errors(root, packet, review, acquisition=acquisition)
             and not coverage_errors(root, packet, review, acquisition=acquisition)
             and not quality_errors(root, packet, review))

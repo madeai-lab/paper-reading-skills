@@ -181,9 +181,8 @@ def inspect_run(root, require_review=True, acquisition=None):
                 or review.get("reviewed_source_hashes") != source_hashes):
             error("REVIEW_STALE", "G3", "Re-review this scope and source version; record reviewed_scope_revision and reviewed_source_hashes independently.")
         if review.get('reviewed_content_sha256'):
-            # Import lazily: the controller also uses this structural preflight.
-            from reading_run_control import content_fingerprint
-            if review['reviewed_content_sha256'] != content_fingerprint(root, packet):
+            from reading_run_records import review_content_matches
+            if not review_content_matches(root, packet, review):
                 error('REVIEW_CONTENT_STALE', 'G3', 'Reinspect changed report, target, records and visual assets; obtain a new actual review.')
         evidence(review.get("source_first_inventory_ref"), "source-first review")
         errors.extend(coverage_errors(root, packet, review, acquisition))
