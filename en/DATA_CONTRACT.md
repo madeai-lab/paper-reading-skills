@@ -29,6 +29,8 @@ Data-file units use file + location locators instead of pages; the unit's source
 | JSON | `{json_pointer}` | RFC 6901; `""` is the whole document. |
 | MD, TXT | `{lines: [first, last]}` | 1-based inclusive lines. |
 
+`--chars FIRST LAST` is a read window, not an inventory locator: it selects 1-based inclusive Unicode characters in a single text line, selected table field or JSON string. Retain the file and original row/field, line or JSON pointer and check all relevant windows before claiming full coverage.
+
 `object_label` and `section` may carry the paper's own label (for example "Table S4"). Data units are TABLE, SECTION, APPENDIX or BIBLIOGRAPHY. They record `content_reading: {mode: DATA_FILE, conflict_resolution_refs, unresolved_conflicts: []}`, with no page_refs or element IDs. Every locator must resolve in the bound file. Cite file + rows/fields in notes, claims and reports, for example `ESM1 (supplements/MOESM1_ESM.csv) rows 2–240, fields doi and inclusion_rationale`.
 
 On native SECTION (including subsection), APPENDIX and BIBLIOGRAPHY units, inventory `locators` in logical reading order. A locator with `body: {}` selects all native words on its `physical_page`; optional `bbox`, `start_at` and `stop_before` inside `body` narrow the selection. Absence of `body` binds no text, even on an old page locator. See [section reading](../references/section-reading.md#01-map-the-source-outline) for exact boundaries, shared pages and columns. Other object locators and visual evidence retain their own rules.
@@ -147,7 +149,7 @@ Save the two handoffs separately as UTF-8 JSON. For **each**, in order, use `val
 
 ## Detailed field authorities
 
-- [Native elements](../references/native-elements.md): content_acquisition, the append-only manifest history, data-file bindings, content_reading, structured_inspection, source/page/element binding and conflict evidence. Only complete validated native TABLE records and resolving DATA_FILE TABLE units qualify for the structured alternative.
+- [Native elements](../references/native-elements.md): content_acquisition, the append-only manifest history, data-file bindings, content_reading, structured_inspection, source/page/element binding and conflict evidence. Only complete validated native PDF tables or DATA_FILE tables with inspectable tabular cells and no omitted workbook graphics qualify for the structured alternative; resolving a scalar is not a table inspection.
 - [Review modes](../references/review-modes.md): review_mode, coverage_label, coverage_check, mandatory IDs, sampling and continuation. Every current claim is mandatory; comparison_id/same_as prevent duplicate evidence counting.
 - [Reliable execution](../references/reliable-execution.md): reviewer_session_id, visual_inspection and the four reviewed_* snapshot fields. The actual reviewer supplies these; review.gate_decisions uses plain gate strings.
 - [Targets and visuals](../references/targets-and-visual-reports.md): explicit research_target, target_analysis, report_visuals and derived data provenance. Target purpose is distinct from paper identity and does not reduce coverage.

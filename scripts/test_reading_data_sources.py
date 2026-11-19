@@ -222,6 +222,77 @@ class DataSourceTests(DataRunFixture):
         self.save()
         self.assertEqual(self.codes(), ['ELEMENT_SOURCE_CHANGED'])
 
+    def test_decoding_correction_is_a_synced_read_overlay_not_a_rebinding(self):
+        source = self.add('RAW', 'raw.csv', b'label,value\r\nM\xfcller,0\r\n', 'CSV')
+        self.extract()
+        self.add('TXT', 'readme.txt', 'Package notes', 'TXT')
+        self.extract(append=True)  # Include a real predecessor and hash chain.
+        frozen = {p: p.read_bytes() for p in (self.root/'source_elements').rglob('*') if p.is_file()}
+        original = self.manifest()['data_sources'][0]
+        locator = {'rows': [2, 2]}
+        self.assertEqual(original['structure']['conflict'], 'TEXT_DECODING_CONFLICT')
+        with self.assertRaises(data.DataError) as unreadable:
+            data.read_data(self.root, 'RAW', locator)
+        self.assertEqual(unreadable.exception.code, 'DATA_PARSE_CONFLICT')
+
+        source['encoding'] = 'cp1252'
+        self.assertEqual(self.codes(), ['ELEMENT_SOURCE_CHANGED'])  # Packet alone is not a declaration.
+        (self.root/'01_sources.json').write_text(json.dumps(self.packet['sources']), encoding='utf8')
+        del source['encoding']
+        self.assertEqual(data.read_data(self.root, 'RAW')['structure'], original['structure'])  # Not synced yet.
+        control.sync_inventory(self.root, self.packet, {'history': []})
+        self.save()
+        state = contracts.validate_acquisition(self.root, self.packet)
+        self.assertEqual(state['manifest']['data_sources'][0], original)
+        effective = state['data']['RAW'][1]
+        self.assertEqual((effective['encoding'], effective['sha256']), ('cp1252', original['sha256']))
+        self.assertEqual(effective['structure']['parse_state'], 'PARSED')
+        self.assertEqual(data.read_data(self.root, 'RAW')['structure'], effective['structure'])
+        self.assertEqual(data.read_data(self.root, 'RAW', locator)['rows'][0]['values'], ['Müller', '0'])
+        self.assertTrue(contracts.structured_ready(self.root, self.packet, self.unit('T', 'RAW', locators=[locator])))
+        self.assertEqual(frozen, {p: p.read_bytes() for p in frozen})
+
+    def test_unresolved_correction_does_not_replace_a_conflict_with_success(self):
+        source = self.add('RAW', 'raw.json', b'{"key":\xff}', 'JSON')
+        self.extract()
+        original = self.manifest()['data_sources'][0]
+        self.assertEqual(original['structure']['conflict'], 'TEXT_DECODING_CONFLICT')
+        source['encoding'] = 'latin-1'  # Decodes, but is not valid JSON.
+        (self.root/'01_sources.json').write_text(json.dumps(self.packet['sources']), encoding='utf8')
+        self.save()
+        for locator in (None, {'json_pointer': '/key'}):
+            with self.subTest(locator=locator), self.assertRaises(data.DataError) as caught:
+                data.read_data(self.root, 'RAW', locator)
+            self.assertEqual(caught.exception.code, 'DATA_PARSE_CONFLICT')
+            self.assertIn('JSON_PARSE_CONFLICT', str(caught.exception))
+        self.assertEqual(self.manifest()['data_sources'][0], original)
+
+    def test_manifest_structure_is_recomputed_under_bound_codec_before_use(self):
+        source = self.add('S2', 'raw.csv', b'x\r\nM\xfcller\r\n', 'CSV', encoding='cp1252')
+        self.add('CONFLICT', 'raw.json', b'\xff', 'JSON')
+        self.extract()
+        path = self.root/'source_elements/manifest.json'
+        manifest = self.manifest()
+        for index, changes in ((0, {'row_count': 7}), (0, {'first_row': True}), (0, {'row_1_values': ['forged']}),
+                               (0, {'flags': ['RAGGED_ROWS']}), (1, {'detail': 'invented explanation'})):
+            with self.subTest(changes=changes):
+                altered = copy.deepcopy(manifest)
+                structure = altered['data_sources'][index]['structure']
+                (structure if index else structure['tables'][0]).update(changes)
+                path.write_text(json.dumps(altered), encoding='utf8')
+                self.assertEqual(self.codes(), ['ELEMENTS_INVALID'])
+                with self.assertRaises(data.DataError):
+                    data.read_data(self.root, 'S2')
+        # A manifest assertion of decoding failure cannot authorize a codec swap if its codec actually worked.
+        source['encoding'] = 'latin-1'
+        (self.root/'01_sources.json').write_text(json.dumps(self.packet['sources']), encoding='utf8')
+        altered = copy.deepcopy(manifest)
+        altered['data_sources'][0]['structure'] = manifest['data_sources'][1]['structure']
+        path.write_text(json.dumps(altered), encoding='utf8')
+        self.assertEqual(self.codes(), ['ELEMENTS_INVALID'])
+        path.write_text(json.dumps(manifest), encoding='utf8')
+        self.assertEqual(self.codes(), ['ELEMENT_SOURCE_CHANGED'])
+
     def test_non_utf8_source_is_hashed_as_data_not_read_as_an_owner_note(self):
         import reading_repair_sync as repair_sync
         from reading_run_records import content_fingerprint
@@ -394,6 +465,51 @@ class DataUnitTests(DataRunFixture):
         unit['content_reading']['conflict_resolution_refs'] = ['interpretation.md']
         self.assertTrue(contracts.structured_ready(self.root, self.packet, unit))
 
+    def test_only_actual_tabular_cells_can_remove_the_pixel_requirement(self):
+        from reading_review_modes import required_visual_ids
+        self.add('TXT', 'metadata.txt', 'dataset identifier 043', 'TXT')
+        self.add('MD', 'metadata.md', '# Dataset title', 'MD')
+        self.add('JSON', 'metadata.json', '{"id":"043","fields":["id","title"]}', 'JSON')
+        self.add('TSV', 'cells.tsv', 'field\tcount\n \t0\n', 'TSV')
+        self.extract(append=True)
+        for sid, loc in (('TXT', {'lines': [1, 1]}), ('MD', {'lines': [1, 1]}),
+                         ('JSON', {'json_pointer': '/id'}), ('JSON', {'json_pointer': '/fields'}),
+                         ('TSV', {'rows': [1, 1]}), ('TSV', {'rows': [1, 2], 'fields': ['field']})):
+            with self.subTest(source=sid, locator=loc):
+                self.packet['units'] = []
+                unit = self.unit('T', sid, locators=[loc])
+                self.assertFalse(contracts.structured_ready(self.root, self.packet, unit))
+                self.assertEqual(required_visual_ids(self.packet, root=self.root), {'T'})
+                unit['kind'] = 'SECTION'  # Ordinary content remains readable by its actual locator.
+                self.assertEqual(contracts.native_unit_errors(self.root, self.packet), [])
+        unit = self.unit('ZERO', 'TSV', locators=[{'rows': [2, 2], 'fields': ['count']}])
+        self.assertTrue(contracts.structured_ready(self.root, self.packet, unit))
+
+    def test_omitted_graphics_need_a_rendering_not_a_generic_resolution_ref(self):
+        from reading_review_contracts import visual_fingerprint, visual_review_errors
+        buf = io.BytesIO(workbook(SHEET))
+        with zipfile.ZipFile(buf, 'a') as package:
+            package.writestr('xl/charts/chart1.xml', '<chart/>')
+        self.add('X', 'chart.xlsx', buf.getvalue(), 'XLSX')
+        self.extract(append=True)
+        unit = self.unit('T', 'X', locators=[{'sheet': 'Coding', 'rows': [2, 2]}])
+        receipt = 'supplements/acquisition.json'
+        unit['content_reading']['conflict_resolution_refs'] = [receipt]
+        self.assertFalse(contracts.structured_ready(self.root, self.packet, unit))
+        unit['visual_review'].update(actually_viewed=True, artifact_refs=[receipt])
+        self.assertEqual([e['code'] for e in contracts.native_unit_errors(self.root, self.packet)], ['UNIT_DATA_EVIDENCE_MISSING'])
+        review_row = {'unit_id': 'T', 'actually_viewed': True, 'artifact_refs': [receipt], 'observations': 'Read plotted values.'}
+        review = {'reviewer_session_id': 'reviewer', 'visual_inspection': {'session_id': 'reviewer', 'status': 'COMPLETE',
+                  'direct_pixels_available': True, 'blocked_unit_ids': [], 'tool_evidence_refs': [receipt], 'units': [review_row]}}
+        review['reviewed_visual_evidence_sha256'] = visual_fingerprint(self.root, review)
+        self.assertEqual([e['code'] for e in visual_review_errors(self.root, self.packet, review)], ['REVIEW_VISUAL_INCOMPLETE'])
+        (self.root/'view.pdf').write_bytes(minimal_pdf())  # A separate safe rendering is an inspectable artifact.
+        unit['visual_review']['artifact_refs'] = review_row['artifact_refs'] = ['view.pdf']
+        review['reviewed_visual_evidence_sha256'] = visual_fingerprint(self.root, review)
+        self.assertEqual(contracts.native_unit_errors(self.root, self.packet), [])
+        self.assertEqual(visual_review_errors(self.root, self.packet, review), [])
+        self.assertFalse(contracts.structured_ready(self.root, self.packet, unit))
+
     def test_data_table_uses_structured_route_instead_of_fabricated_viewing(self):
         unit = self.unit('T-S4', 'SUP-CSV')
         self.assertTrue(contracts.structured_ready(self.root, self.packet, unit))
@@ -465,6 +581,47 @@ class DataRunCheckTests(unittest.TestCase):
 
     def test_required_available_data_supplement_passes_source_and_unit_checks(self):
         self.assertEqual(self.relevant(), set())
+
+    def test_restored_owner_gate_only_passes_for_its_bound_scope(self):
+        self.packet['scope_revision'] = 2
+        gates = self.packet['gate_results']
+        gates['G0']['scope_revision'] = gates['G3']['scope_revision'] = 1
+        gates['G1']['scope_revision'] = 2  # G2 is an existing unstamped 2.10 PASS.
+        self.write()
+        self.assertEqual({e['item'] for e in inspect_run(self.root) if e['code'] == 'GATE_SCOPE_STALE'}, {'G0'})
+        gates['G0']['decision'] = 'PENDING'
+        self.write()
+        self.assertNotIn('GATE_SCOPE_STALE', {e['code'] for e in inspect_run(self.root)})
+
+    def test_hundred_tables_share_one_check_but_later_disk_changes_are_revalidated(self):
+        from reading_review_modes import required_visual_ids
+        first = self.packet['units'][0]
+        first.update(kind='TABLE', content_reading={'mode': 'NATIVE_ELEMENTS', 'element_ids': ['p0001-t001'],
+                                                     'page_refs': ['source_elements/page-0001.json']})
+        self.packet['units'] += [dict(self.unit, unit_id='ESM1-%03d' % i) for i in range(99)]
+        self.inventory = copy.deepcopy(self.packet['units'])
+        self.write()
+        review = self.packet['reviews'][-1]
+        with patch.object(contracts, 'validate_acquisition', wraps=contracts.validate_acquisition) as verify:
+            self.assertEqual(required_visual_ids(self.packet, review, self.root), set())
+            verify.assert_called_once()
+            verify.reset_mock()
+            self.assertEqual(contracts.structured_review_errors(self.root, self.packet, review)[0]['code'], 'REVIEW_NATIVE_INCOMPLETE')
+            verify.assert_called_once()
+            verify.reset_mock()
+            codes = {e['code'] for e in inspect_run(self.root)}
+            self.assertIn('REVIEW_NATIVE_INCOMPLETE', codes)  # The independent structured check still ran.
+            self.assertFalse({'UNIT_DATA_EVIDENCE_MISSING', 'UNIT_NATIVE_EVIDENCE_MISSING', 'VISUAL_NOT_VIEWED'} & codes)
+            verify.assert_called_once()
+            verify.reset_mock()
+            errors = control.preflight(self.root)['errors']
+            self.assertFalse({'UNIT_DATA_EVIDENCE_MISSING', 'UNIT_NATIVE_EVIDENCE_MISSING', 'VISUAL_NOT_VIEWED'} & {e['code'] for e in errors})
+            verify.assert_called_once()
+            verify.reset_mock()
+            (self.root/'esm.csv').write_bytes(b'changed bytes')
+            codes = {e['code'] for e in inspect_run(self.root)}
+            self.assertTrue({'ELEMENT_SOURCE_CHANGED', 'VISUAL_NOT_VIEWED'} <= codes)
+            verify.assert_called_once()  # Even a failed validation is shared only for this check.
 
     def test_hash_only_does_not_complete_a_required_supplement(self):
         self.packet['units'].pop()

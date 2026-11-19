@@ -241,14 +241,84 @@ class SourceAppendTests(unittest.TestCase):
         self.assert_code('ELEMENTS_APPEND_BUSY', lambda: self.extract(append=True))
         self.assertEqual(tree(self.root), before)
 
+    def test_partial_snapshot_write_never_reaches_history_and_append_can_retry(self):
+        self.extract()
+        before = tree(self.root)
+        self.register('S2', 'late.pdf')
+        snapshot = self.root/'source_elements/history/manifest-0001.json'
+        open_file = Path.open
+
+        def open_with_fault(path, mode='r', *args, **kwargs):
+            stream = open_file(path, mode, *args, **kwargs)
+            if path.name == snapshot.name and mode == 'xb':
+                write = stream.write
+
+                def write_half(data):
+                    self.assertEqual(data, before['manifest.json'])
+                    count = write(data[:len(data)//2])
+                    stream.flush()
+                    self.assertFalse(snapshot.exists())  # No half-written public name, even mid-write.
+                    if interrupted:
+                        raise OSError('interrupted snapshot write')
+                    return count
+
+                stream.write = write_half
+            return stream
+
+        for interrupted in (True, False):
+            with self.subTest(interrupted=interrupted):
+                with patch.object(Path, 'open', open_with_fault):
+                    if interrupted:
+                        with self.assertRaisesRegex(OSError, 'interrupted snapshot write'):
+                            self.extract(append=True)
+                    else:
+                        self.assert_code('ELEMENTS_INVALID', lambda: self.extract(append=True))
+                self.assertEqual(tree(self.root), before)
+                self.assertEqual([e['code'] for e in self.errors()], ['ELEMENTS_APPEND_REQUIRED'])
+
+        self.assertEqual(self.extract(append=True)['sequence'], 2)
+        self.assertEqual(snapshot.read_bytes(), before['manifest.json'])
+        self.assertEqual(tree(self.root)['page-0001.json'], before['page-0001.json'])
+        self.assertEqual(self.errors(), [])
+
+    def test_snapshot_flush_to_disk_failure_publishes_nothing(self):
+        self.extract()
+        before = tree(self.root)
+        self.register('S2', 'late.pdf')
+        with patch.object(native.os, 'fsync', side_effect=OSError('snapshot sync failed')):
+            with self.assertRaisesRegex(OSError, 'snapshot sync failed'):
+                self.extract(append=True)
+        self.assertEqual(tree(self.root), before)
+        self.assertEqual(self.extract(append=True)['sequence'], 2)
+        self.assertEqual(self.errors(), [])
+
+    def test_snapshot_racing_publication_is_never_replaced(self):
+        self.extract()
+        before = tree(self.root)
+        self.register('S2', 'late.pdf')
+        operation = 'rename' if native.os.name == 'nt' else 'link'
+        publish = getattr(native.os, operation)
+
+        def race(staged, destination):
+            if destination.name == 'manifest-0001.json':
+                destination.write_bytes(b'conflicting history')
+            return publish(staged, destination)
+
+        with patch.object(native.os, operation, side_effect=race):
+            self.assert_code('ELEMENTS_INVALID', lambda: self.extract(append=True))
+        self.assertEqual(tree(self.root), {**before, 'history/manifest-0001.json': b'conflicting history'})
+
     def test_failed_publication_can_resume_without_overwriting_old_pages(self):
         self.extract()
         self.register('S2', 'late.pdf')
         before = tree(self.root)
         with patch.object(native.os, 'replace', side_effect=OSError('I/O error')), self.assertRaises(OSError):
             self.extract(append=True)
+        after_failure = tree(self.root)
         for name, content in before.items():
-            self.assertEqual(tree(self.root)[name], content)
+            self.assertEqual(after_failure[name], content)
+        self.assertEqual(after_failure['history/manifest-0001.json'], before['manifest.json'])
+        self.assertEqual([e['code'] for e in self.errors()], ['ELEMENTS_APPEND_REQUIRED'])
         self.extract(append=True)
         self.assertEqual(self.errors(), [])
         self.assertEqual(tree(self.root)['history/manifest-0001.json'], before['manifest.json'])
@@ -260,14 +330,18 @@ class SourceAppendTests(unittest.TestCase):
         self.assert_code('ELEMENTS_INVALID', lambda: self.extract(append=True))
         self.assertEqual(tree(self.root), before)
 
-    def test_conflicting_preserved_snapshot_is_never_overwritten(self):
+    def test_legacy_partial_snapshot_requires_manual_inspection_and_is_never_overwritten(self):
         self.extract()
         history = self.root/'source_elements/history'
         history.mkdir()
-        (history/'manifest-0001.json').write_text('{"other": true}', encoding='utf8')
+        original = tree(self.root)['manifest.json']
+        (history/'manifest-0001.json').write_bytes(original[:len(original)//2])
+        before = tree(self.root)
         self.register('SUP', 'supplement.pdf')
-        self.assert_code('ELEMENTS_INVALID', lambda: self.extract(append=True))
-        self.assertEqual((history/'manifest-0001.json').read_text(encoding='utf8'), '{"other": true}')
+        error = self.assert_code('ELEMENTS_INVALID', lambda: self.extract(append=True))
+        self.assertIn('manifest-0001.json', str(error))
+        self.assertIn('Manually quarantine', str(error))
+        self.assertEqual(tree(self.root), before)
 
 
 class MixedSourceWorkflowTests(unittest.TestCase):

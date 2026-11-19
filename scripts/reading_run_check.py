@@ -7,12 +7,12 @@ from reading_data_sources import extensions_enabled
 from reading_review_contracts import structure_errors, visual_review_errors
 from reading_review_modes import coverage_errors
 from reading_report_quality import quality_errors
-from reading_element_contracts import element_errors, native_unit_errors, structured_ready
+from reading_element_contracts import checked_acquisition, element_errors, native_unit_errors, structured_ready
 
 VERIFIED = {"VERIFIED_FOR_SCOPE", "VERIFIED_WITH_USER_REVIEW"}
 
 
-def inspect_run(root, require_review=True):
+def inspect_run(root, require_review=True, acquisition=None):
     root = Path(root).resolve()
     errors = []
 
@@ -45,8 +45,10 @@ def inspect_run(root, require_review=True):
         error("EMPTY_INVENTORY", "units", "Inventory the source before claiming complete coverage.")
     units = packet.get("units", [])
     errors.extend(structure_errors(packet))
-    errors.extend(element_errors(root, packet))
-    errors.extend(native_unit_errors(root, packet))
+    if acquisition is None:
+        acquisition = checked_acquisition(root, packet)
+    errors.extend(element_errors(root, packet, acquisition))
+    errors.extend(native_unit_errors(root, packet, acquisition))
     errors.extend(quality_errors(root, packet))
     ids = [u.get("unit_id") for u in units]
     if len(set(ids)) != len(ids) or None in ids:
@@ -102,7 +104,7 @@ def inspect_run(root, require_review=True):
         for ref in unit.get("evidence_refs", []):
             evidence(ref, uid)
         visual = unit.get("visual_review", {})
-        if (visual.get("required") or unit.get("kind") in {"FIGURE", "PANEL", "TABLE", "OTHER_VISUAL"}) and not structured_ready(root, packet, unit):
+        if (visual.get("required") or unit.get("kind") in {"FIGURE", "PANEL", "TABLE", "OTHER_VISUAL"}) and not structured_ready(root, packet, unit, acquisition):
             if visual.get("actually_viewed") is not True:
                 error("VISUAL_NOT_VIEWED", uid, "Actually open and inspect the original visual.")
             if not visual.get("artifact_refs"):
@@ -117,6 +119,10 @@ def inspect_run(root, require_review=True):
         record = packet.get("gate_results", {}).get(gate, {})
         if record.get("decision") != "PASS":
             error("GATE_PENDING", gate, "Complete and review this gate.")
+        elif (gate != 'G3' and extensions_enabled(packet) and 'scope_revision' in record
+              and (type(record['scope_revision']) is not type(packet.get('scope_revision'))
+                   or record['scope_revision'] != packet.get('scope_revision'))):
+            error('GATE_SCOPE_STALE', gate, 'Recheck this Owner gate against the current scope revision.')
         if not record.get("evidence_refs"):
             error("EVIDENCE_MISSING", gate, "Link the actual gate decision.")
         for ref in record.get("evidence_refs", []):
@@ -159,7 +165,7 @@ def inspect_run(root, require_review=True):
         error("REVIEW_MISSING", "G3", "Obtain independent source-first review.")
     elif reviews:
         review = reviews[-1]
-        errors.extend(visual_review_errors(root, packet, review))
+        errors.extend(visual_review_errors(root, packet, review, acquisition))
         if review.get("template_only") is True:
             error("REVIEW_TEMPLATE_NOT_EXECUTED", "G3", "Replace the review template with an actual current review.")
         writers = set(packet.get("writer_ids", [])) | {packet.get("owner_id")}
@@ -180,7 +186,7 @@ def inspect_run(root, require_review=True):
             if review['reviewed_content_sha256'] != content_fingerprint(root, packet):
                 error('REVIEW_CONTENT_STALE', 'G3', 'Reinspect changed report, target, records and visual assets; obtain a new actual review.')
         evidence(review.get("source_first_inventory_ref"), "source-first review")
-        errors.extend(coverage_errors(root, packet, review))
+        errors.extend(coverage_errors(root, packet, review, acquisition))
         errors.extend(quality_errors(root, packet, review))
         if review.get("unresolved_reading_gaps") or review.get("repair_requests"):
             error("REVIEW_REPAIRS_OPEN", "G3", "Complete requested repairs and obtain re-review.")

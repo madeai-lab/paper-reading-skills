@@ -235,6 +235,34 @@ def extract_elements(root, parser=None, append=False):
     return result
 
 
+def _verify_existing_snapshot(snapshot, previous_bytes):
+    if snapshot.resolve() != snapshot or snapshot.read_bytes() != previous_bytes:
+        raise ElementError('ELEMENTS_INVALID', f'Conflicting history snapshot at {snapshot}; it was not overwritten. '
+                           'Back up the run and verify its committed history. Manually quarantine the file outside '
+                           'history only if confirmed to be an unreferenced remnant of an interrupted append.')
+
+
+def _publish_snapshot(snapshot, previous_bytes):
+    snapshot.parent.mkdir(exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix='.snapshot-', dir=snapshot.parent) as temporary:
+        staged = Path(temporary)/snapshot.name
+        with staged.open('xb') as stream:
+            stream.write(previous_bytes)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if staged.read_bytes() != previous_bytes:
+            raise ElementError('ELEMENTS_INVALID', 'Staged history snapshot differs from the current manifest; retry append.')
+        try:
+            # Windows rename refuses an existing destination; POSIX rename would replace it.
+            if os.name == 'nt':
+                os.rename(staged, snapshot)
+            else:
+                os.link(staged, snapshot)
+        except FileExistsError:
+            # A previous attempt may have published this snapshot but not swapped the manifest.
+            _verify_existing_snapshot(snapshot, previous_bytes)
+
+
 def _append(root, packet, parser):
     """Bind newly registered sources into an existing 2.10+ extraction without touching earlier evidence."""
     from reading_element_contracts import error_code, validate_acquisition
@@ -242,22 +270,25 @@ def _append(root, packet, parser):
     manifest_path = destination/'manifest.json'
     if not manifest_path.is_file():
         raise ElementError('ELEMENTS_INVALID', 'No extraction exists yet; run extract-elements without --append first.')
+    if manifest_path.resolve() != manifest_path:
+        raise ElementError('ELEMENTS_INVALID', 'Do not follow redirected manifest paths when appending.')
     try:
+        previous_bytes = manifest_path.read_bytes()
+        manifest = json.loads(previous_bytes.decode('utf-8-sig'))
+        sequence = len(manifest['history']) + 1
+        snapshot_ref = f'source_elements/history/manifest-{sequence-1:04}.json'
+        snapshot = root/snapshot_ref
+        if snapshot.resolve() != snapshot:
+            raise ElementError('ELEMENTS_INVALID', 'Do not follow redirected history paths when appending.')
+        # Diagnose legacy partial snapshots before the general history validator rejects the extra file.
+        if snapshot.exists():
+            _verify_existing_snapshot(snapshot, previous_bytes)
         state = validate_acquisition(root, packet, allow_pending=True)
     except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
         raise ElementError(error_code(exc), str(exc)) from exc
     new_pdf, new_data = state['pending_pdf'], state['pending_data']
     if not new_pdf and not new_data:
         raise ElementError('ELEMENTS_NOTHING_TO_APPEND', 'Every AVAILABLE source is already bound. Register lawfully acquired sources in 01_sources.json and sync first.')
-    previous_bytes = manifest_path.read_bytes()
-    manifest = json.loads(previous_bytes.decode('utf-8-sig'))
-    sequence = len(manifest['history']) + 1
-    snapshot_ref = f'source_elements/history/manifest-{sequence-1:04}.json'
-    snapshot = root/snapshot_ref
-    if snapshot.resolve() != snapshot or manifest_path.resolve() != manifest_path:
-        raise ElementError('ELEMENTS_INVALID', 'Do not follow redirected manifest or history paths when appending.')
-    if snapshot.exists() and snapshot.read_bytes() != previous_bytes:
-        raise ElementError('ELEMENTS_INVALID', 'A different preserved manifest already occupies '+snapshot_ref+'; inspect it, do not overwrite it.')
     name = f'append-{sequence:04}'
     suffix = 1
     while (destination/name).exists():
@@ -285,17 +316,14 @@ def _append(root, packet, parser):
         manifest['sources'] += entries
         manifest['data_sources'] += data_entries
         manifest['history'].append(history)
-        # Commit order: new pages, preserved previous manifest, then the atomic manifest swap.
-        if manifest_path.read_bytes() != previous_bytes or load(root/'paper_packet.json')['sources'] != packet['sources']:
-            raise ElementError('ELEMENT_SOURCE_CHANGED', 'Sources or manifest changed during append; retry on a stable inventory.')
-        if entries:
-            staging.rename(destination/name)
-        snapshot.parent.mkdir(exist_ok=True)
-        if not snapshot.exists():
-            with snapshot.open('xb') as stream:
-                stream.write(previous_bytes)
         pending = Path(temporary)/'manifest.json'
         save(pending, manifest)
+        if manifest_path.read_bytes() != previous_bytes or load(root/'paper_packet.json')['sources'] != packet['sources']:
+            raise ElementError('ELEMENT_SOURCE_CHANGED', 'Sources or manifest changed during append; retry on a stable inventory.')
+        # Until the final swap readers still see the old manifest and, at most, its exact snapshot.
+        _publish_snapshot(snapshot, previous_bytes)
+        if entries:
+            staging.rename(destination/name)
         os.replace(pending, manifest_path)
     return {'manifest_ref': 'source_elements/manifest.json', 'operation': 'APPEND', 'sequence': sequence,
             'appended_source_ids': history['source_ids'], 'appended_data_source_ids': history['data_source_ids'],

@@ -5,8 +5,8 @@ import math
 from pathlib import Path
 import re
 
-from reading_data_sources import (DATA_KIND, DATA_UNIT_KINDS, check_record, check_registry, extensions_enabled,
-                                  is_data_source, parse, resolve, sha256_file)
+from reading_data_sources import (DATA_KIND, DATA_UNIT_KINDS, ENCODINGS, TABULAR, check_record, check_registry,
+                                  extensions_enabled, is_data_source, parse, resolve, sha256_file, summary)
 
 CODES = {'ELEMENT_SOURCE_CHANGED', 'ELEMENTS_APPEND_REQUIRED', 'DATA_SOURCE_INVALID', 'DATA_SOURCE_UNSUPPORTED',
          'DATA_LIMIT', 'DATA_LOCATOR_INVALID', 'DATA_PARSE_CONFLICT'}
@@ -119,28 +119,51 @@ def _data_entries(root, manifest, current):
         raise ValueError('ELEMENT_SOURCE_CHANGED: a bound data source is no longer an available DATA_FILE; use a fresh run.')
     result = {}
     archive_hashes = {}
+    declarations = None  # Only needed when applying a synced decoding correction.
     for row in rows:
         source = current[row['source_id']]
         container = (source.get('provenance') or {}).get('container')
         if (row.get('local_path') != source.get('local_path') or row.get('sha256') != source.get('sha256')
-                or row.get('format') != source.get('format') or row.get('encoding') != source.get('encoding')
+                or row.get('format') != source.get('format')
                 or row.get('container') != container or row.get('supplement_of') != source.get('supplement_of')
                 or row.get('origin') != source['provenance']['origin']
                 or row.get('acquisition_ref') != source['provenance']['acquisition_ref']
                 or row.get('acquisition_sha256') != sha256_file(root/source['provenance']['acquisition_ref'])):
             raise ValueError('ELEMENT_SOURCE_CHANGED: data source identity changed after binding: ' + row['source_id'])
-        if sha256_file(root/source['local_path']) != source['sha256']:
+        path = root/source['local_path']
+        if sha256_file(path) != source['sha256']:
             raise ValueError('ELEMENT_SOURCE_CHANGED: data file bytes changed: ' + row['source_id'])
         if container:
-            path = root/container['local_path']
-            if path not in archive_hashes:
-                archive_hashes[path] = sha256_file(path)
-            if archive_hashes[path] != container['sha256']:
+            archive = root/container['local_path']
+            if archive not in archive_hashes:
+                archive_hashes[archive] = sha256_file(archive)
+            if archive_hashes[archive] != container['sha256']:
                 raise ValueError('ELEMENT_SOURCE_CHANGED: container archive changed: ' + row['source_id'])
-        structure = row.get('structure')
-        if not isinstance(structure, dict) or structure.get('parse_state') not in {'PARSED', 'CONFLICT'}:
-            raise ValueError('Data manifest entries record a parsed structure or an explicit conflict.')
-        result[row['source_id']] = (source, row)
+        encoding = row['encoding']
+        if encoding is not None and (encoding not in ENCODINGS or source['format'] == 'XLSX'):
+            raise ValueError('Invalid originally bound encoding: ' + row['source_id'])
+        original = summary(parse(path, row, row['sha256']))
+        # Exact JSON types matter: True, 1 and 1.0 are equal in Python, not in a frozen record.
+        if json.dumps(row.get('structure'), sort_keys=True) != json.dumps(original, sort_keys=True):
+            raise ValueError('Recorded data structure differs from the bound bytes and encoding: ' + row['source_id'])
+        entry = row
+        if source.get('encoding') != encoding:
+            if original.get('conflict') != 'TEXT_DECODING_CONFLICT' or not source.get('encoding'):
+                raise ValueError('ELEMENT_SOURCE_CHANGED: only an original text decoding conflict permits '
+                                 'an explicit encoding correction: ' + row['source_id'])
+            if declarations is None:
+                registry = root/'01_sources.json'
+                declarations = _load(registry) if registry.is_file() else []
+                check_registry(declarations)
+            if source not in declarations:
+                raise ValueError('ELEMENT_SOURCE_CHANGED: declare the correction in 01_sources.json and sync: ' + row['source_id'])
+            effective = summary(parse(path, source, row['sha256']))
+            if effective['parse_state'] != 'PARSED':
+                raise ValueError('DATA_PARSE_CONFLICT: corrected encoding does not resolve ' + row['source_id']
+                                 + ': ' + effective['conflict'])
+            # Only the read interface uses this overlay. manifest and its history retain the original conflict.
+            entry = dict(row, encoding=source['encoding'], structure=effective)
+        result[row['source_id']] = (source, entry)
     return result
 
 
@@ -228,14 +251,21 @@ def validated_pages(root, packet):
     return validate_acquisition(root, packet)['pages']
 
 
-def element_errors(root, packet):
-    if not enabled(packet):
-        return []
-    try:
-        validate_acquisition(Path(root).resolve(), packet)
-        return []
-    except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
-        return [{'code': error_code(exc), 'item': 'content_acquisition', 'next_action': str(exc)}]
+def checked_acquisition(root, packet):
+    """Share one read-only validation (including failure) within a check; never cache it across checks."""
+    errors = []
+    if enabled(packet):
+        try:
+            return validate_acquisition(root, packet)
+        except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
+            errors.append({'code': error_code(exc), 'item': 'content_acquisition', 'next_action': str(exc)})
+    return {'pages': {}, 'data': {}, 'errors': errors}
+
+
+def element_errors(root, packet, acquisition=None):
+    if acquisition is None:
+        acquisition = checked_acquisition(root, packet)
+    return acquisition.get('errors', [])
 
 
 def _reading(root, packet, unit, pages):
@@ -274,7 +304,7 @@ def _reading(root, packet, unit, pages):
 
 
 def _data_reading(root, unit, data):
-    """Check a data-file unit's own reading record and file + row/field locators."""
+    """Validate locator evidence; return whether it represents actual table cells without missing graphics."""
     source, entry = data[unit['source_id']]
     if unit.get('kind') not in DATA_UNIT_KINDS:
         raise ValueError('Data-file sources hold TABLE, SECTION, APPENDIX or BIBLIOGRAPHY units; register image or PDF '
@@ -290,68 +320,100 @@ def _data_reading(root, unit, data):
     if not isinstance(locators, list) or not locators:
         raise ValueError('Data units need file + sheet/row/field, JSON-pointer or line locators.')
     doc = parse(root/source['local_path'], source, entry['sha256'])
+    has_cells = False
     for locator in locators:
         selected = resolve(doc, locator)
         if selected.get('flags') and not refs:
             raise ValueError('Inspect flagged structure or cached values and link a resolution note: ' + ', '.join(selected['flags']))
-    return record
+        if doc['format'] in TABULAR and not has_cells:
+            has_cells = any(value is not None and str(value).strip()
+                            for row in selected['rows'] if row['row'] != selected['header_row']
+                            for value in row['values'])
+    # Notes can explain cached numeric values/headers, but cannot supply omitted graphics.
+    return has_cells and 'EMBEDDED_GRAPHICS_NOT_REPRESENTED' not in doc.get('flags', [])
 
 
-def native_unit_errors(root, packet):
+def native_unit_errors(root, packet, acquisition=None):
     if not enabled(packet):
         return []
     root = Path(root).resolve()
-    try:
-        state = validate_acquisition(root, packet)
-    except (OSError, ValueError, TypeError, KeyError, AttributeError):
+    if acquisition is None:
+        acquisition = checked_acquisition(root, packet)
+    if acquisition.get('errors'):
         return []  # element_errors reports the acquisition failure itself.
     errors = []
     for unit in packet.get('units', []):
         if unit.get('read_state') not in {'CHECKED', 'NON_INFORMATIVE'}:
             continue
-        on_data = unit.get('source_id') in state['data']
+        on_data = unit.get('source_id') in acquisition['data']
         try:
             if on_data:
-                _data_reading(root, unit, state['data'])
+                cells = _data_reading(root, unit, acquisition['data'])
+                visual = unit.get('visual_review', {})
+                if (unit.get('kind') == 'TABLE' and not cells
+                        and (visual.get('actually_viewed') is not True or not has_rendered_artifact(root, visual.get('artifact_refs')))):
+                    raise ValueError('Link the inspected rendering; a data locator or resolution note is not pixels.')
             else:
-                _reading(root, packet, unit, state['pages'])
+                _reading(root, packet, unit, acquisition['pages'])
         except (ValueError, KeyError, TypeError, AttributeError) as exc:
             errors.append({'code': 'UNIT_DATA_EVIDENCE_MISSING' if on_data else 'UNIT_NATIVE_EVIDENCE_MISSING',
                            'item': unit.get('unit_id'), 'next_action': str(exc)})
     return errors
 
 
-def data_table_ready(root, packet, unit):
-    """A TABLE held in a registered data file has no pixels; its cells are the original."""
+def has_rendered_artifact(root, refs):
+    """A non-cell DATA_FILE visual needs an actual local image/PDF, not just a text note."""
+    if not isinstance(refs, list):
+        return False
+    for ref in refs:
+        if not isinstance(ref, str):
+            continue
+        path = (root/ref.split('#', 1)[0]).resolve()
+        if (path.suffix.lower() not in {'.png', '.jpg', '.jpeg', '.gif', '.tif', '.tiff', '.webp', '.pdf'}
+                or not path.is_relative_to(root) or not path.is_file()):
+            continue
+        try:
+            with path.open('rb') as stream:
+                prefix = stream.read(12)
+        except OSError:
+            continue
+        if (prefix.startswith((b'\x89PNG\r\n\x1a\n', b'\xff\xd8\xff', b'GIF87a', b'GIF89a', b'%PDF-',
+                               b'II\x2a\x00', b'MM\x00\x2a')) or (prefix[:4], prefix[8:]) == (b'RIFF', b'WEBP')):
+            return True
+    return False
+
+
+def data_table_ready(root, packet, unit, acquisition=None):
+    """Only located tabular data values can stand in for pixels, not a resolved scalar or header."""
     if not enabled(packet) or not extensions_enabled(packet) or unit.get('kind') != 'TABLE':
         return False
-    root = Path(root).resolve()
+    if acquisition is None:
+        acquisition = checked_acquisition(root, packet)
     try:
-        data = validate_acquisition(root, packet)['data']
-        if unit.get('source_id') not in data:
-            return False
-        _data_reading(root, unit, data)
-        return True
+        return _data_reading(Path(root).resolve(), unit, acquisition['data'])
     except (OSError, ValueError, KeyError, TypeError, AttributeError):
         return False
 
 
-def structured_ready(root, packet, unit):
+def structured_ready(root, packet, unit, acquisition=None):
     """Non-pixel structured evidence that may replace viewing: complete native PDF or data-file tables."""
-    if unit.get('kind') != 'TABLE':
+    if not enabled(packet) or unit.get('kind') != 'TABLE':
         return False
-    if any(is_data_source(s) and s.get('source_id') == unit.get('source_id') for s in packet.get('sources', [])):
-        return data_table_ready(root, packet, unit)
-    return native_table_ready(root, packet, unit)
+    if acquisition is None:
+        acquisition = checked_acquisition(root, packet)
+    if unit.get('source_id') in acquisition['data']:
+        return data_table_ready(root, packet, unit, acquisition)
+    return native_table_ready(root, packet, unit, acquisition)
 
 
-def native_table_ready(root, packet, unit):
+def native_table_ready(root, packet, unit, acquisition=None):
     if not enabled(packet) or unit.get('kind') != 'TABLE':
         return False
     root = Path(root).resolve()
+    if acquisition is None:
+        acquisition = checked_acquisition(root, packet)
     try:
-        pages = validated_pages(root, packet)
-        record, selected = _reading(root, packet, unit, pages)
+        record, selected = _reading(root, packet, unit, acquisition['pages'])
         if record['mode'] != 'NATIVE_ELEMENTS':
             return False
         if {page['page'] for page in selected} != {x.get('physical_page') for x in unit.get('locators', [])}:
@@ -384,14 +446,18 @@ def native_table_ready(root, packet, unit):
         return False
 
 
-def structured_review_errors(root, packet, review):
+def structured_review_errors(root, packet, review, acquisition=None):
     if not enabled(packet):
         return []
     from reading_review_modes import review_plan
     root = Path(root).resolve()
     required = set(review_plan(packet)['required_unit_ids']) | set(review.get('checked_unit_ids', []))
-    tables = {u['unit_id'] for u in packet.get('units', [])
-              if u['unit_id'] in required and structured_ready(root, packet, u)}
+    candidates = [u for u in packet.get('units', []) if u.get('kind') == 'TABLE' and u['unit_id'] in required]
+    if not candidates:
+        return []
+    if acquisition is None:
+        acquisition = checked_acquisition(root, packet)
+    tables = {u['unit_id'] for u in candidates if structured_ready(root, packet, u, acquisition)}
     if not tables:
         return []
     record = review.get('structured_inspection', {})

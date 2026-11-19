@@ -18,7 +18,7 @@ Register supplements you already hold before the first extraction: PDFs as `PDF`
 python "<skill>/scripts/reading_run_control.py" extract-elements "<run>" --append
 ```
 
-The assessment reports ELEMENTS_APPEND_REQUIRED until you do. The append binds only the new sources and preserves all earlier pages and the previous manifest ([details](../references/native-elements.md#add-sources-acquired-after-extraction-210)). Checked units on earlier sources keep their evidence; dependent claims, the report and review snapshots must still absorb the new material. Runs initialized before 2.10 keep their original continuation-run route.
+The assessment reports ELEMENTS_APPEND_REQUIRED until you do. The append binds only the new sources and preserves all earlier pages and the previous manifest ([details](../references/native-elements.md#add-sources-acquired-after-extraction-210)). Checked units on unchanged sources keep their evidence. Re-close G0 for the new scope, read every new unit, and renew the Owner's G1/G2 evidence (including affected claims and report passages) before a new independent decision. Old PASS records belong to their old scope revision, not the enlarged one. Runs initialized before 2.10 keep their original continuation-run route.
 
 ## Read, hand off and verify locally
 

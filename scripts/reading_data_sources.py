@@ -5,6 +5,7 @@ external-link execution, no network access and no format conversion on disk.
 """
 import codecs
 import csv
+from dataclasses import dataclass
 import hashlib
 import io
 import json
@@ -325,6 +326,19 @@ def _xlsx(path):
         return tables, sorted(flags)
 
 
+@dataclass(frozen=True)
+class _JsonNumber:
+    """A JSON number token, deliberately neither a binary float nor a string value."""
+    __slots__ = ('token',)
+    token: str
+
+
+def _json_int(token):
+    # Keep ordinary integers native. Preserve signed zero and avoid Python's
+    # configurable decimal digit limit (and costly conversions of huge integers).
+    return int(token) if len(token) <= 640 and token != '-0' else _JsonNumber(token)
+
+
 def _json(text):
     def pairs(items):
         keys = [k for k, _ in items]
@@ -335,7 +349,8 @@ def _json(text):
     def constant(name):
         raise _Conflict('JSON_PARSE_CONFLICT', 'Non-standard JSON constant ' + name)
     try:
-        return json.loads(text, object_pairs_hook=pairs, parse_constant=constant)
+        return json.loads(text, object_pairs_hook=pairs, parse_constant=constant,
+                          parse_int=_json_int, parse_float=_JsonNumber)
     except (ValueError, RecursionError) as exc:
         raise _Conflict('JSON_PARSE_CONFLICT', 'The file is not valid JSON: ' + type(exc).__name__) from exc
 
@@ -404,7 +419,8 @@ def summary(doc):
                 'row_1_values': table['rows'].get(1), 'flags': table['flags']})
     elif 'value' in doc:
         value = doc['value']
-        names = {dict: 'object', list: 'array', str: 'string', bool: 'boolean', int: 'number', float: 'number'}
+        names = {dict: 'object', list: 'array', str: 'string', bool: 'boolean',
+                 int: 'number', float: 'number', _JsonNumber: 'number'}
         result['top_level'] = names.get(type(value), 'null')
         if isinstance(value, dict):
             result['keys'] = list(value)
@@ -517,12 +533,118 @@ def manifest_entry(root, packet, source):
             'structure': summary(parse(path, source, digest))}
 
 
-def read_data(root, source_id, locator=None, max_chars=MAX_READ_CHARS):
+def _read_chars(doc, locator, chars):
+    """Window one decoded value, without extending resolve()'s scientific locators."""
+    first, last = _pair(chars, 'chars')
+    if not isinstance(locator, dict):
+        raise DataError('DATA_LOCATOR_INVALID', '--chars needs a line, named cell or JSON string locator.')
+    fmt = doc['format']
+    if fmt in TABULAR:
+        start, end = _pair(locator.get('rows'), 'rows')
+        fields = locator.get('fields')
+        if start != end or (fields is not None and (not isinstance(fields, list) or len(fields) != 1)):
+            raise DataError('DATA_LOCATOR_INVALID', '--chars needs one row and one field (omit fields for a single-column row).')
+    elif fmt != 'JSON':
+        start, end = _pair(locator.get('lines'), 'lines')
+        if start != end:
+            raise DataError('DATA_LOCATOR_INVALID', '--chars needs exactly one line.')
+
+    selected = resolve(doc, locator)
+
+    def window(value):
+        if not isinstance(value, str):
+            raise DataError('DATA_LOCATOR_INVALID', '--chars needs a string value, not a number, null or container.')
+        size = len(value)
+        if last > size:
+            raise DataError('DATA_LOCATOR_INVALID', 'Selected value has %d characters; narrow --chars or omit it.' % size)
+        selected.update(chars=[first, last], total_chars=size, partial=(first != 1 or last != size))
+        return value[first - 1:last]
+
+    if fmt in TABULAR:
+        row, = selected['rows']
+        if len(row['values']) != 1:
+            raise DataError('DATA_LOCATOR_INVALID', '--chars needs exactly one field; name it in --fields for a multi-column row.')
+        # An unprojected values list belongs to the cache. Replace, never edit it.
+        row['values'] = [window(row['values'][0])]
+        if locator.get('fields') is None:
+            selected['column'] = 1
+            if selected['header_row'] == row['row']:
+                del selected['header']  # The selected header cell itself must not escape the window.
+            elif selected['header'] is not None:
+                selected['header'] = selected['header'][:1]
+    elif fmt == 'JSON':
+        selected['value'] = window(selected['value'])
+    else:
+        selected['text'] = window(selected['text'])
+    return selected
+
+
+def _check_budget(max_chars):
+    if type(max_chars) is not int or not 1 <= max_chars <= MAX_READ_CHARS:
+        raise DataError('DATA_READ_LIMIT', 'Choose a character budget from 1 to %d.' % MAX_READ_CHARS)
+
+
+def data_json(result, *, max_chars=MAX_READ_CHARS):
+    """Compact ASCII JSON (no newline); the budget includes one final CLI LF.
+
+    Write only validated number tokens unquoted. Bound the output as we go: e.g.
+    a rejected multi-megabyte string must not allocate its full ASCII escape form.
+    """
+    _check_budget(max_chars)
+    out = io.StringIO()
+
+    def reserve(size):
+        if out.tell() + size + 1 > max_chars:
+            raise DataError('DATA_READ_LIMIT', 'Narrow rows, fields, lines or the JSON pointer. For one line, cell '
+                            'or JSON string try --chars 1 1, or narrow the character range. Increase --max-chars '
+                            'if the locator and metadata alone exceed the budget; nothing was silently truncated.')
+
+    def put(token):
+        reserve(len(token))
+        out.write(token)
+
+    def emit(value):
+        if isinstance(value, dict):
+            put('{')
+            for i, (name, child) in enumerate(value.items()):
+                if not isinstance(name, str):
+                    raise TypeError('JSON object keys must be strings.')
+                if i:
+                    put(',')
+                emit(name)
+                put(':')
+                emit(child)
+            put('}')
+        elif isinstance(value, (list, tuple)):
+            put('[')
+            for i, child in enumerate(value):
+                if i:
+                    put(',')
+                emit(child)
+            put(']')
+        elif isinstance(value, _JsonNumber):
+            reserve(len(value.token))
+            if not re.fullmatch(r'-?(?:0|[1-9][0-9]*)(?:\.[0-9]+)?(?:[eE][+-]?[0-9]+)?', value.token):
+                raise ValueError('Invalid JSON number token.')
+            put(value.token)
+        else:
+            if isinstance(value, str):
+                reserve(len(value) + 2)
+            put(json.dumps(value, ensure_ascii=True, allow_nan=False))
+
+    try:
+        emit(result)
+    except RecursionError as exc:
+        raise DataError('DATA_READ_LIMIT', 'Selection is too deeply nested; choose a narrower JSON pointer.') from exc
+    return out.getvalue()
+
+
+def read_data(root, source_id, locator=None, max_chars=MAX_READ_CHARS, *, chars=None):
+    """Read verified data. Optional chars=[first,last] counts Unicode code points from one."""
     from reading_element_contracts import validate_acquisition, error_code
     root = Path(root).resolve()
     packet = json.loads((root/'paper_packet.json').read_text(encoding='utf-8-sig'))
-    if type(max_chars) is not int or not 1 <= max_chars <= MAX_READ_CHARS:
-        raise DataError('DATA_READ_LIMIT', 'Choose a character budget from 1 to %d.' % MAX_READ_CHARS)
+    _check_budget(max_chars)
     try:
         bound = validate_acquisition(root, packet)['data']
     except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
@@ -533,10 +655,12 @@ def read_data(root, source_id, locator=None, max_chars=MAX_READ_CHARS):
     result = {'source_id': source_id, 'local_path': source['local_path'], 'format': source['format'],
               'reading_state_changed': False, 'code_executed': False}
     if locator is None:
+        if chars is not None:
+            raise DataError('DATA_LOCATOR_INVALID', '--chars needs a content locator, not a navigation-only structure.')
         result.update(view='structure', purpose='NAVIGATION_ONLY', structure=entry['structure'])
     else:
         doc = parse(root/source['local_path'], source, entry['sha256'])
-        result.update(locator=locator, **resolve(doc, locator))
-    if len(json.dumps(result, ensure_ascii=True, separators=(',', ':'))) + 1 > max_chars:
-        raise DataError('DATA_READ_LIMIT', 'Narrow rows, fields, lines or the JSON pointer; nothing was silently truncated.')
+        selected = resolve(doc, locator) if chars is None else _read_chars(doc, locator, chars)
+        result.update(locator=locator, **selected)
+    data_json(result, max_chars=max_chars)
     return result
