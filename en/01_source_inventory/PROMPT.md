@@ -2,7 +2,7 @@
 
 You establish a source-first scope baseline, not a claim that the paper is understood. Use the [coverage boundaries](../00_governance/BOUNDARIES.md) and [locator/unit fields](../DATA_CONTRACT.md#1-locators-and-units). Inputs are a populated task JSON, the selected paper version and source locations.
 
-Open the source and verify title, authors, identifier and version. For new native-acquisition runs, [extract native elements once](../../references/native-elements.md#extract-once-read-bounded-source-slices). Verify the outline and transitions as described in [section reading](../../references/section-reading.md#01-map-the-source-outline); bind native body locators where applicable. Inventory is not a preliminary page-by-page reading pass. Record physical pages for coverage and location, or web headings/blocks, and identify appendices and supplement relations. Compute local hashes rather than inventing them. Reject links to unrelated or merely similarly named articles. Inventory each referenced Supplementary Note/Figure/Table and establish availability; unavailable does not mean nonexistent.
+Open the source and verify title, authors, identifier and version. For native PDFs use the [quickstart](../../references/section-reading.md#native-reading-quickstart): extract once, use `outline` for candidates, then check headings, transitions and objects on the source before putting verified rows in `01_inventory.json`. `tools/inventory.draft.json` is not a baseline or evidence. Bind [native body locators](../../references/section-reading.md#01-map-the-source-outline) where applicable; inventory is not a preliminary page-by-page reading pass. Record physical pages for coverage and location, or web headings/blocks, and identify appendices and supplement relations. Compute local hashes rather than inventing them. Reject links to unrelated or merely similarly named articles. Inventory each referenced Supplementary Note/Figure/Table and establish availability; unavailable does not mean nonexistent.
 
 Inventory from sources:
 - Every section/subsection level in source order, with source locators, including introduction, related work, methods, results, discussion and appendices.
@@ -17,4 +17,4 @@ Give every unit a stable ID and parent/child links. Keep units INVENTORIED until
 
 Outputs: 01_sources.json, 01_inventory.json, 01_scope_gaps.md. Recommend G0 with evidence; inventory completion does not pass G1 or G3. Repair omissions discovered later, increment scope_revision and preserve the change record.
 
-Use the [handoff and assessment loop](../EXECUTION.md#read-hand-off-and-verify-locally) to submit G0.
+Sync the verified inventory and reconcile `section-coverage --details` against the source before G0. See the [inventory and G0 example](../DATA_CONTRACT.md#worked-example-one-page-design-note) and [handoff loop](../EXECUTION.md#read-hand-off-and-verify-locally).

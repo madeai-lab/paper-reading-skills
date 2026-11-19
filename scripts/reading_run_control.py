@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 import re
 import shutil
+import sys
 
 from reading_run_records import (RunError, read, write, digest, evidence, content_fingerprint,
                                  generated_target, render, MARKER)
@@ -153,11 +154,17 @@ def assess(root):
             return continue_with("REPAIR",ids, repair_ids=[r["repair_id"] for r in batch], requests=batch,
                                  instruction="Inspect source and repair affected records/dependencies; save repair evidence and obtain reviewer reinspection.")
     if packet.get("gate_results",{}).get("G0",{}).get("decision") != "PASS":
-        return continue_with("SOURCE_INVENTORY", instruction="Inspect source identity/all pages; save source inventory before dependent readers, then merge an evidenced G0 decision.")
+        instruction = ('Start with outline (optional --out tools/inventory.draft.json), not a full page dump. '
+                       'Verify heading boundaries, columns, panels and omissions; sync, then section-coverage --details. '
+                       'Only the Owner can merge an evidenced G0.' if packet.get('content_acquisition') else
+                       'Inspect the original source identity and scope, inventory all units and merge an evidenced G0.')
+        return continue_with("SOURCE_INVENTORY", instruction=instruction)
     if accessible:
         return continue_with("READ_AND_RECORD_UNITS", [u.get("unit_id") for u in accessible[:4]],
                              units=accessible[:4], open_unit_count=len(units),
-                             instruction="Actually read/check these units and submit their own source-specific explanations; do not defer detail or merely change flags.")
+                             instruction=("Read mapped prose with read-section --id ID --format text and follow next_cursor; "
+                                          "for native visuals use read-elements --view locator, then render-crop and actually open the PNG. "
+                                          "Use original sources for unmapped/legacy units. Submit source-specific explanations, not flags."))
     if units:
         return continue_with("RESOLVE_READING_GAPS",[u.get("unit_id") for u in units[:4]],
                              instruction="Record actual blocked units and evidence. Do not invent a limit.")
@@ -530,7 +537,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command",choices=["init","merge","ingest-review","repair-scan","repair-ready","sync","next","snapshot","set-target","validate-handoff","handoff-template","review-template",
                                           "review-plan","preflight","review-delta","escalate-review","workflow-failure","workflow-repaired",
-                                          "extract-elements","read-elements","read-section","section-coverage"])
+                                          "extract-elements","outline","read-elements","read-section","section-coverage","render-crop"])
     parser.add_argument("run_directory",type=Path)
     parser.add_argument("--source",type=Path)
     parser.add_argument("--target",type=Path, help="Explicit research-target JSON for init.")
@@ -549,16 +556,33 @@ def main():
     parser.add_argument('--bbox', nargs=4, type=float)
     parser.add_argument('--source-id')
     parser.add_argument('--cursor', help='Resume read-section from its previous next_cursor.')
-    parser.add_argument('--max-chars', type=int, default=18000)
-    parser.add_argument('--view', choices=('detail', 'locator'),
-                        help='read-elements only: full evidence (default) or lightweight figure/table navigation.')
+    parser.add_argument('--max-chars', type=int, default=18000, help='Maximum bounded read (1-18000); omit for the default. Continue long sections with their cursor.')
+    parser.add_argument('--format', choices=('text','json'), help='Output for outline (default: text) or read-section (default: json).')
+    parser.add_argument('--out', type=Path, help='New run-relative draft under tools/ or crop under evidence/ or reviews/.')
+    parser.add_argument('--details', action='store_true', help='Show unmapped native word runs in the coverage audit.')
+    parser.add_argument('--offset', type=int, help='Resume section-coverage --details with the same page filter.')
+    parser.add_argument('--scale', type=float, help='Crop pixels per PDF point (default: 2).')
+    parser.add_argument('--view', choices=('detail', 'locator', 'text'),
+                        help='read-elements only: native detail (default), object locators, or plain text for spot checks.')
     args=parser.parse_args()
     if args.view and args.command != 'read-elements':
         parser.error('--view applies only to read-elements')
     if args.cursor is not None and args.command != 'read-section':
         parser.error('--cursor applies only to read-section')
-    if args.command in ('read-section','section-coverage') and (args.pages or args.bbox):
-        parser.error('Select a section by --id or audit a source by --source-id; use read-elements for a physical region.')
+    if args.command == 'read-section' and (args.pages or args.bbox):
+        parser.error('Select a section by --id; use read-elements for a physical region.')
+    if args.command == 'section-coverage' and (args.bbox or (args.pages and not args.details)):
+        parser.error('Use --pages with --details to filter the coverage diagnostics, not the source audit.')
+    if args.command == 'outline' and (args.pages or args.bbox):
+        parser.error('outline proposes a map of the source; use read-elements --view text for a page or region')
+    if (args.details and args.command != 'section-coverage') or (args.offset is not None and not args.details):
+        parser.error('--details and its optional --offset apply only to section-coverage')
+    if args.format and args.command not in ('outline','read-section'):
+        parser.error('--format applies to outline or read-section; for a page text check use read-elements --view text')
+    if args.out is not None and args.command not in ('outline','render-crop'):
+        parser.error('--out applies only to outline or render-crop')
+    if args.scale is not None and args.command != 'render-crop':
+        parser.error('--scale applies only to render-crop')
     if args.command == 'read-section' and args.source_id:
         parser.error('read-section takes its source from the section unit, not --source-id')
     root=args.run_directory.resolve()
@@ -572,15 +596,29 @@ def main():
         elif args.command=='extract-elements':
             from reading_pdf_elements import extract_elements
             result=extract_elements(root)
+        elif args.command=='outline':
+            from reading_outline import run_outline, outline_text, outline_json
+            outline, units, warnings = run_outline(root,args.source_id,args.out)
+            if args.format == 'json':
+                result = outline_json(outline)
+                if units is not None:
+                    result.update(draft_path=str(args.out), draft_units=len(units), review=warnings)
+            else:
+                result = outline_text(outline,units,warnings,args.out)
+        elif args.command=='render-crop':
+            from reading_crop import render_crop
+            if not args.source_id or not args.pages or len(args.pages)!=1 or not args.bbox or not args.out:
+                raise RunError('INVALID_ARGUMENT','render-crop requires --source-id, one --pages value, --bbox x0 top x1 bottom and --out evidence/NAME.png or reviews/NAME.png.')
+            result=render_crop(root,args.source_id,args.pages[0],args.bbox,args.out,scale=2.0 if args.scale is None else args.scale)
         elif args.command=='read-elements':
             from reading_pdf_elements import read_elements
             result=read_elements(root,args.pages,args.bbox,args.max_chars,args.source_id,view=args.view or 'detail')
         elif args.command=='read-section':
             from reading_sections import read_section
-            result=read_section(root,args.id,args.cursor,args.max_chars)
+            result=read_section(root,args.id,args.cursor,args.max_chars,output_format=args.format or 'json')
         elif args.command=='section-coverage':
             from reading_sections import section_coverage
-            result=section_coverage(root,args.source_id)
+            result=section_coverage(root,args.source_id,details=args.details,pages_filter=args.pages,offset=args.offset or 0)
         elif args.command=='preflight':
             result=preflight(root)
         elif args.command=='review-delta':
@@ -609,11 +647,22 @@ def main():
         elif args.command=='handoff-template':
             packet=read(root/'paper_packet.json')
             ids=args.units or [u['unit_id'] for u in packet.get('units',[])]
-            known={u['unit_id'] for u in packet.get('units',[])}
-            if not args.writer or set(ids)-known:
-                raise RunError('INVALID_ARGUMENT', 'Supply --writer and existing --units IDs.')
-            result={'writer_id':args.writer, 'units':[{'unit_id':uid,'read_state':'READ',
-                    'understanding_note':'','evidence_refs':[]} for uid in ids],
+            units={u['unit_id']:u for u in packet.get('units',[])}
+            if not args.writer:
+                raise RunError('INVALID_ARGUMENT', 'Set --writer to the actual reading agent ID.')
+            unknown=[uid for uid in ids if uid not in units]
+            if unknown:
+                raise RunError('INVALID_ARGUMENT', f'Unknown synced unit IDs: {unknown[:6]}. Verify the draft and sync 01_inventory.json first.')
+            records=[]
+            for uid in ids:
+                u=units[uid]
+                item={'unit_id':uid,'read_state':'READ','understanding_note':'','evidence_refs':[]}
+                if packet.get('content_acquisition') and not u.get('content_reading'):
+                    item['content_reading']={'mode':None,'page_refs':[],'element_ids':[],'conflict_resolution_refs':[]}
+                if u.get('kind') in VISUAL and u.get('read_state') == 'INVENTORIED':
+                    item['visual_review']={'required':True,'actually_viewed':False,'artifact_refs':[],'checks':[],'limitations':[]}
+                records.append(item)
+            result={'writer_id':args.writer, 'units':records,
                     'methods_taxonomy':[], 'experiments':[], 'claims':[], 'issues':[], 'gate_results':{}}
         elif args.command=='review-template':
             result=read(Path(__file__).resolve().parent.parent/'shared/review-record.template.json')
@@ -653,7 +702,13 @@ def main():
             packet,state=read(root/"paper_packet.json"),read(root/"execution_state.json")
             sync_inventory(root,packet,state)
             result=commit(root,packet,state,"Synced canonical inventory/state without granting acceptance.")
-        if args.command in ('read-elements','read-section','section-coverage'):
+        if isinstance(result,str):
+            # Plain output is part of the CLI wire format, independent of the console code page.
+            if hasattr(sys.stdout,'buffer'):
+                sys.stdout.buffer.write((result+'\n').encode('utf-8'))
+            else:
+                print(result)
+        elif args.command in ('read-elements','read-section','section-coverage','outline'):
             print(json.dumps(result,ensure_ascii=True,separators=(',', ':')))
         else:
             print(json.dumps(result,ensure_ascii=True,indent=2))

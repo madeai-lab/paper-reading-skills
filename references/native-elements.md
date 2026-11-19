@@ -4,13 +4,7 @@ Use this contract for runs initialized with `content_acquisition.method=PDFPLUMB
 
 ## Extract once, read bounded source slices
 
-Run the canonical controller with a Python interpreter that already provides pdfplumber:
-
-```text
-python "<skill>/scripts/reading_run_control.py" extract-elements "<run>"
-```
-
-For a coverage question or a specific original object, request bounded page detail, for example:
+Start with the [native reading quickstart](section-reading.md#native-reading-quickstart) for `extract-elements`, outline, verified section reading and page diagnostics. Use `read-elements --view text` for a short UTF-8 check of a heading or disputed passage, not a full-text page export. For glyph geometry or a specific object, request bounded **detail**, for example:
 
 ```text
 python "<skill>/scripts/reading_run_control.py" read-elements "<run>" --source-id SRC-01 --pages 7 --bbox <x0> <top> <x1> <bottom>
@@ -37,7 +31,7 @@ The page result points back to the original PDF (`source_ref`), physical page, i
 
 A bbox narrows the search, counts local primitives and adds a native-word preview (up to 240 characters). `caption_hints` are numbered line starts nearby, including above/below the crop, with word IDs, boxes and first-line previews; `preview_shortened` marks clipped previews. These are candidates, not verified associations: confirm the caption, panel, continuation lines, table notes and relevant body footnotes on the source. Missing candidates can mean a missed borderless table, an unnumbered figure or labels baked into pixels. Rules, logos or several adjacent panels can form a drawing region, and chart gridlines can be misdetected as a table. Treat the shape and kind as hints, not a reason to skip pixels. Never infer absence or coverage from a locator list. If the response exceeds `--max-chars`, narrow the page/region; no object list is silently truncated.
 
-For detailed object inspection, omit `--view` (or use `--view detail`), inspect the specific saved page/table record by ID when detail is too large, and open the original graphics/conflicts as required below. The locator is navigation only: it changes no read state, proves no cell values or visual observations, and cannot replace continuous section reading or independent source inspection.
+For detailed object inspection, omit `--view` (or use `--view detail`) and inspect the specific saved page/table record by ID when detail is too large. For a graphic or conflict, `render-crop` takes **one physical page**, the verified bbox in top-left PDF points and a new run-relative PNG path. Its receipt gives `path`, `physical_page`, `source_id`, `source_sha256`, `bbox`, `image_sha256`, `pixel_size`, `scale` and `reading_state_changed=false`. Open **that file** with an image-capable viewer and inspect it alongside the caption/context. If the crop cuts off a label or panel, correct the box and open the new crop; if pixels are unavailable, record the gap. Neither a locator nor a render/hash establishes a visual observation.
 
 ## Choose the evidence route per object
 

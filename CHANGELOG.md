@@ -12,6 +12,8 @@ Additive CLI view: `read-elements --view locator` returns lightweight figure/tab
 
 Full body reading follows verified section/subsection order. `read-section` joins explicitly mapped native spans with bounded continuation; `section-coverage` checks physical-page assignments for gaps and overlaps without certifying understanding. Existing runs are not migrated.
 
+Owner workflow helpers: `outline` proposes headings and optional inventory scaffolding before G0. Plain-text section reads preserve source anchors and continuation, detailed coverage identifies remaining word ranges, and `render-crop` produces a new local evidence image from a frozen source rectangle. No helper certifies reading, actual viewing or review. Existing default JSON reads are retained.
+
 ## 2.8 — reader-facing explanations
 
 Imported the reusable update from the local paper-agent skill identified by the referenced chat. Reports explain problem, mechanism, metrics, every experiment, visuals and limitations. report_readability.json binds Owner passage checks to report bytes; the existing independent reviewer supplies the semantic decision. No additional reviewer or automatic full rereading is introduced. Existing runs remain unchanged.

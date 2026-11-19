@@ -6,16 +6,15 @@ Use the [stage guide](README.md) for the current action's prerequisites. Reserve
 
 ```text
 python "<skill>/scripts/reading_run_control.py" init "<new-run>" --source "<paper.pdf>" --owner "<actual-owner>" --language en --review-mode KEY_CLAIMS
-python "<skill>/scripts/reading_run_control.py" extract-elements "<run>"
 ```
 
 The directory must not exist. init copies/hashes the source and creates unfinished records. Bind only an explicit research target using init --target or set-target --file; otherwise leave null. Changed content under the same target_id requires a higher revision. Targets add questions, never filter source coverage.
 
-For native PDFs, follow [Native elements](../references/native-elements.md) to extract once with an already provisioned pdfplumber interpreter. Verify source identity, section/subsection headings and their boundaries, all objects, appendices and supplements. Save 01_sources.json, 01_inventory.json and scope evidence; sync the inventory and use `section-coverage "<run>" --source-id SRC-01` to locate mapping gaps or overlaps. A flagged page calls for targeted inspection, not another full-text pass. Merge an evidenced G0 before dependent readers start. Preserve missing material and new discoveries instead of removing difficult units.
+For native PDFs use the [quickstart](../references/section-reading.md#native-reading-quickstart) with an already provisioned pdfplumber interpreter. Verify source identity, section boundaries and all objects, appendices and supplements. Save 01_sources.json, verified 01_inventory.json and scope evidence; sync, reconcile coverage flags and merge an evidenced G0 before dependent readers start. Preserve missing material and new discoveries instead of removing difficult units.
 
 ## Read, hand off and verify locally
 
-Load the prompt for the current responsibility. Follow [section reading](../references/section-reading.md#02-read-and-reconcile): use `read-section "<run>" --id S2` and its continuation for mapped prose, or read sections directly from the source when no mapping/helper applies. Read every unit; save content, relationships, conditions, limits and actual evidence. For a figure/table, use `read-elements --view locator` on its page to navigate, then inspect the original object or detailed native table as required. Locator previews and coverage diagnostics never advance read state. Missing dependencies do not authorize installation, OCR or uploads.
+Load the prompt for the current responsibility. Read mapped prose in the quickstart's UTF-8 text view and follow each section to its end, or [read sections directly](../references/section-reading.md#02-read-and-reconcile) when no mapping/helper applies. Read every unit; save content, relationships, conditions, limits and actual evidence. For a figure/table, use `read-elements --view locator` on its page to navigate, then inspect the original object or detailed native table as required. Locator previews and coverage diagnostics never advance read state. Missing dependencies do not authorize installation, OCR or uploads.
 
 Identity/locator edits belong in inventory. Use `handoff-template --writer ... --units ...`, fill actual content, `validate-handoff --file ...`, then `merge --file ...`. Validation is read-only; its success is not a merge. Merge preserves raw history and generates notebook/index. Use the canonical records rather than maintaining parallel transcripts.
 

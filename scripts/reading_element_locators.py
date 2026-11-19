@@ -56,7 +56,7 @@ def _ruled_regions(lines, captions):
         if not labels:
             continue
         # A caption between two borders separates tables with identical margins.
-        for band in _bands(borders, 1, 144):
+        for band in _bands(borders, 1, 160):
             partitions = {}
             for border in band:
                 slot = sum(c['bbox'][3] < border['bbox'][1] for c in labels)
@@ -114,7 +114,15 @@ def locator_page(page, page_ref, bbox=None):
                         'row_count': len(t['rows']), 'flags': t['flags']})
     captions = list(_caption_hints(page['words'], area))
     drawings = list(_drawing_regions([item for group in graphics.values() for item in group], area))
-    objects.extend(drawings or _ruled_regions(graphics['lines'], captions))
+    if not any(d['bbox'][3] - d['bbox'][1] > 1 for d in drawings):
+        # A printed rule can be a single zero-height line or several adjacent filled paths.
+        borders = [p for p in graphics['lines'] if p['bbox'][1] == p['bbox'][3]]
+        borders.extend({'bbox': d['bbox'], 'id': d['anchor_element_id']} for d in drawings)
+        ruled = list(_ruled_regions(borders, captions))
+        if ruled:
+            drawings = [d for d in drawings if not any(r['bbox'][0] <= d['bbox'][0] and d['bbox'][2] <= r['bbox'][2]
+                        and r['bbox'][1] <= d['bbox'][1] and d['bbox'][3] <= r['bbox'][3] for r in ruled)] + ruled
+    objects.extend(drawings)
     result = {'page': page['page'], 'page_ref': page_ref, 'bbox': area,
               'page_size': [page['width'], page['height']], 'flags': page['flags'],
               'objects': sorted(objects, key=lambda o: (o['bbox'][1], o['bbox'][0], o['kind'])),

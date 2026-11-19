@@ -13,7 +13,7 @@ Use one Owner for 01–07; reserve a distinct source-first reviewer for 08. Add 
 
 ## Start and continue
 
-Initialize a new directory, normally `paper_reading_runs/<paper-stem>-<unique-id>/`:
+Initialize a new directory, normally `paper_reading_runs/<paper-stem>-<unique-id>/`. Then follow the [native reading quickstart](references/section-reading.md#native-reading-quickstart) from outline candidates to verified inventory/G0, continuous prose and inspected figures.
 
 ```text
 python "<skill>/scripts/reading_run_control.py" init "<new-run>" --source "<paper.pdf>" --owner "<actual-owner-id>" --language en --review-mode KEY_CLAIMS

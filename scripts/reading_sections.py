@@ -7,7 +7,7 @@ from math import isfinite
 from pathlib import Path
 
 from reading_element_contracts import validated_pages
-from reading_pdf_elements import MAX_READ_CHARS, ElementError
+from reading_pdf_elements import MAX_READ_CHARS, ElementError, word_text
 from reading_run_records import read
 
 TEXT_KINDS = {'SECTION', 'APPENDIX', 'BIBLIOGRAPHY'}
@@ -66,15 +66,9 @@ class Span:
 
     def chunk(self, lo, hi):
         words = self.words[lo:hi]
-        parts = [words[0]['text']]
-        for prev, word in zip(words, words[1:]):
-            top = word['bbox'][1]; old = prev['bbox']
-            gap = top - old[3]
-            sep = '\n\n' if gap > max(3, (old[3]-old[1])*.6) else ('\n' if top-old[1] > 3 else ' ')
-            parts.extend((sep, word['text']))
         return {'locator_index': self.locator_index, 'physical_page': self.page['page'], 'page_ref': self.ref,
                 'text_id': self.page['text_id'], 'first_word_id': words[0]['id'], 'last_word_id': words[-1]['id'],
-                'flags': self.page['flags'], 'text': ''.join(parts)}
+                'flags': self.page['flags'], 'text': word_text(words)}
 
 
 def _spans(unit, pages):
@@ -101,13 +95,25 @@ def _spans(unit, pages):
     return spans
 
 
-def read_section(root, unit_id, cursor=None, max_chars=MAX_READ_CHARS):
+def _section_text(obj):
+    lines = [f"{obj['unit_id']} — {obj['label']} [{obj['source_id']}]"]
+    for seg in obj['segments']:
+        flags = ','.join(seg['flags']) or 'none'
+        lines.extend((f"[p{seg['physical_page']} {seg['page_ref']} {seg['text_id']} "
+                      f"{seg['first_word_id']}..{seg['last_word_id']} flags={flags}]", seg['text']))
+    lines.append('next_cursor: ' + (obj['next_cursor'] or 'END'))
+    return '\n\n'.join(lines)
+
+
+def read_section(root, unit_id, cursor=None, max_chars=MAX_READ_CHARS, *, output_format='json'):
+    if output_format not in ('json','text'):
+        raise ElementError('INVALID_ARGUMENT', 'Use --format text or json for a section.')
     root = Path(root).resolve(); packet = read(root/'paper_packet.json')
     unit = next((u for u in packet.get('units', []) if u['unit_id'] == unit_id), None)
     if not unit or unit.get('kind') not in TEXT_KINDS:
         raise ElementError('INVALID_SECTION', 'Use the ID of a synced SECTION, APPENDIX or BIBLIOGRAPHY unit.')
     if type(max_chars) is not int or not 0 < max_chars <= MAX_READ_CHARS:
-        raise ElementError('ELEMENT_READ_LIMIT', f'Choose a positive character budget up to {MAX_READ_CHARS}.')
+        raise ElementError('ELEMENT_READ_LIMIT', f'Omit --max-chars (default {MAX_READ_CHARS}) or use 1–{MAX_READ_CHARS}; follow next_cursor for the rest of the section.')
     pages = _native(root, packet, unit['source_id'])
     try:
         spans = _spans(unit, pages)
@@ -139,12 +145,13 @@ def read_section(root, unit_id, cursor=None, max_chars=MAX_READ_CHARS):
                 'next_cursor': f'{tag}:{stop}' if stop < total else None, 'reading_state_changed': False}
 
     def fits(obj):
-        return len(json.dumps(obj,ensure_ascii=True,separators=(',',':'))) + 1 <= max_chars
+        display = _section_text(obj) if output_format == 'text' else json.dumps(obj,ensure_ascii=True,separators=(',',':'))
+        return len(display) + 1 <= max_chars
 
     lo, hi = offset+1, min(total,offset+max_chars)
     best = response(hi)
     if fits(best):
-        return best
+        return _section_text(best) if output_format == 'text' else best
     best = None
     while lo <= hi:
         mid = (lo+hi)//2; part = response(mid)
@@ -154,10 +161,36 @@ def read_section(root, unit_id, cursor=None, max_chars=MAX_READ_CHARS):
             hi = mid-1
     if best is None:
         raise ElementError('ELEMENT_READ_LIMIT', 'A single native word and provenance do not fit. Increase the budget or inspect the source conflict.')
-    return best
+    return _section_text(best) if output_format == 'text' else best
 
 
-def section_coverage(root, source_id):
+def _runs(page, mapped):
+    """Consecutive unmapped native words in page order, with a short preview."""
+    runs, cur = [], []
+    for w in page['words']:
+        if w['id'] in mapped:
+            if cur:
+                runs.append(cur)
+            cur = []
+        else:
+            cur.append(w)
+    if cur:
+        runs.append(cur)
+    out = []
+    for r in runs:
+        text = ' '.join(w['text'] for w in r)
+        box = [min(w['bbox'][0] for w in r), min(w['bbox'][1] for w in r),
+               max(w['bbox'][2] for w in r), max(w['bbox'][3] for w in r)]
+        where = ('top margin' if box[3] <= page['height']*.09 else
+                 'bottom margin' if box[1] >= page['height']*.91 else 'body')
+        out.append({'first_word_id': r[0]['id'], 'last_word_id': r[-1]['id'], 'words': len(r),
+                    'bbox': [round(v, 1) for v in box], 'position': where,
+                    'text': text if len(text) <= 160 else text[:157] + '...'})
+    return out
+
+
+def section_coverage(root, source_id, details=False, pages_filter=None, limit=60, offset=0):
+    """Account for native words page by page. Any unit kind may own body selectors (captions, table text)."""
     root = Path(root).resolve(); packet = read(root/'paper_packet.json')
     pages = _native(root,packet,source_id)
     counts = defaultdict(Counter)
@@ -165,14 +198,14 @@ def section_coverage(root, source_id):
               'overlap_pages': [], 'no_native_text_pages': [], 'unbound_sections': [], 'invalid_sections': {},
               'reading_state_changed': False, 'purpose': 'MAPPING_AUDIT_ONLY'}
     for unit in packet.get('units', []):
-        if unit.get('source_id') != source_id or unit.get('kind') not in TEXT_KINDS:
+        if unit.get('source_id') != source_id:
             continue
         try:
             spans = _spans(unit, pages)
         except ValueError as exc:
             result['invalid_sections'][unit['unit_id']] = str(exc)
             continue
-        if not spans:
+        if not spans and unit.get('kind') in TEXT_KINDS:
             result['unbound_sections'].append(unit['unit_id'])
         for s in spans:
             counts[s.page['page']].update(w['id'] for w in s.words)
@@ -186,4 +219,18 @@ def section_coverage(root, source_id):
             result['partial_pages'].append(n)
         if any(v > 1 for v in hits.values()):
             result['overlap_pages'].append(n)
+    if details:
+        wanted = set(pages_filter or (result['unmapped_pages'] + result['partial_pages']))
+        if any(type(n) is not int or n not in pages for n in wanted):
+            raise ElementError('INVALID_ARGUMENT', 'Filter --details by physical pages of the selected source.')
+        if type(offset) is not int or offset < 0 or type(limit) is not int or limit <= 0:
+            raise ElementError('INVALID_ARGUMENT', 'Use a nonnegative details offset and a positive limit.')
+        total, runs = 0, {}
+        for n in sorted(wanted):
+            for run in _runs(pages[n][1], counts[n]):
+                if offset <= total < offset+limit:
+                    runs.setdefault(n, []).append(run)
+                total += 1
+        result.update(unmapped_runs=runs, total_unmapped_runs=total,
+                      next_offset=offset+limit if offset+limit < total else None)
     return result

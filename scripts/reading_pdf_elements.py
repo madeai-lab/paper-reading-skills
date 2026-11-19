@@ -174,10 +174,22 @@ def extract_elements(root, parser=None):
             'reading_state_changed': False, 'notice': 'Extraction records PDF elements, not understanding or acceptance.'}
 
 
+def word_text(words):
+    if not words:
+        return ''
+    parts = [words[0]['text']]
+    for prev, word in zip(words, words[1:]):
+        top = word['bbox'][1]; old = prev['bbox']
+        gap = top - old[3]
+        sep = '\n\n' if gap > max(3, (old[3]-old[1])*.6) else ('\n' if top-old[1] > 3 else ' ')
+        parts.extend((sep, word['text']))
+    return ''.join(parts)
+
+
 def read_elements(root, pages, bbox=None, max_chars=MAX_READ_CHARS, source_id=None, *, view='detail'):
     from reading_element_contracts import element_errors
-    if view not in ('detail', 'locator'):
-        raise ElementError('INVALID_ARGUMENT', 'Use detail or locator for the native read view.')
+    if view not in ('detail', 'locator', 'text'):
+        raise ElementError('INVALID_ARGUMENT', 'Use detail, locator or text for the native read view.')
     root = Path(root).resolve()
     packet = load(root/'paper_packet.json')
     errors = element_errors(root, packet)
@@ -188,20 +200,36 @@ def read_elements(root, pages, bbox=None, max_chars=MAX_READ_CHARS, source_id=No
     manifest = load(root/packet['content_acquisition']['manifest_ref'])
     sources = manifest['sources']
     source = next((s for s in sources if s['source_id'] == (source_id or sources[0]['source_id'])), None)
-    if (source is None or not isinstance(pages, list) or not pages or len(pages) > 4
-            or len(set(pages)) != len(pages) or any(type(p) is not int or not 1 <= p <= source['page_count'] for p in pages)
-            or type(max_chars) is not int or not 1 <= max_chars <= MAX_READ_CHARS):
-        raise ElementError('ELEMENT_READ_LIMIT', 'Select 1-4 valid pages and a character budget at most 18000.')
+    if source is None:
+        raise ElementError('INVALID_ARGUMENT', 'Unknown source_id; select a source in the frozen manifest.')
+    if (not isinstance(pages, list) or not pages or len(pages) > 4
+            or any(type(p) is not int or not 1 <= p <= source['page_count'] for p in pages)
+            or len(set(pages)) != len(pages)):
+        raise ElementError('ELEMENT_READ_LIMIT', f"Choose 1–4 distinct physical pages from 1 to {source['page_count']}; for prose use read-section --id ID --format text.")
+    if type(max_chars) is not int or not 1 <= max_chars <= MAX_READ_CHARS:
+        raise ElementError('ELEMENT_READ_LIMIT', 'Omit --max-chars (default 18000) or use 1–18000. For prose use read-section and its continuation cursor.')
     selected_box = box(bbox) if bbox is not None else None
     result = {'source_id': source['source_id'], 'pages': [], 'ocr_used': False, 'truncated': False}
     if view == 'locator':
         result.update(view='locator', purpose='NAVIGATION_ONLY', source_ref=source['local_path'],
                       reading_state_changed=False)
+    text_pages = []
     for number in pages:
         row = next(p for p in source['pages'] if p['page'] == number)
         page = load(root/row['ref'])
         if selected_box and not (0 <= selected_box[0] < selected_box[2] <= page['width'] and 0 <= selected_box[1] < selected_box[3] <= page['height']):
             raise ElementError('ELEMENT_READ_LIMIT', 'The bounding box must stay inside the page.')
+        if view == 'text':
+            if selected_box is None:
+                text = page['text']
+            else:
+                x0, top, x1, bottom = selected_box
+                text = word_text([w for w in page['words'] if x0 <= (w['bbox'][0]+w['bbox'][2])/2 < x1
+                                  and top <= (w['bbox'][1]+w['bbox'][3])/2 < bottom])
+            flags = ', '.join(page['flags']) or 'none'
+            region = f' bbox={selected_box}' if selected_box else ''
+            text_pages.append(f"[{source['source_id']} p{number} {row['ref']} {page['text_id']}{region} flags={flags}]\n{text}")
+            continue
         if view == 'locator':
             from reading_element_locators import locator_page
             result['pages'].append(locator_page(page, row['ref'], selected_box))
@@ -222,6 +250,11 @@ def read_elements(root, pages, bbox=None, max_chars=MAX_READ_CHARS, source_id=No
             data['words'] = [w for w in page['words'] if within(w)]
             data['chars'] = [c for c in page['chars'] if within(c)]
         result['pages'].append(data)
+    if view == 'text':
+        output = '\n\n'.join(text_pages)
+        if len(output) + 1 > max_chars:
+            raise ElementError('ELEMENT_READ_LIMIT', 'Select a smaller --bbox or fewer pages. For continuous prose use read-section --format text and its cursor.')
+        return output
     if len(json.dumps(result, ensure_ascii=True, separators=(',', ':'))) + 1 > max_chars:
         raise ElementError('ELEMENT_READ_LIMIT', 'Slice by page/region or read specific saved records; no content was silently truncated.')
     return result
