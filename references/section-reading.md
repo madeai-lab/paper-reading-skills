@@ -12,7 +12,7 @@ outline RUN --source-id SRC-01 --out tools/inventory.draft.json
 read-elements RUN --view text --pages 1 --source-id SRC-01
 ```
 
-**2. Verify, then sync.** Check the proposed headings, joins, columns, object boundaries and omissions on the original. Correct the hierarchy, add missed objects/panels and put **only verified rows** into `RUN/01_inventory.json`, preserving existing IDs. A draft is neither the inventory nor evidence. Save the source/scope checks, then run:
+**2. Verify, then sync.** Check the proposed headings, joins, columns, object boundaries and omissions on the original. If an abstract would span more than two physical pages, the draft retains page hints but no readable body: verify where the main text starts, even if every page has text. Correct the hierarchy, add missed objects/panels and put **only verified rows** into `RUN/01_inventory.json`, preserving existing IDs. A draft is neither the inventory nor evidence. Save the source/scope checks, then run:
 
 ```text
 sync RUN

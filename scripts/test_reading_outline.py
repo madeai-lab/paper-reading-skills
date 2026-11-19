@@ -93,6 +93,53 @@ class OutlineTests(unittest.TestCase):
         self.save()
         self.assertEqual(self.read_words('S1'), p.extract_text().split())
 
+    def test_divider_is_not_runin_and_wrapped_title_stops_before_prose(self):
+        p = page((20, 40, '1 | Findings'), (20, 60, '1.1 | Model'), (20, 70, 'Validation'),
+                 (20, 90, 'body paragraph'), (20, 110, '1.2 | Caution. Plain prose follows'),
+                 (20, 140, '2 | Ordinary table cells'), (20, 170, '2 | Discussion'), bold=[40, 60, 70, 110, 170])
+        for glyph in p.chars:
+            if glyph['text'] == '|' or glyph['text'] in ('Plain', 'prose', 'follows'):
+                glyph['fontname'] = 'Regular'
+        self.freeze(p)
+        result, _, _ = run_outline(self.root)
+        units, _ = draft_inventory(result)
+        self.assertEqual([u['unit_id'] for u in units], ['S1', 'S1.1', 'S2'])
+        self.assertEqual(units[1]['label'], '1.1 Model Validation')
+        self.assertEqual(units[1]['parent_id'], 'S1')
+        self.packet['units'] = units
+        self.save()
+        self.assertEqual(self.read_words('S1.1'),
+                         '1.1 | Model Validation body paragraph 1.2 | Caution. Plain prose follows 2 | Ordinary table cells'.split())
+
+    def test_full_width_abstract_then_two_columns_on_the_same_page(self):
+        intro = ' '.join(['summary']*14)
+        pairs = [(x, 380+12*i, f'{side} column passage {i}') for i in range(12)
+                 for x, side in ((20, 'left'), (280, 'right'))]
+        p = page((20, 60, 'Abstract'), *((20, 82+12*i, intro) for i in range(22)),
+                 (20, 366, '1 | Methods'), (280, 366, '2 | Results'), *pairs, bold=[60, 366])
+        self.freeze(p)
+        result, _, _ = run_outline(self.root)
+        self.packet['units'], _ = draft_inventory(result)
+        self.save()
+        self.assertEqual(self.read_words('S-ABSTRACT'), ('Abstract '+(intro+' ')*22).split())
+        for uid, side, title in [('S1', 'left', 'Methods'), ('S2', 'right', 'Results')]:
+            self.assertEqual(self.read_words(uid), [uid[1:], '|', title] +
+                             ' '.join(f'{side} column passage {i}' for i in range(12)).split())
+
+    def test_unbounded_abstract_keeps_page_hints_but_no_readable_body(self):
+        self.freeze(page((20, 100, 'Abstract'), (20, 140, 'short summary'), bold=[100]),
+                    page((20, 120, 'unrecognised boundary')), page((20, 160, 'more prose')))
+        result, units, review = run_outline(self.root, out='tools/draft.json')
+        self.assertTrue(any('abstract would cover 3 pages' in s for s in result['notes']))
+        self.assertTrue(any('first body heading' in s for s in review))
+        self.assertEqual([loc['physical_page'] for loc in units[0]['locators']], [1, 2, 3])
+        self.assertFalse(any('body' in loc for loc in units[0]['locators']))
+        self.packet['units'] = units
+        self.save()
+        with self.assertRaises(ElementError) as err:
+            read_section(self.root, 'S-ABSTRACT')
+        self.assertEqual(err.exception.code, 'SECTION_UNMAPPED')
+
     def test_ambiguous_boundary_does_not_publish_even_a_partial_section(self):
         repeat = ' '.join(['a'] * 18)
         self.freeze(page((20, 80, 'front page')),

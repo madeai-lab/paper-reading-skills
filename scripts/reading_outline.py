@@ -268,6 +268,42 @@ def _heading(line, fonts, body):
             'size': size, 'text': text, 'run_in': None if spaced else run_in, 'structural': bool(number) or keyword}
 
 
+def _divided_heading(stream, i, fonts, body):
+    """A separately typeset divider is not the start of regular-weight prose."""
+    if not _divided_number(stream, i):
+        return None
+    num, bar, first = stream[i:i+3]
+    box = num['bbox']
+    height = box[3]-box[1]
+    def aligned(w, top):
+        return abs(w['bbox'][1]-top) <= .35*height
+    if (not fonts[num['id']][1] or not fonts[first['id']][1] or
+            not all(aligned(w, box[1]) for w in (bar, first)) or
+            not (box[2] <= bar['bbox'][0] < bar['bbox'][2] <= first['bbox'][0]) or
+            first['bbox'][0]-box[2] > 4*height or
+            (i and aligned(stream[i-1], box[1]) and stream[i-1]['bbox'][2] <= box[0])):
+        return None
+    title = [first]
+    for w in stream[i+3:]:
+        prev = title[-1]['bbox']
+        same_line = aligned(w, prev[1]) and -.5 <= w['bbox'][0]-prev[2] <= 2*height
+        wrapped = (prev[1]+.65*height <= w['bbox'][1] <= prev[3]+.6*height and
+                   abs(w['bbox'][0]-box[0]) < height and not NUMBER.fullmatch(w['text']))
+        if not same_line and not wrapped:
+            break
+        if not fonts[w['id']][1]:
+            if same_line:
+                return None  # genuine mixed-style run-in; leave it for verification
+            break
+        title.append(w)
+    words = [num, *title]
+    text = ' '.join(w['text'] for w in words)
+    h = _heading({'text': text, 'words': words}, fonts, body)
+    if h and h['number']:
+        return dict(h, tokens=len(words)+1, bbox=_extent(words))
+    return None
+
+
 def _objects(page, area):
     objs = [{'kind': 'table', 'element_id': t['id'], 'bbox': t['bbox']} for t in page['tables']]
     page_area = page['width']*page['height']
@@ -373,6 +409,33 @@ def _captions(lines, fonts, page, area, objects, body):
     return caps
 
 
+def _divided_number(words, i):
+    return (i+2 < len(words) and NUMBER.fullmatch(words[i]['text']) and
+            words[i+1]['text'] == '|' and words[i+2]['text'][:1].isalpha())
+
+
+def _mixed_columns(rows, words, width):
+    """Recover a locally two-column band around a numbered heading on a mixed page."""
+    ys = [_center(w['bbox'])[1] for i, w in enumerate(words) if _divided_number(words, i)]
+    if not ys:
+        return None
+    gap = max(6., statistics.median(r['h'] for r in rows))
+    for y in ys:
+        i = min(range(len(rows)), key=lambda j: abs(rows[j]['cy']-y))
+        local = rows[max(0, i-5):i+16]
+        gutter = _gutter(local, width)
+        if gutter is None or _crosses(rows[i], gutter, gap):
+            continue
+        lo = hi = i
+        while lo and not _crosses(rows[lo-1], gutter, gap):
+            lo -= 1
+        while hi+1 < len(rows) and not _crosses(rows[hi+1], gutter, gap):
+            hi += 1
+        if _gutter(rows[lo:hi+1], width) is not None:
+            return gutter, lo, hi
+    return None
+
+
 def _layout(n, ref, page, furniture_rows):
     W, H = page['width'], page['height']
     furn_ids = {w['id'] for r in furniture_rows for w in r['words']}
@@ -389,8 +452,16 @@ def _layout(n, ref, page, furniture_rows):
     words = [w for w in page['words'] if top <= _center(w['bbox'])[1] < bottom]
     rows = _rows(words)
     gutter = _gutter(rows, W)
+    mixed = _mixed_columns(rows, words, W) if gutter is None and rows else None
+    if mixed:
+        gutter, lo, hi = mixed
+        def spanning(part):
+            return [dict(ln, col='S') for ln in _lines(part, None, W)]
+        lines = spanning(rows[:lo]) + _lines(rows[lo:hi+1], gutter, W) + spanning(rows[hi+1:])
+    else:
+        lines = _lines(rows, gutter, W)
     return {'page': n, 'ref': ref, 'width': W, 'height': H, 'area': [0.0, top, W, bottom],
-            'gutter': gutter, 'rows': rows, 'lines': _lines(rows, gutter, W), 'flags': page['flags']}
+            'gutter': gutter, 'rows': rows, 'lines': lines, 'flags': page['flags']}
 
 
 def _carves(lay, page, fonts, body):
@@ -587,9 +658,17 @@ def analyze(root, source_id=None):
             notes.append(f"p{lay['page']}: {len(unmapped)} non-margin words outside draft cells, starting at "
                          f"{unmapped[0]['id']}; inspect this page before using its draft.")
         caption_words = {wid for c in page_carves for wid in c['word_ids']}
+        divided = set()
+        for wid, (cell, i) in home.items():
+            if wid in caption_words:
+                continue
+            if h := _divided_heading(cell['stream'], i, fonts, body):
+                inside = any(c['object'] and _inside(h['bbox'], c['object']['bbox']) for c in page_carves)
+                headings.append(dict(h, page=lay['page'], cell=cell, index=i, inside_object=inside))
+                divided.add(wid)
         for ln in lay['lines']:
             first = ln['words'][0]['id']
-            if first not in home or first in caption_words:
+            if first not in home or first in caption_words or first in divided:
                 continue
             h = _heading(ln, fonts, body)
             if h and h['score'] >= 2:
@@ -615,6 +694,17 @@ def analyze(root, source_id=None):
             level = h['level'] or 1
             active = {lv: n for lv, n in active.items() if lv < level}
             active[level] = num
+    accepted = [h for h in headings if h['accepted']]
+    for i, h in enumerate(accepted):
+        if h['core'] != 'abstract':
+            continue
+        tail = accepted[i+1] if i+1 < len(accepted) else None
+        last = order[id(tail['cell'])] + bool(tail['index']) if tail else len(cells)
+        mapped = {c['page'] for c in cells[order[id(h['cell'])]:last] if c['role'] == 'prose'}
+        if len(mapped) > 2:
+            h['mapping_warning'] = (f"p{h['page']}: abstract would cover {len(mapped)} pages; "
+                                    'verify the first body heading before mapping it.')
+            notes.append(h['mapping_warning'])
     actual_carves = {id(c['carve']) for c in cells if c['role'] == 'carve'}
     for cap in carves:
         cap['carved'] = id(cap) in actual_carves
@@ -703,6 +793,10 @@ def draft_inventory(result):
                     else:
                         loc['body'][key] = phrase
             locators.append(loc)
+        if h and h.get('mapping_warning') and locators:
+            review.append(f"{uid}: {h['mapping_warning']}")
+            locators[0]['paragraph_or_cell'] = h['mapping_warning']
+            unresolved = True
         if unresolved:
             # A partly mapped section also reads as though it were complete.
             # Keep the page hints, but let read-section fail SECTION_UNMAPPED.
