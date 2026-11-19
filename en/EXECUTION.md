@@ -1,5 +1,15 @@
 # Execution and terminal decisions — current contract 2.10
 
+## Depth before initialization
+
+This document governs complete-reading runs (L3). Screening, skims and targeted reading use the [depth guide](triage/README.md) and `reading_triage_control.py`; they create screening records, not runs. A run begins with `init`, or with `promote` from a screening workspace:
+
+```text
+python "<skill>/scripts/reading_triage_control.py" promote "<workspace>" --paper P0001 --run "<new-run>" --owner "<actual-owner>" --language en --review-mode KEY_CLAIMS
+```
+
+`promote` needs a current `PROMOTE_TO_L3` decision or the user's request. It calls the same initialization, adopts the native extraction of the same source bytes when one exists, and stores earlier notes under `handoffs/screening/` as leads. Everything below applies to the new run without exception: inventory and G0 from the source, every unit read here, evidence from this run, G1–G2 by the Owner and G3 from actual independent review. The review mode chosen at promotion is independent of the depth the paper came from.
+
 ## Initialize and inventory
 
 Use the [stage guide](README.md) for the current action's prerequisites. Reserve a distinct reviewer early. Default new runs to KEY_CLAIMS; preserve requested FULL_DOUBLE_READ and never migrate active/frozen runs.
@@ -46,6 +56,8 @@ Stabilize all text, assets, G0–G2 and records before preflight and review-plan
 
 ## Independent decision and repair
 
+For a **new task**, the default engagement is one first review and at most one difference review after repairs ([handoff and stopping policy](../references/research-work.md#handoff-and-stopping-a-review)). If that decision is negative, preserve it and return the remaining work, without another automatic dispatch. This is not `ACCEPTED`, does not alter `next`, and is not a fabricated resource interruption. Resume on an explicit continuation request. A 429 is not grounds for starting a replacement review.
+
 Load 08. Use an actual reviewer distinct from all writers, with fresh/no-history initial context where supported. Supply sources/08 requirements first; withhold drafts until the reviewer's source-first map exists. Probe required image access early. KEY_CLAIMS is not full double reading; FULL_DOUBLE_READ checks all units. The same reviewer assesses narrative explanation in the existing round.
 
 After actual inspection the reviewer saves its draft/observations and runs snapshot --file <draft>, copying all four reviewed_* fields into a new real decision. Freeze inspected content during review. Owner immediately runs ingest-review --file, preserving negative decisions too.
@@ -58,6 +70,6 @@ Pass preflight and send review-delta to the same actual reviewer under [Efficien
 
 Run next and reading_run_check.py before delivery. ACCEPTED requires current actual independent acceptance, complete Owner reading and consistent records. State mode, independent extent and claim-use restrictions separately. Do not edit scientific text after acceptance or refresh an old token. Scripts neither launch models nor authenticate understanding, viewing or independence.
 
-Only a user stop, imposed platform/resource limit, or demonstrated material/capability block after accessible work permits unfinished delivery. In execution_state record stop_reason=USER_STOP|RESOURCE_LIMIT|MATERIAL_BLOCK|CAPABILITY_BLOCK, restart_action and interruption observed_constraint, attempts, evidence_refs, affected_unit_ids and affected_repair_ids where needed. Capability blocks use affected_action=REQUEST_REVIEW and retain G3 PENDING. Subjective elapsed time, temporary capacity, pending review or a useful report is not a stop condition. INTERRUPTED_WITH_EVIDENCE explicitly means unfinished and promises no automatic background continuation.
+For an actual interruption (as distinct from reporting a negative decision at the agreed review boundary), only a user stop, imposed platform/resource limit, or demonstrated material/capability block after accessible work permits unfinished delivery. In execution_state record stop_reason=USER_STOP|RESOURCE_LIMIT|MATERIAL_BLOCK|CAPABILITY_BLOCK, restart_action and interruption observed_constraint, attempts, evidence_refs, affected_unit_ids and affected_repair_ids where needed. Capability blocks use affected_action=REQUEST_REVIEW and retain G3 PENDING. Subjective elapsed time, temporary capacity, pending review or a useful report is not a stop condition. INTERRUPTED_WITH_EVIDENCE explicitly means unfinished and promises no automatic background continuation.
 
 Without Python maintain equivalent records manually and disclose the missing check. Without independent capability finish accessible reading/reporting and retain pending review. A single paper omits 09. Requested synthesis preserves all paper states and claim restrictions; new synthesis assertions return to 08.

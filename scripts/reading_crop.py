@@ -177,7 +177,7 @@ def _render(data, page_num, page_count, frozen, box, scale):
         raise ElementError('CROP_RENDER_FAILED', 'Could not render source page: '+type(exc).__name__) from exc
 
 
-def render_crop(root, source_id, page_num, bbox, out, scale=2.0):
+def render_crop(root, source_id, page_num, bbox, out, scale=2.0, packet=None):
     """Render one 1-based physical page bbox [x0, top, x1, bottom] into a new run-local PNG."""
     root = Path(root).absolute()
     _check_path(root)
@@ -192,7 +192,8 @@ def render_crop(root, source_id, page_num, bbox, out, scale=2.0):
     if (type(page_num) is not int or page_num < 1 or not isinstance(source_id, str) or not source_id or
             type(scale) not in (int, float) or not MIN_SCALE <= scale <= MAX_SCALE):
         raise ElementError('INVALID_ARGUMENT', f'Use a source ID, positive integer physical page and scale {MIN_SCALE}..{MAX_SCALE}.')
-    packet = load(root/'paper_packet.json')
+    if packet is None:
+        packet = load(root/'paper_packet.json')
     sources = [s for s in packet.get('sources', []) if s.get('access_state') == 'AVAILABLE']
     for source in sources:
         local = _relative(source['local_path'])

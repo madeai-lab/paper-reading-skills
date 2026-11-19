@@ -1,0 +1,153 @@
+{
+  "writer_id": "screener-demo",
+  "paper_id": "P0001",
+  "depth": "L0",
+  "paper_type": "SYSTEM",
+  "field": "Robotics",
+  "examined": [
+    {
+      "item_id": "M-TITLE",
+      "kind": "TITLE",
+      "label": "Title",
+      "read_level": "READ_IN_FULL",
+      "source_ref": "REC-01"
+    },
+    {
+      "item_id": "M-ABS",
+      "kind": "ABSTRACT",
+      "label": "Abstract",
+      "read_level": "READ_IN_FULL",
+      "source_ref": "REC-01",
+      "note": "Fictional illustration of the pass format. Replace every value with what was actually examined; never copy ratings or statements."
+    }
+  ],
+  "not_examined": [
+    {
+      "label": "Paper body",
+      "reason": "Metadata screening does not open the paper."
+    }
+  ],
+  "uncertainty_flags": [
+    {
+      "code": "BODY_NOT_READ",
+      "detail": "Whether replanning was evaluated separately is unknown."
+    }
+  ],
+  "screening": {
+    "full_text_read": false,
+    "potential_value": [
+      {
+        "text": "The authors state that executors report failures to a planner that replans the remaining steps.",
+        "attribution": "AUTHOR_CLAIM",
+        "from_items": [
+          "M-ABS"
+        ]
+      },
+      {
+        "text": "The protocol may transfer to tool-using software agents.",
+        "attribution": "ANALYST_INFERENCE",
+        "from_items": [
+          "M-ABS"
+        ]
+      }
+    ]
+  },
+  "assessment": {
+    "dimensions": {
+      "topic_relevance": {
+        "rating": "LOW",
+        "basis": "Warehouse robotics, not software agents; the overlap is the coordination problem.",
+        "evidence_level": "METADATA_ONLY",
+        "refs": [
+          "M-ABS"
+        ]
+      },
+      "methodological_relevance": {
+        "rating": "MEDIUM",
+        "basis": "A planner/executor split with explicit failure reports matches the organizational mechanisms in Q1.",
+        "evidence_level": "METADATA_ONLY",
+        "refs": [
+          "M-ABS"
+        ]
+      },
+      "transferability": {
+        "rating": "HIGH",
+        "basis": "The replanning protocol is stated without robot-specific assumptions.",
+        "evidence_level": "METADATA_ONLY",
+        "refs": [
+          "M-ABS"
+        ]
+      },
+      "evidence_adequacy": {
+        "rating": "UNKNOWN",
+        "basis": "Not judged: the experiments were not examined.",
+        "evidence_level": "NOT_ASSESSED",
+        "refs": [
+          "M-ABS"
+        ]
+      },
+      "novelty_potential": {
+        "rating": "LOW",
+        "basis": "Presented as an application of known hierarchical planning.",
+        "evidence_level": "METADATA_ONLY",
+        "refs": [
+          "M-ABS"
+        ]
+      },
+      "practical_applicability": {
+        "rating": "MEDIUM",
+        "basis": "Reports deployment constraints such as latency budgets.",
+        "evidence_level": "METADATA_ONLY",
+        "refs": [
+          "M-ABS"
+        ]
+      },
+      "research_utility": {
+        "rating": "MEDIUM",
+        "basis": "Useful as one cross-domain example of coordination, not as a core reference.",
+        "evidence_level": "METADATA_ONLY",
+        "refs": [
+          "M-ABS"
+        ]
+      }
+    },
+    "uncertainty": {
+      "level": "HIGH",
+      "missing_information": [
+        "Experimental design and results",
+        "Whether the protocol is specified in enough detail to reuse"
+      ]
+    },
+    "target_links": [
+      {
+        "question_id": "Q1",
+        "relation": "A candidate organizational mechanism from another domain."
+      }
+    ],
+    "mechanisms_worth_study": [
+      "Failure-report and replanning protocol between planner and executors"
+    ],
+    "evidenced_points": [],
+    "author_stated_only": [
+      "Replanning reduces failed missions."
+    ],
+    "depth_rationale": "The abstract suggests one transferable mechanism; a skim can confirm whether it is specified.",
+    "decision_changers": [
+      "A method section that specifies the protocol",
+      "An ablation isolating replanning"
+    ]
+  },
+  "decision": {
+    "decision": "PROMOTE_TO_L1",
+    "decided_by": "ROUTER_RULES",
+    "reasons": [
+      "Transferability is rated high and methodological relevance medium from the abstract; topic relevance is low."
+    ],
+    "source_refs": [
+      "M-ABS"
+    ],
+    "decision_changers": [
+      "Full text shows the mechanism is not described."
+    ]
+  }
+}

@@ -1,0 +1,376 @@
+{
+  "evaluation_tier": "SIMULATED_FLOW",
+  "purpose": "Routing-rule cases with gold ratings. Expected decisions are design expectations for the rule baseline, not results of agent runs.",
+  "cases": [
+    {
+      "case_id": "R01",
+      "description": "Unrelated domain; every deciding dimension rated NONE from the abstract.",
+      "scenario": "irrelevant paper at L0",
+      "paper": {
+        "paper_type": "EMPIRICAL",
+        "depth": "L0",
+        "full_text": "NOT_ATTEMPTED"
+      },
+      "ratings": {
+        "topic_relevance": "NONE",
+        "methodological_relevance": "NONE",
+        "transferability": "NONE",
+        "practical_applicability": "NONE",
+        "research_utility": "NONE"
+      },
+      "is_core": false,
+      "acceptable_decisions": [
+        "EXCLUDE_FOR_TARGET"
+      ]
+    },
+    {
+      "case_id": "R02",
+      "description": "Record has a title only; topic relevance cannot be judged.",
+      "scenario": "missing information",
+      "paper": {
+        "paper_type": "EMPIRICAL",
+        "depth": "L0",
+        "full_text": "NOT_ATTEMPTED"
+      },
+      "ratings": {
+        "topic_relevance": "UNKNOWN",
+        "methodological_relevance": "UNKNOWN"
+      },
+      "is_core": false,
+      "acceptable_decisions": [
+        "DEFER_FOR_EVIDENCE"
+      ]
+    },
+    {
+      "case_id": "R03",
+      "description": "Industrial agent deployment: no new architecture, high applied value.",
+      "scenario": "high relevance, low novelty",
+      "paper": {
+        "paper_type": "EMPIRICAL",
+        "depth": "L0",
+        "full_text": "NOT_ATTEMPTED"
+      },
+      "ratings": {
+        "topic_relevance": "HIGH",
+        "methodological_relevance": "MEDIUM",
+        "practical_applicability": "HIGH",
+        "research_utility": "HIGH",
+        "novelty_potential": "LOW"
+      },
+      "is_core": true,
+      "acceptable_decisions": [
+        "PROMOTE_TO_L1"
+      ]
+    },
+    {
+      "case_id": "R04",
+      "description": "Same paper after a skim confirms its deployment conditions.",
+      "scenario": "high relevance, low novelty",
+      "paper": {
+        "paper_type": "EMPIRICAL",
+        "depth": "L1",
+        "full_text": "AVAILABLE"
+      },
+      "ratings": {
+        "topic_relevance": "HIGH",
+        "methodological_relevance": "MEDIUM",
+        "practical_applicability": "HIGH",
+        "research_utility": "HIGH",
+        "novelty_potential": "LOW"
+      },
+      "is_core": true,
+      "acceptable_decisions": [
+        "PROMOTE_TO_L2"
+      ]
+    },
+    {
+      "case_id": "R05",
+      "description": "Robotics scheduling paper with a transferable coordination mechanism.",
+      "scenario": "cross-domain transfer",
+      "paper": {
+        "paper_type": "EMPIRICAL",
+        "depth": "L0",
+        "full_text": "NOT_ATTEMPTED"
+      },
+      "ratings": {
+        "topic_relevance": "LOW",
+        "methodological_relevance": "MEDIUM",
+        "transferability": "HIGH",
+        "research_utility": "MEDIUM"
+      },
+      "is_core": false,
+      "acceptable_decisions": [
+        "PROMOTE_TO_L1"
+      ]
+    },
+    {
+      "case_id": "R06",
+      "description": "Same paper after a skim: only the coordination mechanism matters.",
+      "scenario": "cross-domain transfer",
+      "paper": {
+        "paper_type": "EMPIRICAL",
+        "depth": "L1",
+        "full_text": "AVAILABLE"
+      },
+      "ratings": {
+        "topic_relevance": "LOW",
+        "methodological_relevance": "MEDIUM",
+        "transferability": "HIGH",
+        "research_utility": "MEDIUM"
+      },
+      "is_core": false,
+      "acceptable_decisions": [
+        "PROMOTE_TO_L2"
+      ]
+    },
+    {
+      "case_id": "R07",
+      "description": "Highly relevant survey whose taxonomy is context rather than the method to build on.",
+      "scenario": "survey versus empirical",
+      "paper": {
+        "paper_type": "SURVEY",
+        "depth": "L1",
+        "full_text": "AVAILABLE"
+      },
+      "ratings": {
+        "topic_relevance": "HIGH",
+        "methodological_relevance": "MEDIUM",
+        "research_utility": "HIGH"
+      },
+      "is_core": true,
+      "acceptable_decisions": [
+        "PROMOTE_TO_L2"
+      ]
+    },
+    {
+      "case_id": "R08",
+      "description": "Survey whose classification is itself the method to extend.",
+      "scenario": "survey versus empirical",
+      "paper": {
+        "paper_type": "SURVEY",
+        "depth": "L1",
+        "full_text": "AVAILABLE"
+      },
+      "ratings": {
+        "topic_relevance": "HIGH",
+        "methodological_relevance": "HIGH",
+        "research_utility": "HIGH"
+      },
+      "is_core": true,
+      "acceptable_decisions": [
+        "PROMOTE_TO_L2"
+      ]
+    },
+    {
+      "case_id": "R09",
+      "description": "Empirical paper with the same ratings as R07.",
+      "scenario": "survey versus empirical",
+      "paper": {
+        "paper_type": "EMPIRICAL",
+        "depth": "L1",
+        "full_text": "AVAILABLE"
+      },
+      "ratings": {
+        "topic_relevance": "HIGH",
+        "methodological_relevance": "MEDIUM",
+        "research_utility": "HIGH"
+      },
+      "is_core": true,
+      "acceptable_decisions": [
+        "PROMOTE_TO_L2"
+      ]
+    },
+    {
+      "case_id": "R10",
+      "description": "Promising abstract, full text not obtainable.",
+      "scenario": "missing full text",
+      "paper": {
+        "paper_type": "EMPIRICAL",
+        "depth": "L0",
+        "full_text": "UNAVAILABLE"
+      },
+      "ratings": {
+        "topic_relevance": "HIGH",
+        "research_utility": "HIGH"
+      },
+      "is_core": true,
+      "acceptable_decisions": [
+        "DEFER_FOR_EVIDENCE"
+      ]
+    },
+    {
+      "case_id": "R11",
+      "description": "User asked for complete reading; the abstract looks unrelated.",
+      "scenario": "explicit L3 request",
+      "paper": {
+        "paper_type": "EMPIRICAL",
+        "depth": "L0",
+        "full_text": "NOT_ATTEMPTED",
+        "user_requested": "L3"
+      },
+      "ratings": {
+        "topic_relevance": "NONE",
+        "methodological_relevance": "NONE",
+        "transferability": "NONE",
+        "practical_applicability": "NONE",
+        "research_utility": "NONE"
+      },
+      "is_core": false,
+      "acceptable_decisions": [
+        "PROMOTE_TO_L3"
+      ]
+    },
+    {
+      "case_id": "R12",
+      "description": "On topic, nothing that needs deeper reading.",
+      "scenario": "related, not core",
+      "paper": {
+        "paper_type": "EMPIRICAL",
+        "depth": "L1",
+        "full_text": "AVAILABLE"
+      },
+      "ratings": {
+        "topic_relevance": "MEDIUM"
+      },
+      "is_core": false,
+      "acceptable_decisions": [
+        "REMAIN_AT_L1"
+      ]
+    },
+    {
+      "case_id": "R13",
+      "description": "Marginal topical overlap only.",
+      "scenario": "background",
+      "paper": {
+        "paper_type": "EMPIRICAL",
+        "depth": "L0",
+        "full_text": "NOT_ATTEMPTED"
+      },
+      "ratings": {
+        "topic_relevance": "LOW"
+      },
+      "is_core": false,
+      "acceptable_decisions": [
+        "BACKGROUND_ONLY"
+      ]
+    },
+    {
+      "case_id": "R14",
+      "description": "Core paper whose examined evidence is thin.",
+      "scenario": "weak evidence",
+      "paper": {
+        "paper_type": "EMPIRICAL",
+        "depth": "L1",
+        "full_text": "AVAILABLE"
+      },
+      "ratings": {
+        "topic_relevance": "HIGH",
+        "research_utility": "HIGH",
+        "evidence_adequacy": "LOW"
+      },
+      "is_core": true,
+      "acceptable_decisions": [
+        "PROMOTE_TO_L2"
+      ]
+    },
+    {
+      "case_id": "R15",
+      "description": "Abstract and results table disagree on the headline number.",
+      "scenario": "contradictory evidence",
+      "paper": {
+        "paper_type": "EMPIRICAL",
+        "depth": "L1",
+        "full_text": "AVAILABLE",
+        "open_conflict": true
+      },
+      "ratings": {
+        "topic_relevance": "MEDIUM"
+      },
+      "is_core": false,
+      "acceptable_decisions": [
+        "PROMOTE_TO_L2"
+      ]
+    },
+    {
+      "case_id": "R16",
+      "description": "Targeted reading confirms core utility, without a mandate for a whole-paper audit.",
+      "scenario": "upgrade from L2",
+      "paper": {
+        "paper_type": "EMPIRICAL",
+        "depth": "L2",
+        "full_text": "AVAILABLE"
+      },
+      "ratings": {
+        "topic_relevance": "HIGH",
+        "methodological_relevance": "HIGH",
+        "research_utility": "HIGH"
+      },
+      "is_core": true,
+      "acceptable_decisions": [
+        "REMAIN_AT_L2"
+      ]
+    },
+    {
+      "case_id": "R17",
+      "description": "Targeted reading answered the question; the rest is not needed.",
+      "scenario": "stay at L2",
+      "paper": {
+        "paper_type": "EMPIRICAL",
+        "depth": "L2",
+        "full_text": "AVAILABLE"
+      },
+      "ratings": {
+        "methodological_relevance": "MEDIUM",
+        "research_utility": "MEDIUM"
+      },
+      "is_core": false,
+      "acceptable_decisions": [
+        "REMAIN_AT_L2"
+      ]
+    },
+    {
+      "case_id": "R18",
+      "description": "Novel idea in an unrelated field.",
+      "scenario": "novelty is not research value",
+      "paper": {
+        "paper_type": "EMPIRICAL",
+        "depth": "L0",
+        "full_text": "NOT_ATTEMPTED"
+      },
+      "ratings": {
+        "novelty_potential": "HIGH",
+        "topic_relevance": "NONE",
+        "methodological_relevance": "NONE",
+        "transferability": "NONE",
+        "practical_applicability": "NONE",
+        "research_utility": "NONE"
+      },
+      "is_core": false,
+      "acceptable_decisions": [
+        "EXCLUDE_FOR_TARGET"
+      ]
+    },
+    {
+      "case_id": "R19",
+      "description": "An optimizer paper touches the target mechanism in one sentence; reading it closely is not expected to help.",
+      "scenario": "mechanism noted, low utility",
+      "paper": {
+        "paper_type": "EMPIRICAL",
+        "depth": "L1",
+        "full_text": "AVAILABLE"
+      },
+      "ratings": {
+        "methodological_relevance": "MEDIUM",
+        "transferability": "MEDIUM",
+        "research_utility": "LOW",
+        "evidence_adequacy": "LOW"
+      },
+      "is_core": false,
+      "acceptable_decisions": [
+        "BACKGROUND_ONLY",
+        "REMAIN_AT_L1"
+      ]
+    }
+  ],
+  "reading_policy": 2
+}

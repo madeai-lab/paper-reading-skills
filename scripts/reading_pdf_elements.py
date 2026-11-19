@@ -163,9 +163,17 @@ def _data_entry(root, packet, source):
         raise ElementError(exc.code, str(exc)) from exc
 
 
-def extract_elements(root, parser=None, append=False):
+def extract_elements(root, parser=None, append=False, packet=None):
+    """Extract native elements for a run, or for a screening workspace that supplies its own source record.
+
+    A supplied packet is a read-only acquisition descriptor (sources and contract); no run record is created
+    from it, and appends stay exclusive to real runs.
+    """
     root = Path(root).resolve()
-    packet = load(root/'paper_packet.json')
+    if packet is None:
+        packet = load(root/'paper_packet.json')
+    elif append:
+        raise ElementError('ELEMENTS_APPEND_UNSUPPORTED', 'Append binds sources of an initialized run only.')
     acquisition = packet.get('content_acquisition', {})
     if acquisition != {'method': 'PDFPLUMBER_NATIVE', 'manifest_ref': 'source_elements/manifest.json'}:
         raise ElementError('ELEMENTS_INVALID', 'Initialize a new native-elements run; existing runs are not migrated.')
@@ -344,12 +352,13 @@ def word_text(words):
     return ''.join(parts)
 
 
-def read_elements(root, pages, bbox=None, max_chars=MAX_READ_CHARS, source_id=None, *, view='detail'):
+def read_elements(root, pages, bbox=None, max_chars=MAX_READ_CHARS, source_id=None, *, view='detail', packet=None, contained_words=False):
     from reading_element_contracts import element_errors
     if view not in ('detail', 'locator', 'text'):
         raise ElementError('INVALID_ARGUMENT', 'Use detail, locator or text for the native read view.')
     root = Path(root).resolve()
-    packet = load(root/'paper_packet.json')
+    if packet is None:
+        packet = load(root/'paper_packet.json')
     errors = element_errors(root, packet)
     if errors:
         raise ElementError(errors[0]['code'], errors[0]['next_action'])
@@ -384,8 +393,12 @@ def read_elements(root, pages, bbox=None, max_chars=MAX_READ_CHARS, source_id=No
                 text = page['text']
             else:
                 x0, top, x1, bottom = selected_box
-                text = word_text([w for w in page['words'] if x0 <= (w['bbox'][0]+w['bbox'][2])/2 < x1
-                                  and top <= (w['bbox'][1]+w['bbox'][3])/2 < bottom])
+                if contained_words:
+                    text = word_text([w for w in page['words'] if x0 <= w['bbox'][0] and w['bbox'][2] <= x1
+                                      and top <= w['bbox'][1] and w['bbox'][3] <= bottom])
+                else:
+                    text = word_text([w for w in page['words'] if x0 <= (w['bbox'][0]+w['bbox'][2])/2 < x1
+                                      and top <= (w['bbox'][1]+w['bbox'][3])/2 < bottom])
             flags = ', '.join(page['flags']) or 'none'
             region = f' bbox={selected_box}' if selected_box else ''
             text_pages.append(f"[{source['source_id']} p{number} {row['ref']} {page['text_id']}{region} flags={flags}]\n{text}")

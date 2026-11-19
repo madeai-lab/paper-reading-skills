@@ -1,9 +1,12 @@
 # Stage guide — current contract 2.10
 
-At startup load [00: Owner and coordination](00_governance/COORDINATOR_PROMPT.md) and initialize as described in [SKILL.md](../SKILL.md). On resume, use `next` to locate the current action instead of starting again. Links below are routes, not a startup reading list. Read the relevant sections when their action first applies. Reuse instructions already in context; after context loss or a specialist handoff, reload what that role needs.
+When starting an L3 run load [00: Owner and coordination](00_governance/COORDINATOR_PROMPT.md) and initialize as described in [SKILL.md](../SKILL.md). On resume, use `next` to locate the current action instead of starting again. Links below are routes, not a startup reading list. Read the relevant sections when their action first applies. Reuse instructions already in context; after context loss or a specialist handoff, reload what that role needs.
+
+This guide covers complete reading (L3). For screening, a skim or targeted reading, use the [depth guide](triage/README.md) instead and do not load the stages below.
 
 | Action | Load before doing the work |
 |---|---|
+| Continue a run opened by `promote` | The same rows as any run. Read `handoffs/screening/leads.md` as leads only; [nothing is inherited](../references/adaptive-depth.md#upgrades-and-reuse). |
 | Bind an explicit research target (even at init) | [Explicit research target](../references/targets-and-visual-reports.md#explicit-research-target). Otherwise leave it null. |
 | Extract and inventory | [01: Sources](01_source_inventory/PROMPT.md), [boundaries](00_governance/BOUNDARIES.md) and [locator/unit fields](DATA_CONTRACT.md#1-locators-and-units). Use the [native reading quickstart](../references/section-reading.md#native-reading-quickstart) for mapping and reuse it in 02/05. See [Native PDF elements](../references/native-elements.md) for extraction, object inspection, late supplements and data files. |
 | Submit the first handoff, including G0 | [Current records and handoffs](DATA_CONTRACT.md#current-records-handoffs-and-deliverables) and [handoff validation](../references/reliable-execution.md#generate-and-validate-handoffs-before-mutation). Use the [control loop](EXECUTION.md#use-the-current-assessment). |

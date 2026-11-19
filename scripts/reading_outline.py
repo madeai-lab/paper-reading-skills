@@ -601,9 +601,10 @@ def _slug(text):
     return re.sub(r'[^A-Za-z0-9]+', '-', text).strip('-')[:24] or 'X'
 
 
-def analyze(root, source_id=None):
+def analyze(root, source_id=None, packet=None):
     root = Path(root).resolve()
-    packet = json.loads((root/'paper_packet.json').read_text(encoding='utf-8-sig'))
+    if packet is None:
+        packet = json.loads((root/'paper_packet.json').read_text(encoding='utf-8-sig'))
     sources = [s['source_id'] for s in packet.get('sources', []) if s.get('access_state') == 'AVAILABLE']
     sid = source_id or (sources[0] if sources else None)
     pages = _native(root, packet, sid)
@@ -970,10 +971,10 @@ def _write_draft(root, rel, data):
         raise ElementError('INVALID_PATH', f'Cannot safely create the draft under tools/: {exc}') from exc
 
 
-def run_outline(root, source_id=None, out=None):
+def run_outline(root, source_id=None, out=None, packet=None):
     root = Path(root).absolute()
     rel = _draft_path(root, out) if out is not None else None
-    result = analyze(root, source_id)
+    result = analyze(root, source_id, packet)
     if rel is None:
         return result, None, None
     units, review = draft_inventory(result)

@@ -2,6 +2,10 @@
 
 This contract applies to every role. New native-acquisition runs also follow [Native PDF elements](../../references/native-elements.md); earlier runs retain their existing acquisition requirements. The revision-2.6 review-mode distinction below defines independent scope; complete Owner reading never changes. Role prompts cannot weaken it. If the user explicitly narrows the task, record the new scope name and stop using a full-paper completion label.
 
+## B00: Depth does not weaken this contract
+
+B01–B16 define complete reading (L3), not the default depth for a new explanation request. Reading below that depth is governed by [adaptive depth](../../references/adaptive-depth.md): it produces screening records that state the depth reached and the content not examined, and it never uses a completion label, a gate or a VERIFIED state from this contract. Choosing a lower depth is an explicit, recorded decision about a paper. It is not a way to finish a complete-reading run early, and an automatic relevance rating never lowers a depth the user asked for. B01, B03, B04, B09 and B11 hold at every depth: freeze the source version, keep missing material visible, keep access, extraction, reading and verification apart, separate author claims from observations, and never present a reading gap as irrelevance.
+
 ## B01: Freeze the object before interpreting it
 
 Record title, authors, DOI/identifier, file version, publication status, page count and available supplements. Distinguish PDF physical pages from printed pages. Locate web evidence by headings, paragraphs and visual identifiers. Different versions receive different source_id values; do not combine their experiments, figures or limitations. Record discrepancies between abstract pages and PDFs.

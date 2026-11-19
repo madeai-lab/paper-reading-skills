@@ -8,6 +8,10 @@ import re
 import shutil
 import sys
 
+# An isolated interpreter (-I) does not put this directory on the module path; the sibling helpers live here.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.dont_write_bytecode = True  # an installed skill directory stays as it was delivered
+
 from reading_run_records import (RunError, read, write, digest, evidence, content_fingerprint,
                                  review_content_matches, generated_target, render, MARKER)
 from reading_run_check import inspect_run, VERIFIED
@@ -530,6 +534,9 @@ def merge_handoff(root, payload, dry_run=False):
     if writer not in packet["writer_ids"]:
         packet["writer_ids"].append(writer)
     defects = structure_errors(packet) + element_errors(root, packet, acquisition=acquisition) + native_unit_errors(root, packet, acquisition=acquisition)
+    from reading_promotion_contracts import promoted, promotion_errors
+    if promoted(root, packet):
+        defects += promotion_errors(root, packet)
     if defects:
         raise RunError('INVALID_HANDOFF', json.dumps(defects, ensure_ascii=True))
     if dry_run:

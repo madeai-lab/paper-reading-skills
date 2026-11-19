@@ -6,6 +6,8 @@ For native runs, use the [locator and crop steps](../../references/section-readi
 
 Read native table cells, headers, notes and labels from source-bound records. Only a validated complete native TABLE may use structured reading instead of pixels; leave `actually_viewed=false` if no pixels were viewed. For an ambiguous glyph, table or layout, reinspect the original and record the resolution. If content remains unreadable, obtain a legible lawful version or retain a `READING_GAP`; captions cannot fill it.
 
+Apply the [figure ladder](../../references/research-work.md#figure-ladder): full inspection is required here, but digitization, color inversion and new statistics are not part of completeness.
+
 For each information unit explain:
 - Flow/architecture diagrams: node duties, data/control flow, arrow direction, branches/loops, shared state, boundaries and human roles; distinguish design from demonstrated implementation.
 - Plots/heatmaps: axes, units, ranges, log/truncated scales, colors, normalization, groups, baselines, uncertainty, samples and marks; describe comparisons and counterexamples.

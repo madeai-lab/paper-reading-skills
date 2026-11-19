@@ -1,0 +1,27 @@
+[
+  {
+    "synthesis_claim_id": "SC1",
+    "text": "Accepted finding restated with its conditions.",
+    "evidence_basis": "ACCEPTED",
+    "strength": "CONCLUSION",
+    "support": [
+      {
+        "paper_id": "P0002",
+        "claim_id": "C1"
+      }
+    ]
+  },
+  {
+    "synthesis_claim_id": "SC2",
+    "text": "A robotics system offers a candidate replanning protocol for comparison.",
+    "evidence_basis": "SCREENING_LIMITED",
+    "strength": "CANDIDATE",
+    "support": [
+      {
+        "paper_id": "P0001",
+        "local_claim_id": "LC1"
+      }
+    ],
+    "limitation": "Targeted reading of sections 3.2 and 4.1 and Table 3 only; not independently reviewed; generality not examined."
+  }
+]

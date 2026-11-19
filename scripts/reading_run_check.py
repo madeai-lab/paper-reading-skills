@@ -3,6 +3,12 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import sys
+
+# An isolated interpreter (-I) does not put this directory on the module path; the sibling helpers live here.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.dont_write_bytecode = True  # an installed skill directory stays as it was delivered
+
 from reading_data_sources import extensions_enabled
 from reading_review_contracts import structure_errors, visual_review_errors
 from reading_review_modes import coverage_errors
@@ -50,6 +56,10 @@ def inspect_run(root, require_review=True, acquisition=None):
     errors.extend(element_errors(root, packet, acquisition))
     errors.extend(native_unit_errors(root, packet, acquisition))
     errors.extend(quality_errors(root, packet))
+    from reading_promotion_contracts import promoted, promotion_errors
+    if promoted(root, packet):
+        # Only runs opened from a screening record are checked; all other runs are unchanged.
+        errors.extend(promotion_errors(root, packet))
     ids = [u.get("unit_id") for u in units]
     if len(set(ids)) != len(ids) or None in ids:
         error("UNIT_ID_INVALID", "units", "Assign unique, non-null unit IDs.")
