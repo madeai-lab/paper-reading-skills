@@ -2,25 +2,30 @@
 
 ## Initialize and inventory
 
-Use one Owner for stages 01–07 and one distinct reviewer for 08. Reserve review capacity early; specialists address concrete difficulties. Read [boundaries](00_governance/BOUNDARIES.md), [data contract](DATA_CONTRACT.md) and [loading routes](../references/architecture.md). Default new runs to KEY_CLAIMS; preserve requested FULL_DOUBLE_READ and never migrate active/frozen runs.
+Use the [stage guide](README.md) for the current action's prerequisites. Reserve a distinct reviewer early. Default new runs to KEY_CLAIMS; preserve requested FULL_DOUBLE_READ and never migrate active/frozen runs.
 
 ```text
 python "<skill>/scripts/reading_run_control.py" init "<new-run>" --source "<paper.pdf>" --owner "<actual-owner>" --language en --review-mode KEY_CLAIMS
 python "<skill>/scripts/reading_run_control.py" extract-elements "<run>"
-python "<skill>/scripts/reading_run_control.py" read-elements "<run>" --source-id SRC-01 --pages 1 2 --max-chars 18000
 ```
 
 The directory must not exist. init copies/hashes the source and creates unfinished records. Bind only an explicit research target using init --target or set-target --file; otherwise leave null. Changed content under the same target_id requires a higher revision. Targets add questions, never filter source coverage.
 
-Follow [Native elements](../references/native-elements.md): use an already provisioned pdfplumber interpreter, extract once and continuously read every page through bounded slices; use --bbox for regions. Missing dependencies do not authorize installation, OCR or uploads. Read native text, labels and complete tables structurally first; actually view graphics, bitmaps and formula/parsing conflicts as required. Extraction does not advance read_state.
-
-Inspect identity, page joins, all objects, appendices and supplements. Save 01_sources.json, 01_inventory.json and scope evidence. sync, then merge an evidenced G0 before dependent readers start. Preserve missing material and new discoveries instead of removing difficult units.
+For native PDFs, follow [Native elements](../references/native-elements.md) to extract once with an already provisioned pdfplumber interpreter. Verify source identity, section/subsection headings and their boundaries, all objects, appendices and supplements. Save 01_sources.json, 01_inventory.json and scope evidence; sync the inventory and use `section-coverage "<run>" --source-id SRC-01` to locate mapping gaps or overlaps. A flagged page calls for targeted inspection, not another full-text pass. Merge an evidenced G0 before dependent readers start. Preserve missing material and new discoveries instead of removing difficult units.
 
 ## Read, hand off and verify locally
 
-Load current stage-01–06 prompts. Read all units continuously and save content, relationships, conditions, limits and actual evidence. Identity/locator edits belong in inventory. Use handoff-template --writer --units, fill actual content, validate-handoff --file, then merge --file. Merge preserves raw history and generates notebook/index; do not maintain handwritten current mirrors. DATA_CONTRACT.md defines fields and ownership.
+Load the prompt for the current responsibility. Follow [section reading](../references/section-reading.md#02-read-and-reconcile): use `read-section "<run>" --id S2` and its continuation for mapped prose, or read sections directly from the source when no mapping/helper applies. Read every unit; save content, relationships, conditions, limits and actual evidence. For a figure/table, use `read-elements --view locator` on its page to navigate, then inspect the original object or detailed native table as required. Locator previews and coverage diagnostics never advance read state. Missing dependencies do not authorize installation, OCR or uploads.
 
-Run next after each batch and perform next_action. CONTINUE means work now, not end with a plan. Owner closes evidenced G1/G2 after actual coverage and method–experiment–visual–claim checks. Counts cannot replace understanding; READ/UNDERSTOOD never automatically becomes CHECKED. Repair READING_GAP/WORKFLOW_ERROR. Preserve SOURCE_ANOMALY evidence, alternative explanations and HOLD/CONDITIONAL claims without requiring a user truth verdict before continuing.
+Identity/locator edits belong in inventory. Use `handoff-template --writer ... --units ...`, fill actual content, `validate-handoff --file ...`, then `merge --file ...`. Validation is read-only; its success is not a merge. Merge preserves raw history and generates notebook/index. Use the canonical records rather than maintaining parallel transcripts.
+
+Owner closes evidenced G1/G2 after actual coverage and method–experiment–visual–claim checks. Counts cannot replace understanding; READ/UNDERSTOOD never automatically becomes CHECKED. Repair READING_GAP/WORKFLOW_ERROR. Preserve SOURCE_ANOMALY evidence, alternatives and HOLD/CONDITIONAL claims without requiring a user truth verdict before continuing.
+
+## Use the current assessment
+
+A successful `init`, `sync`, `merge`, `repair-ready` or `ingest-review` already returns the assessment that `next` would compute. On `CONTINUE`, perform its `next_action` now; do not call `next` again on unchanged state. Send progress, not a plan in place of work. Errors are not assessments: address the error rather than continuing from an older result.
+
+On resume, after manual edits, or when the result was lost or lacks an assessment and you need a routing decision, run `next`. Sync inventory changes first. For example, `extract-elements` returns extraction metadata, not a reading decision. Do not substitute an earlier assessment for preflight, repair validation or the final `next` and read-only checker.
 
 ## Finish the narrative before dispatch
 

@@ -8,6 +8,8 @@ An English-instruction skill for complete paper reading, source-linked explanati
 
 Reports must explain the mechanism, metrics and every experiment, alongside complete saved source coverage. The default team is one Owner plus one independent reviewer. Both KEY_CLAIMS and FULL_DOUBLE_READ remain available.
 
+- [Read the full body in verified section/subsection order](references/section-reading.md); use physical pages to check for omissions, locate evidence and inspect original objects, not as the reading sequence.
+- [Lightweight figure/table locators: when to switch from navigation to source evidence](references/native-elements.md#locate-figures-and-tables-before-detailed-inspection)
 - [Architecture, loading routes and file ownership](references/architecture.md)
 - [Reader-facing explanation contract](references/reader-explanations.md)
 - [Version history and maintenance scope](CHANGELOG.md)

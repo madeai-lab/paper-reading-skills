@@ -11,6 +11,8 @@ Use SECTION, FIGURE, PANEL, TABLE, EQUATION, ALGORITHM, APPENDIX, OTHER_VISUAL o
 
 locator: physical_page, printed_page, section, object_label, panel, paragraph_or_cell, image_path. Inapplicable fields may be null; never guess a page. An object spanning pages may have several locators.
 
+On native SECTION (including subsection), APPENDIX and BIBLIOGRAPHY units, inventory `locators` in logical reading order. A locator with `body: {}` selects all native words on its `physical_page`; optional `bbox`, `start_at` and `stop_before` inside `body` narrow the selection. Absence of `body` binds no text, even on an old page locator. See [section reading](../references/section-reading.md#01-map-the-source-outline) for exact boundaries, shared pages and columns. Other object locators and visual evidence retain their own rules.
+
 read_state is INVENTORIED, READ, UNDERSTOOD, CHECKED, BLOCKED or NON_INFORMATIVE. Attach stage evidence when advancing a state and preserve other roles' findings. visual_review contains required, actually_viewed, artifact_refs, checks and limitations. Rendering alone cannot set actually_viewed.
 
 understanding_note states content, relationships/mechanism, conditions/units, supported and unsupported interpretations. “Understood,” “see figure” or “correct” alone is insufficient. evidence_refs must identify actual sources and existing notes/images, not only an old report.

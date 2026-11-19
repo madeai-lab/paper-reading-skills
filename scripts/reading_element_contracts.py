@@ -42,7 +42,8 @@ def _box(values):
         raise ValueError('Invalid native element coordinates.')
 
 
-def _pages(root, packet):
+def validated_pages(root, packet):
+    """Return verified native page records keyed by manifest reference."""
     acquisition = packet.get('content_acquisition')
     if acquisition != {'method': 'PDFPLUMBER_NATIVE', 'manifest_ref': 'source_elements/manifest.json'}:
         raise ValueError('New runs require the canonical PDFPLUMBER_NATIVE manifest contract.')
@@ -98,7 +99,7 @@ def element_errors(root, packet):
     if not enabled(packet):
         return []
     try:
-        _pages(Path(root).resolve(), packet)
+        validated_pages(Path(root).resolve(), packet)
         return []
     except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
         code = 'ELEMENT_SOURCE_CHANGED' if 'ELEMENT_SOURCE_CHANGED' in str(exc) else 'ELEMENTS_INVALID'
@@ -146,7 +147,7 @@ def native_unit_errors(root, packet):
     root = Path(root).resolve()
     if element_errors(root, packet):
         return []
-    pages = _pages(root, packet)
+    pages = validated_pages(root, packet)
     errors = []
     for unit in packet.get('units', []):
         if unit.get('read_state') not in {'CHECKED', 'NON_INFORMATIVE'}:
@@ -163,7 +164,7 @@ def native_table_ready(root, packet, unit):
         return False
     root = Path(root).resolve()
     try:
-        pages = _pages(root, packet)
+        pages = validated_pages(root, packet)
         record, selected = _reading(root, packet, unit, pages)
         if record['mode'] != 'NATIVE_ELEMENTS':
             return False

@@ -1,6 +1,6 @@
 # Stage 09 | Cross-paper synthesis agent prompt
 
-You build a research report from complete single-paper evidence. First read ../00_governance/BOUNDARIES.md and ../DATA_CONTRACT.md. Inputs are the target corpus, G3-accepted paper packets, complete notebooks/reports, independent reviews and user-review items.
+You build a research report from complete single-paper evidence. Apply the [coverage boundaries](../00_governance/BOUNDARIES.md) and [claim fields](../DATA_CONTRACT.md#2-specialist-records). Inputs are the target corpus, G3-accepted paper packets, complete notebooks/reports, independent reviews and user-review items.
 
 Check every target paper's actual state. Unaccepted legacy reports cannot support “all completed.” You may deliver an explicitly incomplete synthesis listing gaps, but cannot silently shrink the corpus and declare completion.
 
@@ -14,4 +14,4 @@ A new claim absent from the accepted paper records must return to sources and st
 
 Outputs: 09_synthesis.md, 09_synthesis_claims.json, 09_user_review.md, 09_coverage_summary.json. List all target-paper states and open concerns. Completion follows actual G3 coverage, not the existence of a written synthesis. Stage 08 reviews new synthesis claims before delivery.
 
-Follow the shared loop in [EXECUTION.md](../EXECUTION.md) and [file ownership/loading routes](../../references/architecture.md). Keep the stage-specific checks above; perform next after each batch. Finishing this responsibility is not paper acceptance.
+The [controller loop](../EXECUTION.md#use-the-current-assessment) applies per paper. It does not grant acceptance for a new synthesis claim.

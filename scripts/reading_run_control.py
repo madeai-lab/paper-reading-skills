@@ -530,7 +530,7 @@ def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("command",choices=["init","merge","ingest-review","repair-scan","repair-ready","sync","next","snapshot","set-target","validate-handoff","handoff-template","review-template",
                                           "review-plan","preflight","review-delta","escalate-review","workflow-failure","workflow-repaired",
-                                          "extract-elements","read-elements"])
+                                          "extract-elements","read-elements","read-section","section-coverage"])
     parser.add_argument("run_directory",type=Path)
     parser.add_argument("--source",type=Path)
     parser.add_argument("--target",type=Path, help="Explicit research-target JSON for init.")
@@ -548,8 +548,19 @@ def main():
     parser.add_argument('--pages', nargs='+', type=int)
     parser.add_argument('--bbox', nargs=4, type=float)
     parser.add_argument('--source-id')
+    parser.add_argument('--cursor', help='Resume read-section from its previous next_cursor.')
     parser.add_argument('--max-chars', type=int, default=18000)
+    parser.add_argument('--view', choices=('detail', 'locator'),
+                        help='read-elements only: full evidence (default) or lightweight figure/table navigation.')
     args=parser.parse_args()
+    if args.view and args.command != 'read-elements':
+        parser.error('--view applies only to read-elements')
+    if args.cursor is not None and args.command != 'read-section':
+        parser.error('--cursor applies only to read-section')
+    if args.command in ('read-section','section-coverage') and (args.pages or args.bbox):
+        parser.error('Select a section by --id or audit a source by --source-id; use read-elements for a physical region.')
+    if args.command == 'read-section' and args.source_id:
+        parser.error('read-section takes its source from the section unit, not --source-id')
     root=args.run_directory.resolve()
     try:
         if args.command=="init":
@@ -563,7 +574,13 @@ def main():
             result=extract_elements(root)
         elif args.command=='read-elements':
             from reading_pdf_elements import read_elements
-            result=read_elements(root,args.pages,args.bbox,args.max_chars,args.source_id)
+            result=read_elements(root,args.pages,args.bbox,args.max_chars,args.source_id,view=args.view or 'detail')
+        elif args.command=='read-section':
+            from reading_sections import read_section
+            result=read_section(root,args.id,args.cursor,args.max_chars)
+        elif args.command=='section-coverage':
+            from reading_sections import section_coverage
+            result=section_coverage(root,args.source_id)
         elif args.command=='preflight':
             result=preflight(root)
         elif args.command=='review-delta':
@@ -636,7 +653,7 @@ def main():
             packet,state=read(root/"paper_packet.json"),read(root/"execution_state.json")
             sync_inventory(root,packet,state)
             result=commit(root,packet,state,"Synced canonical inventory/state without granting acceptance.")
-        if args.command == 'read-elements':
+        if args.command in ('read-elements','read-section','section-coverage'):
             print(json.dumps(result,ensure_ascii=True,separators=(',', ':')))
         else:
             print(json.dumps(result,ensure_ascii=True,indent=2))

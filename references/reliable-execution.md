@@ -1,6 +1,6 @@
 # Reliable execution (revision 2.7)
 
-Read this before executing or reviewing a reading run, together with [Native PDF elements](native-elements.md) and [Review modes](review-modes.md). It supplements the English instruction set. Reviewer coverage below is mode-specific for new 2.6 runs; complete Owner reading is unchanged. Existing source, authorization and full-coverage boundaries still apply. These rules address observed failures; they do not turn structural checks into proof of understanding.
+Use the section for the current action via the [stage guide](../en/README.md). For delegated review, read the capability and host-lifetime rules before dispatch, not after the reviewer starts. Structural checks do not establish understanding, viewing or independence.
 
 ## Keep the team and records small
 
@@ -80,7 +80,7 @@ Use the user's requested language for explanations and captions; preserve origin
 
 If local tools permit a rendered preview, inspect the top, middle and bottom through the final paragraph/file links, at a useful width. Capture the document height or deliberately scroll/capture the complete end; a fixed tall viewport or a blank lower crop does not prove coverage. Record exactly which final sections were actually visible. Inspect relevant crops at legible resolution. A failed or unavailable renderer gets an honest disclosure, not a claim from asset existence. Do not install dependencies or start a server just to satisfy this check.
 
-Finish text, assets, target answers, metadata and G0–G2 before the reviewer snapshots. Use neutral report wording pointing to the packet/latest review so approval need not rewrite the inspected report. Reviewer reinspection checks exact repairs and their dependencies, preserves failed decisions, then takes its own new snapshot. The writer ingests the actual decision and runs next plus the read-only checker. Do not rewrite scientific files after approval or refresh an old token.
+Finish text, assets, target answers, metadata and G0–G2 before the reviewer snapshots. Use neutral report wording pointing to the packet/latest review so approval need not rewrite the inspected report. Reviewer reinspection checks exact repairs and their dependencies, preserves failed decisions, then takes its own new snapshot. The writer ingests the actual decision and follows the returned assessment; run `next` plus the read-only checker before final delivery. Do not rewrite scientific files after approval or refresh an old token.
 
 ## Unassisted trial boundary
 

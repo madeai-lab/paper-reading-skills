@@ -6,6 +6,12 @@ New runs share ordered semantic report sections with localized headings and pape
 
 Compatibility correction: a later actual accepted review closes the previous failed round's repair-sync obligations. Current-content fingerprint changes still invalidate acceptance, and active failures still require valid synchronization before review ingestion. This avoids an unrecoverable request for historical repair IDs after acceptance; it does not rewrite or synthesize review decisions.
 
+Workflow-only update: load contracts at their point of use, act on the controller assessment already returned after a handoff, and exchange evidence locators rather than parallel table transcripts. CLI commands, data schemas, reading scope, the independent review and final delivery checks are unchanged.
+
+Additive CLI view: `read-elements --view locator` returns lightweight figure/table navigation from existing frozen page records. Default detail reads, native evidence format and acceptance rules are unchanged.
+
+Full body reading follows verified section/subsection order. `read-section` joins explicitly mapped native spans with bounded continuation; `section-coverage` checks physical-page assignments for gaps and overlaps without certifying understanding. Existing runs are not migrated.
+
 ## 2.8 — reader-facing explanations
 
 Imported the reusable update from the local paper-agent skill identified by the referenced chat. Reports explain problem, mechanism, metrics, every experiment, visuals and limitations. report_readability.json binds Owner passage checks to report bytes; the existing independent reviewer supplies the semantic decision. No additional reviewer or automatic full rereading is introduced. Existing runs remain unchanged.

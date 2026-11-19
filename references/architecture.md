@@ -19,16 +19,7 @@ All operational instructions are English. Reports and evidence prose still use t
 
 ## Progressive loading
 
-| When | Load |
-|---|---|
-| Startup | SKILL, execution entry, EXECUTION, DATA_CONTRACT, boundaries/coordinator; [Native elements](native-elements.md), [Review modes](review-modes.md), [Reliable execution](reliable-execution.md) |
-| Reading | Current role prompt and source slices, not full notebooks repeatedly |
-| Target or report | [Targets and visuals](targets-and-visual-reports.md), [Reader explanations](reader-explanations.md), 07 |
-| Initial review | 08 and relevant evidence contracts; source-first map before drafts |
-| Repair | [Repair synchronization](repair-synchronization.md), [Efficient reinspection](efficient-reinspection.md); compact deltas and paths to the same reviewer |
-| Synthesis | 09, current paper packets/reviews/restrictions; new assertions return to 08 |
-
-Do not load human reference translations, historical plans or whole source trees as routine runtime context.
+The [stage guide](../en/README.md) owns the loading routes. This architecture reference, historical plans and human reference translations are not startup requirements. Read prose by verified section/subsection via the [section reading guide](section-reading.md); read detailed evidence by object ID or source locator. Keep the complete sources accessible.
 
 ## Runtime, validation and synthesis
 
@@ -49,6 +40,7 @@ Host Owner
       → reading_report_quality.py (report passage/experiment/hash checks)
       → reading_repair_sync.py (current-file discovery and dispositions)
       → reading_pdf_elements.py (lazy extraction/read command import)
+          → reading_element_locators.py (optional read-only navigation projection)
   → reading_report_assets.py (optional inspected-image gallery)
       → reading_run_records.py (shared I/O)
 ```
@@ -56,8 +48,11 @@ Host Owner
 The controller continues to re-export record helpers for existing callers. Standalone checker and gallery entrypoints remain available. Imports needed only during validation may be deferred to avoid circular initialization. No public command or data schema is changed by this module split.
 
 ```text
-init → extract-elements/read-elements → inventory/sync/G0
- → read + validate-handoff/merge + next (repeat)
+init → extract-elements (source-bound native pages)
+ → verify source outline + locate objects → inventory/sync/G0
+ → read-section by unit ID and cursor in outline order (or read source sections directly)
+ → reconcile section-coverage leads; inspect original pixels / detailed object evidence
+ → validate-handoff/merge → act on returned assessment (repeat)
  → G1/G2 → report/targets/assets/readability → preflight/review-plan
  → actual independent review → snapshot/ingest-review
     ├─ accepted → next + read-only checker → delivery

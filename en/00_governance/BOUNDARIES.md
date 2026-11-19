@@ -31,7 +31,7 @@ UNDERSTOOD requires a concise, source-grounded explanation of content, relations
 
 ## B05: Continuous reading and inventory cross-check each other
 
-Build a source-first inventory, then read continuously. Search locates or revisits material; snippets cannot replace unread context. Every textual figure/table/equation/appendix reference must link back to an inventoried object. Check duplicated/missing numbering, composite figures and unnumbered illustrations.
+Verify the source outline, then read the entire body continuously in section/subsection order. Use physical pages to find omissions, cite evidence and inspect original objects, not as a second reading sequence. Account for gaps and overlaps against the source; mapping alone cannot close a reading gap. Search locates or revisits material; snippets cannot replace unread context. Every textual figure/table/equation/appendix reference must link back to an inventoried object. Check duplicated/missing numbering, composite figures and unnumbered illustrations.
 
 Chunk long sources without changing total scope. Preserve boundaries, neighboring context, unresolved references and handoffs. The Owner merges and checks for holes and duplicates. If an actual imposed time, page or token limit prevents continuation, checkpoint under EXECUTION.md and report actual coverage rather than forcing completion. A subjective desire to save time is not such a limit.
 
@@ -86,7 +86,7 @@ Do not constrain the notebook to 2,500–4,500 characters or a fixed section cou
 
 ## B14: Four gates
 
-- G0: freeze source versions and scope; inventory all pages, sections, visuals/panels and appendices; list missing materials.
+- G0: freeze source versions and scope; inventory the verified section hierarchy, visuals/panels and appendices, reconcile scope against physical pages or web structure, and list missing materials.
 - G1: actually read every in-scope unit; inspect required graphical/raster/conflict pixels and validate any complete native-table exception; close every reading gap.
 - G2: bidirectionally link methods, taxonomy, experiments, visuals and claims; check definitions/samples/conditions and complete anomaly chains.
 - G3: a distinct reviewer checks sources first, then performs mode-specific independent evidence review, verifies complete Owner coverage and issue treatment, and closes reading/scientific workflow errors. KEY_CLAIMS is not full double reading.
@@ -109,4 +109,4 @@ Execution closure: actually execute and close B14 gates. B15 PARTIAL_SCOPE descr
 
 ## Complete reading versus independent scope
 
-Apply [Review modes](../../references/review-modes.md). B02–B08 require full Owner coverage in every mode. KEY_CLAIMS independently verifies all current claims, their evidence dependencies and a stratified ordinary sample, checking source/Owner coverage and expanding on errors. FULL_DOUBLE_READ independently checks every unit through the source-appropriate route, including the narrow native-table exception only when explicitly enabled; absent acquisition/mode fields retain legacy requirements. Record actual mode/coverage and never call sampled ordinary verification complete independent double reading. NON_INFORMATIVE and scope exclusions still require independent justification. Do not modify active/frozen runs to adopt the new default.
+Before independent verification, apply [Review modes](../../references/review-modes.md). B02–B08 require full Owner coverage in every mode. KEY_CLAIMS independently verifies all current claims, their evidence dependencies and a stratified ordinary sample, checking source/Owner coverage and expanding on errors. FULL_DOUBLE_READ independently checks every unit through the source-appropriate route, including the narrow native-table exception only when explicitly enabled; absent acquisition/mode fields retain legacy requirements. Record actual mode/coverage and never call sampled ordinary verification complete independent double reading. NON_INFORMATIVE and scope exclusions still require independent justification. Do not modify active/frozen runs to adopt the new default.

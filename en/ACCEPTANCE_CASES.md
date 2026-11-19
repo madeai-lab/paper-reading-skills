@@ -76,7 +76,7 @@ These scenarios specify expected behavior, not executed trial results. Report ac
 
 | Case | Trigger | Required behavior | Rejected shortcut |
 |---|---|---|---|
-| N01 | Native body text is available | Read every page continuously in bounded structured slices | Rasterize every text page instead of using native text |
+| N01 | Native body text is available | Read the full text in verified section/subsection order, continuing through each mapped unit | Read isolated page previews, or treat page/word totals as understanding |
 | N02 | Complete native table has current source/page binding | Inspect all cells/headers/notes and record the TABLE exception honestly | Set actually_viewed=true from successful extraction |
 | N03 | A table overlaps an image or has unresolved parser flags | Actually inspect source pixels or retain a reading gap | Accept native table output as automatically complete |
 | N04 | Raster plot contains no native category labels | View original image/context and distinguish estimates from exact values | Infer internal chart data from the caption |
@@ -86,6 +86,10 @@ These scenarios specify expected behavior, not executed trial results. Report ac
 | N08 | pdfplumber is unavailable | Return PDFPLUMBER_UNAVAILABLE and use an explicitly supplied capable interpreter | Install packages, enable OCR or upload sources automatically |
 | N09 | Full-page or bbox output exceeds the read limit | Request a smaller source slice and retain complete coverage | Treat truncated output as complete reading |
 | N10 | Existing/frozen run lacks content_acquisition | Keep its original acquisition/visual rules | Retrofit a native-table exception into old acceptance |
+| N11 | S2 and S3 meet mid-column; a long unit needs several responses | Split at the same unique whole-word heading (stop before/start at it); order column locators, then read each ID through its last cursor chunk | Read in page order, duplicate the heading or treat the first chunk as the unit |
+| N12 | A boundary repeats, is glued to another word or appears out of order | Use verified smaller boxes or read the original section and retain resolution evidence | Choose a plausible occurrence or match a substring |
+| N13 | Coverage flags partial/overlapping/no-text pages or unbound units | Check the original; assign missed prose, notes and objects or explain non-body regions/structural parents. Keep unresolved reading gaps open | Accept a word count, an exhausted cursor or a clean audit as G1 |
+| N14 | An active run has only old page locators, or no native helper applies | Read source sections directly with actual locators and keep the existing evidence contract | Treat missing `body` as a whole page, silently migrate the run or skip reading |
 
 These are behavioral acceptance scenarios, not claims of completed live trials.
 

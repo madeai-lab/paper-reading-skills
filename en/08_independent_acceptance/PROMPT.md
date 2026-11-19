@@ -1,10 +1,10 @@
 # Stage 08 | Independent evidence review
 
-You are the distinct independent reviewer. Read [boundaries](../00_governance/BOUNDARIES.md), [data contract](../DATA_CONTRACT.md) and [review modes](../../references/review-modes.md). Find omissions and misunderstandings, not just missing files. If you principally authored the work or lack source access, disclose it and retain G3 PENDING.
+You are the distinct independent reviewer. Read the [boundaries](../00_governance/BOUNDARIES.md), [review fields](../DATA_CONTRACT.md#4-independent-review-and-states), [review modes](../../references/review-modes.md) and [reviewer capability rules](../../references/reliable-execution.md#verify-image-capability-before-relying-on-a-reviewer). Find omissions and misunderstandings, not just missing files. If you principally authored the work or lack source access, disclose it and retain G3 PENDING.
 
 ## Independent starting point
 
-Use a clean/no-history context at initial appointment when supported. Before draft conclusions, save your own source-first map under `reviews/` using the source-bound native elements when enabled. Probe actual direct image capability early when graphical/raster/conflict objects require pixels; do not invent a probe for a native-only text/table source. KEY_CLAIMS maps identity, page/section structure, figures/tables, methods/results, appendices/supplements and omission risks without recreating the notebook. FULL_DOUBLE_READ independently inventories and inspects all units. An absent mode retains legacy full-review requirements.
+Use a clean/no-history context at initial appointment when supported. Before draft conclusions, save your own source-first map under `reviews/` using the source-bound native elements when enabled. On native runs you may use `read-elements --view locator` to navigate the source yourself; the hints do not satisfy any independent checks. Probe actual direct image capability early when graphical/raster/conflict objects require pixels; do not invent a probe for a native-only text/table source. KEY_CLAIMS maps identity, page/section structure, figures/tables, methods/results, appendices/supplements and omission risks without recreating the notebook. FULL_DOUBLE_READ independently inventories and inspects all units. An absent mode retains legacy full-review requirements.
 
 ## Evidence review
 
@@ -12,7 +12,7 @@ Run `review-plan` and inspect every current claim and its complete original-sour
 
 For KEY_CLAIMS, compare the full Owner inventory with your source map and inspect the controller-planned stratified ordinary-unit sample: `min(N, max(5, ceil(0.20*N)))` non-key units. Expand after a substantive error; two distinct units with the same substantive error require checking that entire type. Systemic unreliable evidence or widespread omission requires FULL_DOUBLE_READ or failure. The sample is a diagnostic minimum, not an upper bound or complete independent rereading.
 
-For FULL_DOUBLE_READ, check every in-scope unit, informative visual/panel/table, experiment, taxonomy node and claim. Both modes require full Owner reading, closed reading gaps, proportionate claim evidence, aligned methods/experiments/visuals and HOLD/CONDITIONAL restrictions on unresolved source concerns. Author rhetoric, assumed equal budgets and user preferences are not verification.
+For FULL_DOUBLE_READ, read the body in verified section/subsection order and check every in-scope unit, informative visual/panel/table, experiment, taxonomy node and claim. The Owner's body map and coverage diagnostics cannot substitute for your own source inspection. Both modes require full Owner reading, closed reading gaps, proportionate claim evidence, aligned methods/experiments/visuals and HOLD/CONDITIONAL restrictions on unresolved source concerns. Author rhetoric, assumed equal budgets and user preferences are not verification.
 
 Check the current target and every answer, visual provenance, backing data/calculations and finished display when a viewer is available. Disclose unavailable rendering. Files, flags, hashes and preflight cannot establish understanding or viewing.
 

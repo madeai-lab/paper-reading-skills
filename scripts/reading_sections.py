@@ -1,0 +1,189 @@
+"""Section-ordered text projection and a separate physical-page coverage audit."""
+from collections import Counter, defaultdict
+from dataclasses import dataclass
+from hashlib import sha256
+import json
+from math import isfinite
+from pathlib import Path
+
+from reading_element_contracts import validated_pages
+from reading_pdf_elements import MAX_READ_CHARS, ElementError
+from reading_run_records import read
+
+TEXT_KINDS = {'SECTION', 'APPENDIX', 'BIBLIOGRAPHY'}
+
+
+def _native(root, packet, source_id):
+    if not packet.get('content_acquisition'):
+        raise ElementError('ELEMENTS_INVALID', 'No frozen native acquisition. Read the source by section; do not migrate this run.')
+    try:
+        pages = validated_pages(root, packet)
+    except (OSError, ValueError, TypeError, KeyError, AttributeError) as exc:
+        code = 'ELEMENT_SOURCE_CHANGED' if 'ELEMENT_SOURCE_CHANGED' in str(exc) else 'ELEMENTS_INVALID'
+        raise ElementError(code, str(exc)) from exc
+    selected = {p['page']: (ref, p) for ref, p in pages.items() if p['source_id'] == source_id}
+    if not selected:
+        raise ElementError('INVALID_ARGUMENT', 'Select a source_id in the frozen native manifest.')
+    return selected
+
+
+def _anchor(words, phrase):
+    if not isinstance(phrase, str) or not phrase.strip():
+        raise ValueError('A text boundary needs a nonempty exact native phrase.')
+    tokens = phrase.split()
+    matches = [i for i, w in enumerate(words) if w['text'] == tokens[0] and
+               [s['text'] for s in words[i:i+len(tokens)]] == tokens]
+    if len(matches) != 1:
+        raise ValueError(f'Boundary {phrase!r} matched {len(matches)} times. Verify the source or narrow the bbox.')
+    return matches[0]
+
+
+def _span_words(page, body):
+    if not isinstance(body, dict) or body.keys() - {'bbox', 'start_at', 'stop_before'}:
+        raise ValueError('body must be an object with only bbox, start_at or stop_before.')
+    words = page['words']
+    if 'bbox' in body:
+        box = body['bbox']
+        if (not isinstance(box, list) or len(box) != 4 or
+                any(type(x) not in (int,float) or not isfinite(x) for x in box) or
+                not (0 <= box[0] < box[2] <= page['width'] and 0 <= box[1] < box[3] <= page['height'])):
+            raise ValueError('Use a positive bbox inside the source page (PDF points, top-left origin).')
+        words = [w for w in words if box[0] <= (w['bbox'][0]+w['bbox'][2])/2 < box[2]
+                 and box[1] <= (w['bbox'][1]+w['bbox'][3])/2 < box[3]]
+    start = _anchor(words, body['start_at']) if 'start_at' in body else 0
+    stop = _anchor(words, body['stop_before']) if 'stop_before' in body else len(words)
+    if start >= stop:
+        raise ValueError('Empty or reversed body span. Resolve the boundary or inspect missing native text.')
+    return words[start:stop]
+
+
+@dataclass
+class Span:
+    locator_index: int
+    ref: str
+    page: dict
+    words: list
+
+    def chunk(self, lo, hi):
+        words = self.words[lo:hi]
+        parts = [words[0]['text']]
+        for prev, word in zip(words, words[1:]):
+            top = word['bbox'][1]; old = prev['bbox']
+            gap = top - old[3]
+            sep = '\n\n' if gap > max(3, (old[3]-old[1])*.6) else ('\n' if top-old[1] > 3 else ' ')
+            parts.extend((sep, word['text']))
+        return {'locator_index': self.locator_index, 'physical_page': self.page['page'], 'page_ref': self.ref,
+                'text_id': self.page['text_id'], 'first_word_id': words[0]['id'], 'last_word_id': words[-1]['id'],
+                'flags': self.page['flags'], 'text': ''.join(parts)}
+
+
+def _spans(unit, pages):
+    spans = []
+    seen = defaultdict(set)
+    locators = unit.get('locators', [])
+    if not isinstance(locators, list):
+        raise ValueError('Section locators must be an ordered list.')
+    for i, loc in enumerate(locators):
+        if not isinstance(loc, dict):
+            raise ValueError(f'Locator {i} must be an object.')
+        if 'body' not in loc:
+            continue
+        page_num = loc.get('physical_page')
+        if type(page_num) is not int or page_num not in pages:
+            raise ValueError(f'Locator {i} has no valid physical_page for its source.')
+        ref, page = pages[page_num]
+        words = _span_words(page, loc['body'])
+        ids = {w['id'] for w in words}
+        if not seen[page_num].isdisjoint(ids):
+            raise ValueError(f'Overlapping body spans in locator {i} on page {page_num}.')
+        seen[page_num].update(ids)
+        spans.append(Span(i, ref, page, words))
+    return spans
+
+
+def read_section(root, unit_id, cursor=None, max_chars=MAX_READ_CHARS):
+    root = Path(root).resolve(); packet = read(root/'paper_packet.json')
+    unit = next((u for u in packet.get('units', []) if u['unit_id'] == unit_id), None)
+    if not unit or unit.get('kind') not in TEXT_KINDS:
+        raise ElementError('INVALID_SECTION', 'Use the ID of a synced SECTION, APPENDIX or BIBLIOGRAPHY unit.')
+    if type(max_chars) is not int or not 0 < max_chars <= MAX_READ_CHARS:
+        raise ElementError('ELEMENT_READ_LIMIT', f'Choose a positive character budget up to {MAX_READ_CHARS}.')
+    pages = _native(root, packet, unit['source_id'])
+    try:
+        spans = _spans(unit, pages)
+    except ValueError as exc:
+        raise ElementError('INVALID_SECTION_MAP', f'{unit_id}: {exc}') from exc
+    if not spans:
+        raise ElementError('SECTION_UNMAPPED', 'No verified body locators for this unit; a page reference alone is not a section boundary.')
+    manifest = root/packet['content_acquisition']['manifest_ref']
+    digest = sha256(manifest.read_bytes())
+    digest.update(json.dumps([unit_id, unit['source_id'], unit['locators']], sort_keys=True).encode())
+    tag = digest.hexdigest()[:20]
+    total = sum(len(s.words) for s in spans)
+    offset = 0
+    if cursor is not None:
+        prefix, _, index = cursor.partition(':') if isinstance(cursor,str) else ('','','')
+        if prefix != tag or not index.isascii() or not index.isdecimal() or len(index)>10 or not 0 < int(index) < total:
+            raise ElementError('INVALID_SECTION_CURSOR', 'Use the last next_cursor from this unchanged section, or restart it.')
+        offset = int(index)
+
+    def response(stop):
+        segments = []; base = 0
+        for span in spans:
+            end = base+len(span.words)
+            if end > offset and base < stop:
+                segments.append(span.chunk(max(0,offset-base), min(stop-base,len(span.words))))
+            base = end
+            if base >= stop: break
+        return {'unit_id': unit_id, 'label': unit.get('label'), 'source_id': unit['source_id'], 'segments': segments,
+                'next_cursor': f'{tag}:{stop}' if stop < total else None, 'reading_state_changed': False}
+
+    def fits(obj):
+        return len(json.dumps(obj,ensure_ascii=True,separators=(',',':'))) + 1 <= max_chars
+
+    lo, hi = offset+1, min(total,offset+max_chars)
+    best = response(hi)
+    if fits(best):
+        return best
+    best = None
+    while lo <= hi:
+        mid = (lo+hi)//2; part = response(mid)
+        if fits(part):
+            best = part; lo = mid+1
+        else:
+            hi = mid-1
+    if best is None:
+        raise ElementError('ELEMENT_READ_LIMIT', 'A single native word and provenance do not fit. Increase the budget or inspect the source conflict.')
+    return best
+
+
+def section_coverage(root, source_id):
+    root = Path(root).resolve(); packet = read(root/'paper_packet.json')
+    pages = _native(root,packet,source_id)
+    counts = defaultdict(Counter)
+    result = {'source_id': source_id, 'page_count': len(pages), 'unmapped_pages': [], 'partial_pages': [],
+              'overlap_pages': [], 'no_native_text_pages': [], 'unbound_sections': [], 'invalid_sections': {},
+              'reading_state_changed': False, 'purpose': 'MAPPING_AUDIT_ONLY'}
+    for unit in packet.get('units', []):
+        if unit.get('source_id') != source_id or unit.get('kind') not in TEXT_KINDS:
+            continue
+        try:
+            spans = _spans(unit, pages)
+        except ValueError as exc:
+            result['invalid_sections'][unit['unit_id']] = str(exc)
+            continue
+        if not spans:
+            result['unbound_sections'].append(unit['unit_id'])
+        for s in spans:
+            counts[s.page['page']].update(w['id'] for w in s.words)
+    for n, (_, p) in sorted(pages.items()):
+        hits = counts[n]
+        if not p['words']:
+            result['no_native_text_pages'].append(n)
+        elif not hits:
+            result['unmapped_pages'].append(n)
+        elif len(hits) < len(p['words']):
+            result['partial_pages'].append(n)
+        if any(v > 1 for v in hits.values()):
+            result['overlap_pages'].append(n)
+    return result

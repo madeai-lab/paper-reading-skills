@@ -174,8 +174,10 @@ def extract_elements(root, parser=None):
             'reading_state_changed': False, 'notice': 'Extraction records PDF elements, not understanding or acceptance.'}
 
 
-def read_elements(root, pages, bbox=None, max_chars=MAX_READ_CHARS, source_id=None):
+def read_elements(root, pages, bbox=None, max_chars=MAX_READ_CHARS, source_id=None, *, view='detail'):
     from reading_element_contracts import element_errors
+    if view not in ('detail', 'locator'):
+        raise ElementError('INVALID_ARGUMENT', 'Use detail or locator for the native read view.')
     root = Path(root).resolve()
     packet = load(root/'paper_packet.json')
     errors = element_errors(root, packet)
@@ -192,11 +194,18 @@ def read_elements(root, pages, bbox=None, max_chars=MAX_READ_CHARS, source_id=No
         raise ElementError('ELEMENT_READ_LIMIT', 'Select 1-4 valid pages and a character budget at most 18000.')
     selected_box = box(bbox) if bbox is not None else None
     result = {'source_id': source['source_id'], 'pages': [], 'ocr_used': False, 'truncated': False}
+    if view == 'locator':
+        result.update(view='locator', purpose='NAVIGATION_ONLY', source_ref=source['local_path'],
+                      reading_state_changed=False)
     for number in pages:
         row = next(p for p in source['pages'] if p['page'] == number)
         page = load(root/row['ref'])
         if selected_box and not (0 <= selected_box[0] < selected_box[2] <= page['width'] and 0 <= selected_box[1] < selected_box[3] <= page['height']):
             raise ElementError('ELEMENT_READ_LIMIT', 'The bounding box must stay inside the page.')
+        if view == 'locator':
+            from reading_element_locators import locator_page
+            result['pages'].append(locator_page(page, row['ref'], selected_box))
+            continue
         def within(item):
             if selected_box is None:
                 return True

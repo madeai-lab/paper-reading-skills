@@ -8,15 +8,36 @@ Run the canonical controller with a Python interpreter that already provides pdf
 
 ```text
 python "<skill>/scripts/reading_run_control.py" extract-elements "<run>"
-python "<skill>/scripts/reading_run_control.py" read-elements "<run>" --source-id SRC-01 --pages 1 2 --max-chars 18000
-python "<skill>/scripts/reading_run_control.py" read-elements "<run>" --pages 7 --bbox <x0> <top> <x1> <bottom>
+```
+
+For a coverage question or a specific original object, request bounded page detail, for example:
+
+```text
+python "<skill>/scripts/reading_run_control.py" read-elements "<run>" --source-id SRC-01 --pages 7 --bbox <x0> <top> <x1> <bottom>
 ```
 
 pdfplumber is an optional dependency of extraction, not of the standard-library controller/checker. Use the host's documented bundled Python when it already supplies the dependency. Other deployments must supply it explicitly. Missing support returns `PDFPLUMBER_UNAVAILABLE`; do not automatically install, download a model, upload a source, enable OCR or silently substitute full-page vision.
 
 New packets bind `content_acquisition` with `method: PDFPLUMBER_NATIVE` and `manifest_ref: source_elements/manifest.json`. The schema-version-1 manifest records `parser.name=pdfplumber`, its version, `ocr_used=false` and `sources[]` entries containing source_id, local_path, sha256, page_count and pages[{page,ref,sha256}] for every available required local PDF. Extraction preserves actual source identity/hash and page-file hashes; source_id disambiguates identical page-local element IDs across sources. Per-page JSON retains source_id, page, width/height, native text, words with IDs/bboxes, tables with IDs/bboxes/rows/cells/flags, images with IDs/bboxes/srcsize, lines/rects/curves and page flags. The text element is p0001-text, with table p0001-t001, image p0001-i001 and word p0001-w00001 ID patterns. Treat object IDs as page-local evidence locators, not semantic labels invented by a model. Files and parser output do not demonstrate that anyone read them.
 
-Read every source page continuously through bounded `read-elements` slices, selecting supplements with `--source-id`. Bounding boxes use PDF points with the origin at the page top-left. Full-page output includes text plus compact table/image/flag summaries; word/geometry detail is requested only for a bbox. Exhausting --max-chars returns ELEMENT_READ_LIMIT rather than silently cutting a page. Extraction caps each PDF at 500 pages and 100 MB and all PDFs at 10,000,000 native characters; PDF_ELEMENTS_LIMIT fails rather than claiming truncated coverage. Encrypted PDFs fail with PDF_ELEMENTS_ENCRYPTED; no password or bypass is attempted. Existing extraction returns ELEMENTS_EXIST; source changes return ELEMENT_SOURCE_CHANGED; invalid manifests/pages return ELEMENTS_INVALID. Do not overwrite evidence to make stale records appear current. Keep section/page joins and source locators. Use text and table slices in the model context rather than dumping every character, drawing primitive or the complete manifest. Detailed JSON stays on disk for narrow inspection and calculation. Inspect source structure against all extracted pages and the inventory; extraction is not permission to omit footnotes, references needed for interpretation, equations, appendices or required supplements.
+Read prose by [verified section/subsection](section-reading.md), including in supplements. Physical pages back the evidence and coverage audit; use bounded `read-elements` detail to examine gaps, original objects or extraction conflicts, not to drive body reading. Bounding boxes use PDF points with the origin at the page top-left. Full-page output includes text plus compact table/image/flag summaries; word/geometry detail is requested only for a bbox. Exhausting --max-chars returns ELEMENT_READ_LIMIT rather than silently cutting a page. Extraction caps each PDF at 500 pages and 100 MB and all PDFs at 10,000,000 native characters; PDF_ELEMENTS_LIMIT fails rather than claiming truncated coverage. Encrypted PDFs fail with PDF_ELEMENTS_ENCRYPTED; no password or bypass is attempted. Existing extraction returns ELEMENTS_EXIST; source changes return ELEMENT_SOURCE_CHANGED; invalid manifests/pages return ELEMENTS_INVALID. Do not overwrite evidence to make stale records appear current.
+
+Keep section joins and source locators. Use section chunks and targeted table detail rather than dumping every character, drawing primitive or the complete manifest. Detailed JSON stays on disk for narrow inspection and calculation. Reconcile the outline and inventory with page coverage; extraction is not permission to omit footnotes, references needed for interpretation, equations, appendices or required supplements.
+
+## Locate figures and tables before detailed inspection
+
+Use the read-only locator view on pages with visuals or complex tables. It reads the same validated manifest and page files, without OCR, new dependencies, re-extraction or a new run artifact:
+
+```text
+python "<skill>/scripts/reading_run_control.py" read-elements "<run>" --source-id SRC-01 --pages 2 --view locator
+python "<skill>/scripts/reading_run_control.py" read-elements "<run>" --source-id SRC-01 --pages 2 --view locator --bbox <x0> <top> <x1> <bottom>
+```
+
+The page result points back to the original PDF (`source_ref`), physical page, its size in PDF points and the full native record (`page_ref`). `objects` lists embedded bitmaps (native ID and pixel size), detected tables (native ID, row count and flags), and approximate `drawing_region` boxes (grouped native primitives, not classified charts). A drawing anchor identifies **one primitive**, not a whole figure or panel. When nearby parallel rules and a numbered table caption are the only usable drawing cues, `basis: parallel_rules` suggests a crop; it supplies no table ID or cell values. Use the coordinates to open a legible crop of the original page. No image pixels, cell matrix or per-glyph paths are sent in this view.
+
+A bbox narrows the search, counts local primitives and adds a native-word preview (up to 240 characters). `caption_hints` are numbered line starts nearby, including above/below the crop, with word IDs, boxes and first-line previews; `preview_shortened` marks clipped previews. These are candidates, not verified associations: confirm the caption, panel, continuation lines, table notes and relevant body footnotes on the source. Missing candidates can mean a missed borderless table, an unnumbered figure or labels baked into pixels. Rules, logos or several adjacent panels can form a drawing region, and chart gridlines can be misdetected as a table. Treat the shape and kind as hints, not a reason to skip pixels. Never infer absence or coverage from a locator list. If the response exceeds `--max-chars`, narrow the page/region; no object list is silently truncated.
+
+For detailed object inspection, omit `--view` (or use `--view detail`), inspect the specific saved page/table record by ID when detail is too large, and open the original graphics/conflicts as required below. The locator is navigation only: it changes no read state, proves no cell values or visual observations, and cannot replace continuous section reading or independent source inspection.
 
 ## Choose the evidence route per object
 
